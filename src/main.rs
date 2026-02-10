@@ -1,20 +1,25 @@
 mod aliases;
-mod application;
+mod modules;
 
-use eframe::{
-    run_native,
+use modules::{
+    graphics::{
+        events::graphics_event::ITCEvent,
+        graphics_core::GraphicsCore,
+    },
 };
-use aliases::{
-    EFrameResult, EFrameNativeOptions
-};
-use application::{
-    Application,
+use winit::{
+    event_loop::{EventLoop, ControlFlow}
 };
 
-fn main() -> EFrameResult {
-    let native_options = EFrameNativeOptions::default();
+fn main() {
+    let event_loop = EventLoop::<ITCEvent>::with_user_event()
+        .build()
+        .unwrap();
 
-    run_native("My-Ontology-Editor", native_options, Box::new(|creation_context|{
-        Ok(Box::new(Application::new(creation_context)))
-    }))
+    event_loop.set_control_flow(ControlFlow::Wait);
+    let _event_loop_proxy = event_loop.create_proxy();
+
+    let mut application = GraphicsCore::default();
+
+    event_loop.run_app(&mut application).unwrap();
 }

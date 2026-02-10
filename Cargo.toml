@@ -5,4 +5,15 @@ edition = "2024"
 authors = ["Iana Vinnishchuk"]
 
 [dependencies]
-eframe = {version = "0.33.3", features = []}
+# Graphic crates
+wgpu = "27.0.1"
+winit = "0.30.12"
+egui = "0.33.3"
+egui-winit = "0.33.3"
+egui-wgpu = {version = "0.33.3", features = ["wayland", "winit"]}
+
+# Channel 
+flume = "0.12"
+
+# For blocking spawn async func
+pollster = "0.4"

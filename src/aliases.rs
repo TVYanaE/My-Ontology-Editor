@@ -1,14 +1,20 @@
-use eframe::{
-    Frame, Result, NativeOptions,
-    CreationContext,
-    egui::{
-        Context
-    },
+
+use egui::{
+    Context, Ui,
+}; 
+use egui_wgpu::{
+    Renderer, RendererOptions,
+    ScreenDescriptor
+};
+use egui_winit::{
+    State, EventResponse,
 };
 
-pub type EFrame = Frame; 
-pub type EFrameResult = Result;
-pub type EFrameNativeOptions = NativeOptions;
-pub type EFrameCreationContext<'s> = CreationContext<'s>; 
+// egui aliases
 pub type EGUIContext = Context;
-
+pub type EGUIUI = Ui;
+pub type EGUIRenderer = Renderer;
+pub type EGUIWinitState = State;
+pub type EGUIRendererOptions = RendererOptions;
+pub type EGUIEventRespone = EventResponse;
+pub type EGUIScreenDescriptor = ScreenDescriptor;
