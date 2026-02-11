@@ -39,12 +39,14 @@ pub fn redraw_handle(
         .graphics_backend_data
         .egui_data
         .as_mut()
-        .unwrap();
+        .unwrap();     
+        
 
     let full_output = prepare_phase(
         PreparePhaseContext { 
             egui_data: egui_data,
             wgpu_data: wgpu_data,
+            ui_data: &mut redraw_handle_context.graphics_data.ui_data,
             event_buffers: redraw_handle_context.event_buffers,
             ui_state: &mut redraw_handle_context.graphics_states.ui_state
         }

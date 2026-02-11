@@ -47,6 +47,7 @@ pub fn handle_window_event(
     );   
  
     if egui_response.repaint {
+        //println!("test {}", egui_response.repaint);
         redraw_handle(
             RedrawHandleContext { 
                 event_buffers: handle_window_event_context.event_buffers, 

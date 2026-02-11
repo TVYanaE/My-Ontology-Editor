@@ -14,18 +14,36 @@ use crate::{
     modules::{
         graphics::{
             events::UIAffects,
+            graphics_data::{
+                ui_data::{
+                    panels_data::{
+                        top_panel_data::TopPanelData,
+                    },
+                },
+            },
         },
     },
 };
 use self::{
-    main_bar::main_bar, 
+    main_bar::{main_bar, MainBarContext}, 
 };
 
-pub fn top_panel(egui_context: &EGUIContext, ui_affects: &mut UIAffects) {
+pub fn top_panel(
+    egui_context: &EGUIContext, 
+    ui_affects: &mut UIAffects,
+    top_panel_data: &mut TopPanelData,
+) {
     TopBottomPanel::new(TopBottomSide::Top, "Top-Panel")
         .show(egui_context, |top_panel_ui|{
             top_panel_ui.vertical(|vertical_ui|{
-                main_bar(vertical_ui, egui_context, ui_affects);
+                main_bar(
+                    MainBarContext { 
+                        ui: vertical_ui, 
+                        egui_context: egui_context, 
+                        ui_affects: ui_affects, 
+                        main_bar_data: &mut top_panel_data.main_bar_data 
+                    },
+                );
             }) 
 
         });

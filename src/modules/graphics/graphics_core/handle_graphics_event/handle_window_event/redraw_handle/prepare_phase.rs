@@ -10,6 +10,7 @@ use crate::{
                     wgpu_data::WGPUData,
                     egui_data::EGUIData,
                 },
+                ui_data::UIData,
             },
             graphics_states::ui_state::UIState,
             ui::{ui, UIContext},
@@ -20,6 +21,7 @@ use crate::{
 pub struct PreparePhaseContext<'c> {
     pub wgpu_data: &'c WGPUData,
     pub egui_data: &'c mut EGUIData,
+    pub ui_data: &'c mut UIData,
     pub event_buffers: &'c mut EventBuffers,
     pub ui_state: &'c mut UIState,
 }
@@ -39,7 +41,8 @@ pub fn prepare_phase(
                 UIContext { 
                     egui_context: context, 
                     event_buffers: &mut prepare_phase_context.event_buffers,
-                    ui_state: &mut prepare_phase_context.ui_state
+                    ui_state: &mut prepare_phase_context.ui_state,
+                    ui_data: prepare_phase_context.ui_data
                 }
             ); 
         });
