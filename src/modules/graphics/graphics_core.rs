@@ -1,5 +1,4 @@
 mod handle_graphics_event;
-mod register_graphics_event;
 
 use winit::{
     application::ApplicationHandler,
@@ -11,6 +10,7 @@ use crate::{
     modules::{
         graphics::{
             events::{
+                CustomEvents,
                 graphics_event::{ITCEvent, CustomEvent},
                 EventBuffers,
             },
@@ -23,10 +23,9 @@ use self::{
     handle_graphics_event::{
         GraphicsApplicationContext, handle_graphics_event
     },
-    register_graphics_event::register_graphics_event,
 };
 
-#[derive(Default)]
+
 pub struct GraphicsCore {
     graphics_core_state: GraphicsCoreState,
     graphics_data: GraphicsData,
@@ -34,20 +33,28 @@ pub struct GraphicsCore {
     event_buffers: EventBuffers,
 }
 
-impl ApplicationHandler<ITCEvent> for GraphicsCore {
+impl GraphicsCore {
+    pub fn new(custom_events: CustomEvents) -> Self {
+        Self { 
+            graphics_core_state: GraphicsCoreState::default(), 
+            graphics_data: GraphicsData::default(), 
+            graphics_states: GraphicsStates::default(), 
+            event_buffers: EventBuffers::new(custom_events), 
+        }
+    }
+}
+
+impl ApplicationHandler<CustomEvent> for GraphicsCore {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = event_loop
             .create_window(WindowAttributes::default())
             .expect("Create Window Error");
 
-        register_graphics_event(
-            &mut self.event_buffers.graphics_event_buffer, 
-            CustomEvent::ResumedEvent(window)
-        ); 
+        handle_graphics_event(GraphicsApplicationContext::from(self), CustomEvent::ResumedEvent(window).into());
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: ITCEvent) {
-        register_graphics_event(&mut self.event_buffers.graphics_event_buffer, event); 
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {
+        handle_graphics_event(GraphicsApplicationContext::from(self), event.into());
     }
 
     fn window_event(
@@ -56,7 +63,7 @@ impl ApplicationHandler<ITCEvent> for GraphicsCore {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        register_graphics_event(&mut self.event_buffers.graphics_event_buffer, event); 
+        handle_graphics_event(GraphicsApplicationContext::from(self), event.into());
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
@@ -65,7 +72,7 @@ impl ApplicationHandler<ITCEvent> for GraphicsCore {
                 event_loop.exit();
             },
             _ => {
-                handle_graphics_event(GraphicsApplicationContext::from(self));
+                
             }
         }
     }

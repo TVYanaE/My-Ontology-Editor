@@ -75,6 +75,6 @@ fn create_egui_data(
         egui_renderer: egui_renderer,
         egui_winit_state: egui_winit_state,
     };
-
+    
     return egui_data;
 }

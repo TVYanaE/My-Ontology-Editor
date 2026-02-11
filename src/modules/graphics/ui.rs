@@ -9,6 +9,9 @@ use crate::{
     modules::{
         graphics::{
             events::EventBuffers,
+            graphics_states::{
+                ui_state::UIState,
+            },
         },
     },
 };
@@ -23,9 +26,12 @@ use self::{
 pub struct UIContext<'c> {
     pub egui_context: &'c EGUIContext,
     pub event_buffers: &'c mut EventBuffers,
+    pub ui_state: &'c mut UIState,
 }
 
-pub fn ui(mut ui_context: UIContext) {
+pub fn ui(mut ui_context: UIContext) { 
+     
+
     top_panel(
         ui_context.egui_context,
         &mut ui_context.event_buffers.ui_affects

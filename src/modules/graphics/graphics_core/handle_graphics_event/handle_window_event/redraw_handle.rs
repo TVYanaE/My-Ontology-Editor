@@ -31,7 +31,8 @@ pub fn redraw_handle(
     let full_output = prepare_phase(
         PreparePhaseContext { 
             graphics_data: redraw_handle_context.graphics_data, 
-            event_buffers: redraw_handle_context.event_buffers 
+            event_buffers: redraw_handle_context.event_buffers,
+            ui_state: &mut redraw_handle_context.graphics_states.ui_state
         }
     );
     draw_phase(

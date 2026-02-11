@@ -60,5 +60,5 @@ pub fn resumed_event_handle(
                 .graphics_backend_data
                 .egui_data
         }
-    ); 
+    );
 }

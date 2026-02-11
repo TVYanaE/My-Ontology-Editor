@@ -44,4 +44,5 @@ pub fn resize_handle(
     };
     wgpu_data.surface.configure(&wgpu_data.device, &surface_configuration);
     wgpu_data.surface_configuration = surface_configuration;
+    wgpu_data.window.request_redraw();
 }

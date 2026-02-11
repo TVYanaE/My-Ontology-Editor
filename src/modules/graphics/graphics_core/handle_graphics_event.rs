@@ -1,5 +1,4 @@
 mod handle_custom_event;
-mod handle_itcevent;
 mod handle_window_event;
 
 use crate::{
@@ -22,7 +21,6 @@ use self::{
         handle_custom_event,
         CustomEventContext,
     },
-    handle_itcevent::handle_itcevent,
     handle_window_event::{
         handle_window_event,
         HandleWindowEventContext,
@@ -36,52 +34,42 @@ pub struct GraphicsApplicationContext<'c> {
     pub graphics_data: &'c mut GraphicsData,
 }
 
-pub fn handle_graphics_event(graphics_application_context: GraphicsApplicationContext){
+pub fn handle_graphics_event(graphics_application_context: GraphicsApplicationContext, event: GraphicsEvent){
     let current_graphics_core_state = std::mem::replace(
         graphics_application_context.graphics_core_state,
         GraphicsCoreState::Processing,
     );
    
-    while let Some(event) = graphics_application_context.event_buffers.graphics_event_buffer.pop_front() {
-        *graphics_application_context.graphics_core_state = match (&current_graphics_core_state, event) {
-            (GraphicsCoreState::Runnig, event) => {
-                match event {
-                    GraphicsEvent::WindowEvent(event) => {
-                        match handle_window_event(
-                            event,
-                            HandleWindowEventContext { 
-                                event_buffers: graphics_application_context.event_buffers, 
-                                graphics_states: graphics_application_context.graphics_states, 
-                                graphics_data: graphics_application_context.graphics_data, 
-                            }
-                        ) {
-                            Some(new_state) => new_state,
-                            None => GraphicsCoreState::Runnig 
-                        }     
-                    },
-                    GraphicsEvent::CustomEvent(event) => {
-                        match handle_custom_event(
-                            event,
-                            CustomEventContext {
-                                graphics_data: graphics_application_context.graphics_data,
-                                graphics_states: graphics_application_context.graphics_states,
-                            },
-                        ) {
-                            Some(new_state) => new_state,
-                            None => GraphicsCoreState::Runnig  
-                        } 
-                    },
-                    GraphicsEvent::ITCEvent(_event) => {
-                        match handle_itcevent() {
-                            Some(new_state) => new_state,
-                            None => GraphicsCoreState::Runnig 
-                        } 
-                    },
-                } 
-            },
-            (current_state, _) => current_state.clone(), 
-        }     
-    }
-
-    
+    *graphics_application_context.graphics_core_state = match (&current_graphics_core_state, event) {
+        (GraphicsCoreState::Runnig, event) => {
+            match event {
+                GraphicsEvent::WindowEvent(event) => {
+                    match handle_window_event(
+                        event,
+                        HandleWindowEventContext { 
+                            event_buffers: graphics_application_context.event_buffers, 
+                            graphics_states: graphics_application_context.graphics_states, 
+                            graphics_data: graphics_application_context.graphics_data, 
+                        }
+                    ) {
+                        Some(new_state) => new_state,
+                        None => GraphicsCoreState::Runnig 
+                    }     
+                },
+                GraphicsEvent::CustomEvent(event) => {
+                    match handle_custom_event(
+                        event,
+                        CustomEventContext {
+                            graphics_data: graphics_application_context.graphics_data,
+                            graphics_states: graphics_application_context.graphics_states,
+                        },
+                    ) {
+                        Some(new_state) => new_state,
+                        None => GraphicsCoreState::Runnig  
+                    } 
+                }, 
+            } 
+        },
+        (current_state, _) => current_state.clone(), 
+    }     
 }

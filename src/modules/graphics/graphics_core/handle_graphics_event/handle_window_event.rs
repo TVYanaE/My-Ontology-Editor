@@ -39,15 +39,38 @@ pub fn handle_window_event(
     event: WindowEvent,
     handle_window_event_context: HandleWindowEventContext,
 ) -> Option<GraphicsCoreState> {
-    if egui_processing(
+    let egui_response = egui_processing(
         &event, 
         EGUIProcessingContext { 
             graphics_data: handle_window_event_context.graphics_data 
         },
-    ) {
-        return None;
+    );   
+
+    let is_requered_repaint = handle_window_event_context
+        .graphics_data
+        .graphics_backend_data
+        .egui_data
+        .as_ref()
+        .unwrap()
+        .egui_winit_state
+        .egui_ctx()
+        .has_requested_repaint();
+ 
+    println!("handle window event is repaint req from : {}", is_requered_repaint);
+
+    if egui_response.repaint {
+        redraw_handle(
+            RedrawHandleContext { 
+                event_buffers: handle_window_event_context.event_buffers, 
+                graphics_data: handle_window_event_context.graphics_data, 
+                graphics_states: handle_window_event_context.graphics_states 
+            }
+        );
     } 
-    
+
+    if egui_response.consumed {
+        return None;
+    }
 
     let new_graphic_state = match event {
         WindowEvent::CloseRequested => Some(GraphicsCoreState::Shutdown),
@@ -60,18 +83,7 @@ pub fn handle_window_event(
             );
 
             None
-        },
-        WindowEvent::RedrawRequested => {
-            redraw_handle(
-                RedrawHandleContext { 
-                    event_buffers: handle_window_event_context.event_buffers, 
-                    graphics_data: handle_window_event_context.graphics_data, 
-                    graphics_states: handle_window_event_context.graphics_states 
-                }
-            );
-
-            None
-        }
+        }, 
         _ => None
     }; 
 

@@ -77,7 +77,9 @@ pub fn draw_phase(
         egui_data.egui_renderer.update_texture(&wgpu_data.device, &wgpu_data.queue, *id, image_delta);    
     }
 
-    egui_data.egui_renderer.update_buffers(&wgpu_data.device, &wgpu_data.queue, &mut encoder, &paint_jobs, &screen_descriptor);
+    let egui_commands_buffers = egui_data.egui_renderer.update_buffers(&wgpu_data.device, &wgpu_data.queue, &mut encoder, &paint_jobs, &screen_descriptor);
+
+    wgpu_data.queue.submit(egui_commands_buffers);
 
     let render_pass_descriptor = RenderPassDescriptor {
         color_attachments: &[Some(RenderPassColorAttachment {
@@ -102,7 +104,6 @@ pub fn draw_phase(
     for x in &full_output.textures_delta.free {
         egui_data.egui_renderer.free_texture(x);
     }
-
 
     wgpu_data.queue.submit(Some(encoder.finish()));
     

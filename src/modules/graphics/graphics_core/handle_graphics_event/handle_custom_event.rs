@@ -1,3 +1,4 @@
+mod itc_event_handle;
 mod resumed_event_handle; 
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
     },
 };
 use self::{
+    itc_event_handle::itcevent_handle,
     resumed_event_handle::{
         resumed_event_handle,
         ResumedEventContext,
@@ -32,7 +34,7 @@ pub fn handle_custom_event(
         CustomEvent::AppShutdownReq => {
             // TODO Logic For Graceful shutdown
             Some(GraphicsCoreState::Shutdown)
-        },
+        }, 
         CustomEvent::ResumedEvent(window) => {
             resumed_event_handle(
                 window, 
@@ -40,9 +42,12 @@ pub fn handle_custom_event(
                     graphics_states: custom_event_context.graphics_states, 
                     graphics_data: custom_event_context.graphics_data 
                 }
-            ); 
+            );
 
             None
+        },
+        CustomEvent::ITCEvent(event) => {
+            itcevent_handle(event)
         },
     }; 
     

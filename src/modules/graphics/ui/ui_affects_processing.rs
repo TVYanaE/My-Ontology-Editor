@@ -3,7 +3,7 @@ use crate::{
     modules::{
         graphics::{
             events::{
-                graphics_event::{CustomEvent, GraphicsEvent},
+                graphics_event::{CustomEvent},
                 EventBuffers,
             },
             ui::{
@@ -15,14 +15,12 @@ use crate::{
 
 
 pub fn ui_affects_processing(
-    event_buffers: &mut EventBuffers
+    event_buffers: &mut EventBuffers,
 ) {
     while let Some(affect) = event_buffers.ui_affects.pop_front() {
         match affect {
             UIAffect::QuitButtonPushed => {
-                event_buffers.graphics_event_buffer.push_back(GraphicsEvent::CustomEvent(
-                    CustomEvent::AppShutdownReq
-                ));
+                event_buffers.custom_events.send_event(CustomEvent::AppShutdownReq).expect("Event Loop was closed");
             },
         }
     }

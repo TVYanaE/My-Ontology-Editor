@@ -2,6 +2,9 @@ use winit::{
     event::WindowEvent,
 };
 use crate::{
+    aliases::{
+        EGUIEventRespone,
+    },
     modules::{
         graphics::{
             graphics_data::GraphicsData,
@@ -17,7 +20,7 @@ pub struct EGUIProcessingContext<'c> {
 pub fn egui_processing(
     event: &WindowEvent,
     egui_processing_context: EGUIProcessingContext,
-) -> bool {
+) -> EGUIEventRespone {
     let egui_data = egui_processing_context
         .graphics_data
         .graphics_backend_data
@@ -35,11 +38,7 @@ pub fn egui_processing(
         .egui_winit_state.on_window_event(
             &wgpu_data.window, 
             &event
-        );
- 
-    if egui_response.repaint {
-        wgpu_data.window.request_redraw();
-    } 
+        ); 
 
-    return egui_response.consumed;
+    return egui_response;
 }

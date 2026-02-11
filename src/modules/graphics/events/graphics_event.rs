@@ -7,13 +7,13 @@ use winit::{
 pub enum GraphicsEvent {
     WindowEvent(WindowEvent),
     CustomEvent(CustomEvent),
-    ITCEvent(ITCEvent),
 }
 
 #[derive(Debug)]
 pub enum CustomEvent {
     AppShutdownReq,
     ResumedEvent(Window),
+    ITCEvent(ITCEvent)
 }
 
 #[derive(Debug)]
@@ -33,7 +33,7 @@ impl From<CustomEvent> for GraphicsEvent {
     }
 }
 
-impl From<ITCEvent> for GraphicsEvent {
+impl From<ITCEvent> for CustomEvent {
     fn from(value: ITCEvent) -> Self {
         Self::ITCEvent(value)
     }
