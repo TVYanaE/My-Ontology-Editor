@@ -12,34 +12,26 @@ use crate::{
     },
     modules::{
         graphics::{
-            graphics_data::GraphicsData
+            graphics_data::{
+                graphics_backend_data::{
+                    wgpu_data::WGPUData,
+                    egui_data::EGUIData,
+                },
+            },
         },
     },
 };
 
 pub struct DrawPhaseContext<'c> {
-    pub graphics_data: &'c mut GraphicsData,
+    pub wgpu_data: &'c WGPUData,
+    pub egui_data: &'c mut EGUIData,
 }
 
 pub fn draw_phase(
     full_output: FullOutput,
     draw_phase_context: DrawPhaseContext,
-) {
-    let wgpu_data = draw_phase_context
-        .graphics_data
-        .graphics_backend_data
-        .wgpu_data
-        .as_ref()
-        .unwrap();
-    
-    let egui_data = draw_phase_context
-        .graphics_data
-        .graphics_backend_data
-        .egui_data
-        .as_mut()
-        .unwrap();
-    
-    let surface_texture = wgpu_data
+) { 
+    let surface_texture = draw_phase_context.wgpu_data
         .surface
         .get_current_texture()
         .unwrap();
@@ -53,33 +45,68 @@ pub fn draw_phase(
         label: Some("Main comand encoder")
     };
 
-    let mut encoder = wgpu_data
+    let mut encoder = draw_phase_context
+        .wgpu_data
         .device
         .create_command_encoder(&command_encoder_descriptor);
    
     let platform_output = full_output.platform_output;
 
     let screen_descriptor = EGUIScreenDescriptor { 
-        size_in_pixels: [wgpu_data.surface_configuration.width, wgpu_data.surface_configuration.height], 
-        pixels_per_point: wgpu_data.window.scale_factor() as f32,  
+        size_in_pixels: [
+            draw_phase_context.wgpu_data.surface_configuration.width, 
+            draw_phase_context.wgpu_data.surface_configuration.height
+        ], 
+        pixels_per_point: draw_phase_context.wgpu_data.window.scale_factor() as f32,  
     };
 
-    egui_data.egui_winit_state.egui_ctx().set_pixels_per_point(screen_descriptor.pixels_per_point);
-
-    egui_data.egui_winit_state.handle_platform_output(&wgpu_data.window, platform_output);
-
-    let paint_jobs = egui_data
+    draw_phase_context
+        .egui_data
         .egui_winit_state
         .egui_ctx()
-        .tessellate(full_output.shapes, egui_data.egui_winit_state.egui_ctx().pixels_per_point());
+        .set_pixels_per_point(screen_descriptor.pixels_per_point);
+
+    draw_phase_context
+        .egui_data
+        .egui_winit_state
+        .handle_platform_output(
+            &draw_phase_context.wgpu_data.window, 
+            platform_output
+        );
+
+    let paint_jobs = draw_phase_context
+        .egui_data
+        .egui_winit_state
+        .egui_ctx()
+        .tessellate(
+            full_output.shapes, 
+            draw_phase_context.egui_data.egui_winit_state.egui_ctx().pixels_per_point()
+        );
 
     for (id, image_delta) in &full_output.textures_delta.set {
-        egui_data.egui_renderer.update_texture(&wgpu_data.device, &wgpu_data.queue, *id, image_delta);    
+        draw_phase_context
+            .egui_data
+            .egui_renderer
+            .update_texture(
+                &draw_phase_context.wgpu_data.device, 
+                &draw_phase_context.wgpu_data.queue, 
+                *id, 
+                image_delta
+            );    
     }
 
-    let egui_commands_buffers = egui_data.egui_renderer.update_buffers(&wgpu_data.device, &wgpu_data.queue, &mut encoder, &paint_jobs, &screen_descriptor);
+    let egui_commands_buffers = draw_phase_context
+        .egui_data
+        .egui_renderer
+        .update_buffers(
+            &draw_phase_context.wgpu_data.device, 
+            &draw_phase_context.wgpu_data.queue, 
+            &mut encoder, 
+            &paint_jobs, 
+            &screen_descriptor
+        );
 
-    wgpu_data.queue.submit(egui_commands_buffers);
+    draw_phase_context.wgpu_data.queue.submit(egui_commands_buffers);
 
     let render_pass_descriptor = RenderPassDescriptor {
         color_attachments: &[Some(RenderPassColorAttachment {
@@ -99,13 +126,26 @@ pub fn draw_phase(
 
     let render_pass = encoder.begin_render_pass(&render_pass_descriptor);
 
-    egui_data.egui_renderer.render(&mut render_pass.forget_lifetime(), &paint_jobs, &screen_descriptor);
+    draw_phase_context
+        .egui_data
+        .egui_renderer
+        .render(
+            &mut render_pass.forget_lifetime(), 
+            &paint_jobs, 
+            &screen_descriptor
+        );
 
     for x in &full_output.textures_delta.free {
-        egui_data.egui_renderer.free_texture(x);
+        draw_phase_context
+            .egui_data
+            .egui_renderer
+            .free_texture(x);
     }
 
-    wgpu_data.queue.submit(Some(encoder.finish()));
+    draw_phase_context
+        .wgpu_data
+        .queue
+        .submit(Some(encoder.finish()));
     
     surface_texture.present();
 }

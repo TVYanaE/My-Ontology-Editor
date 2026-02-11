@@ -1,25 +1,45 @@
 mod aliases;
 mod modules;
 
+
+use anyhow::Context;
+use tracing::{instrument, error};
+use winit::{
+    event_loop::{EventLoop, ControlFlow}
+};
 use modules::{
     graphics::{
         events::graphics_event::CustomEvent,
         graphics_core::GraphicsCore,
     },
-};
-use winit::{
-    event_loop::{EventLoop, ControlFlow}
+    logger::init_logger,
 };
 
+
 fn main() {
+    let _guard = init_logger();
+   
+    std::panic::set_hook(Box::new(|panic_info|{
+        error!("panic occured: {panic_info}"); 
+    }));
+
+    if let Err(err) = run() {
+        error!(error = ?err, "application terminated");
+    }
+}
+
+#[instrument(skip_all, err)]
+fn run() -> anyhow::Result<()> {
     let event_loop = EventLoop::<CustomEvent>::with_user_event()
         .build()
-        .unwrap();
+        .context("failed to create event loop")?;
 
     event_loop.set_control_flow(ControlFlow::Wait);
     let event_loop_proxy = event_loop.create_proxy();
 
     let mut application = GraphicsCore::new(event_loop_proxy);
 
-    event_loop.run_app(&mut application).unwrap();
-}
+    event_loop.run_app(&mut application).context("event loop error exit")?;
+
+    Ok(())
+} 

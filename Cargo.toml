@@ -17,3 +17,10 @@ flume = "0.12"
 
 # For blocking spawn async func
 pollster = "0.4"
+
+# Error Handling
+anyhow = "1.0.101"
+thiserror = "2.0.18"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"]}
+tracing-appender = "0.2.4"

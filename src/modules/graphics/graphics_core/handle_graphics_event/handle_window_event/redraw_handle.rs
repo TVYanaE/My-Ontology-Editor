@@ -28,9 +28,23 @@ pub struct RedrawHandleContext<'c> {
 pub fn redraw_handle(
     redraw_handle_context: RedrawHandleContext,
 ) {
+    let wgpu_data = redraw_handle_context
+        .graphics_data
+        .graphics_backend_data
+        .wgpu_data
+        .as_ref()
+        .unwrap();
+    let egui_data = redraw_handle_context
+        .graphics_data
+        .graphics_backend_data
+        .egui_data
+        .as_mut()
+        .unwrap();
+
     let full_output = prepare_phase(
         PreparePhaseContext { 
-            graphics_data: redraw_handle_context.graphics_data, 
+            egui_data: egui_data,
+            wgpu_data: wgpu_data,
             event_buffers: redraw_handle_context.event_buffers,
             ui_state: &mut redraw_handle_context.graphics_states.ui_state
         }
@@ -38,7 +52,8 @@ pub fn redraw_handle(
     draw_phase(
         full_output, 
         DrawPhaseContext { 
-            graphics_data: redraw_handle_context.graphics_data 
+            wgpu_data: wgpu_data,
+            egui_data: egui_data,
         }
     );
 }

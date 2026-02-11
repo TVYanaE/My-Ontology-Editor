@@ -45,19 +45,7 @@ pub fn handle_window_event(
             graphics_data: handle_window_event_context.graphics_data 
         },
     );   
-
-    let is_requered_repaint = handle_window_event_context
-        .graphics_data
-        .graphics_backend_data
-        .egui_data
-        .as_ref()
-        .unwrap()
-        .egui_winit_state
-        .egui_ctx()
-        .has_requested_repaint();
  
-    println!("handle window event is repaint req from : {}", is_requered_repaint);
-
     if egui_response.repaint {
         redraw_handle(
             RedrawHandleContext { 
