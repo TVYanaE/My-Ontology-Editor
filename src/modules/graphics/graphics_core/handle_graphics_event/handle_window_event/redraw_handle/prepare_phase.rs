@@ -45,11 +45,7 @@ pub fn prepare_phase(
                     ui_data: prepare_phase_context.ui_data
                 }
             ); 
-        });
-    
-    if prepare_phase_context.egui_data.egui_winit_state.egui_ctx().has_requested_repaint() {
-        prepare_phase_context.wgpu_data.window.request_redraw();
-    } 
+        }); 
 
     return full_output;
 }

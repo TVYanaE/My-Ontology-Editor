@@ -39,9 +39,7 @@ pub fn top_panel(
                 main_bar(
                     MainBarContext { 
                         ui: vertical_ui, 
-                        egui_context: egui_context, 
                         ui_affects: ui_affects, 
-                        main_bar_data: &mut top_panel_data.main_bar_data 
                     },
                 );
             }) 

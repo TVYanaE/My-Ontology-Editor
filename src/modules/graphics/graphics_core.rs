@@ -1,5 +1,6 @@
 mod handle_graphics_event;
 
+
 use winit::{
     application::ApplicationHandler,
     event_loop::ActiveEventLoop,
@@ -11,7 +12,7 @@ use crate::{
         graphics::{
             events::{
                 CustomEvents,
-                graphics_event::{ITCEvent, CustomEvent},
+                graphics_event::{CustomEvent},
                 EventBuffers,
             },
             graphics_data::GraphicsData, 
@@ -49,8 +50,7 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
         let window = event_loop
             .create_window(WindowAttributes::default())
             .expect("Create Window Error");
-
-        handle_graphics_event(GraphicsApplicationContext::from(self), CustomEvent::ResumedEvent(window).into());
+        handle_graphics_event(GraphicsApplicationContext::from(self), CustomEvent::ResumedEvent(window).into()); 
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {

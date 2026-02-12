@@ -75,6 +75,12 @@ fn create_egui_data(
         egui_renderer: egui_renderer,
         egui_winit_state: egui_winit_state,
     };
-    
+   
+    let window_clone = wgpu_data.window.clone();
+
+    egui_data.egui_winit_state.egui_ctx().set_request_repaint_callback(Box::new(move |_info|{
+        window_clone.clone().request_redraw();
+    }));
+
     return egui_data;
 }
