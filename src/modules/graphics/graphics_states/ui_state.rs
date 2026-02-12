@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum UIState {
     Idle,
+    ModalWindowOpen(ModalWindow),
 }
 
 impl Default for UIState {
@@ -8,3 +9,8 @@ impl Default for UIState {
         Self::Idle
     }
 }
+
+#[derive(Debug)]
+pub enum ModalWindow {
+    CreateNewProjectWindow,
+} 

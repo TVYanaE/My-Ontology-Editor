@@ -1,6 +1,10 @@
 mod handle_graphics_event;
 
-
+use std::{
+    sync::{
+        Arc,
+    },
+};
 use winit::{
     application::ApplicationHandler,
     event_loop::ActiveEventLoop,
@@ -9,6 +13,7 @@ use winit::{
 };
 use crate::{
     modules::{
+        app_dirs::ApplicationDirectories,
         graphics::{
             events::{
                 CustomEvents,
@@ -35,10 +40,13 @@ pub struct GraphicsCore {
 }
 
 impl GraphicsCore {
-    pub fn new(custom_events: CustomEvents) -> Self {
+    pub fn new(
+        custom_events: CustomEvents,
+        app_dirs: Arc<ApplicationDirectories>,
+    ) -> Self {
         Self { 
             graphics_core_state: GraphicsCoreState::default(), 
-            graphics_data: GraphicsData::default(), 
+            graphics_data: GraphicsData::new(app_dirs), 
             graphics_states: GraphicsStates::default(), 
             event_buffers: EventBuffers::new(custom_events), 
         }

@@ -1,20 +1,24 @@
 mod aliases;
 mod modules;
 
-
+use std::{
+    sync::Arc,
+};
 use anyhow::Context;
 use tracing::{instrument, error};
 use winit::{
     event_loop::{EventLoop, ControlFlow}
 };
 use modules::{
+    app_dirs::{
+        init_app_dirs,
+    },
     graphics::{
         events::graphics_event::CustomEvent,
         graphics_core::GraphicsCore,
     },
     logger::init_logger,
 };
-
 
 fn main() {
     let _guard = init_logger();
@@ -36,8 +40,10 @@ fn run() -> anyhow::Result<()> {
 
     event_loop.set_control_flow(ControlFlow::Wait);
     let event_loop_proxy = event_loop.create_proxy();
+    
+    let app_dirs = Arc::new(init_app_dirs()?);
 
-    let mut application = GraphicsCore::new(event_loop_proxy);
+    let mut application = GraphicsCore::new(event_loop_proxy, app_dirs.clone());
 
     event_loop.run_app(&mut application).context("event loop error exit")?;
 

@@ -24,3 +24,6 @@ thiserror = "2.0.18"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"]}
 tracing-appender = "0.2.4"
+
+# For working with file system (For default paths in OS)
+directories = "6.0"

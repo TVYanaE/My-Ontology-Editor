@@ -1,4 +1,6 @@
 #[derive(Debug)]
 pub enum UIAffect {
-    QuitButtonPushed, 
+    QuitButtonPressed, 
+    CreateNewProjectButtonPressed,
+    CloseCreateNewProjectWindowButtonPressed,
 }
