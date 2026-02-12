@@ -1,5 +1,6 @@
 
 use crate::{
+    aliases::{EGUIContext},
     modules::{
         graphics::{
             events::{
@@ -7,7 +8,7 @@ use crate::{
                 EventBuffers,
             },
             graphics_states::{
-                ui_state::{UIState, ModalWindow},
+                ui_state::{UIState, ModalWindow, UIGeneralState},
             },
             ui::{
                 ui_affect::UIAffect
@@ -19,6 +20,7 @@ use crate::{
 pub struct UIAffectsProcessingContext<'c> {
     pub event_buffers: &'c mut EventBuffers,
     pub ui_state: &'c mut UIState, 
+    pub egui_context: &'c EGUIContext,
 }
 
 pub fn ui_affects_processing(
@@ -34,13 +36,15 @@ pub fn ui_affects_processing(
                 .expect("Event Loop was closed");
             },
             UIAffect::CreateNewProjectButtonPressed => {
-                *ui_affects_processing_context.ui_state = UIState::ModalWindowOpen(
+                ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::ModalWindowOpen(
                     ModalWindow::CreateNewProjectWindow
-                ); 
+                );
+                ui_affects_processing_context.egui_context.request_repaint();
             },
             UIAffect::CloseCreateNewProjectWindowButtonPressed => {
-                *ui_affects_processing_context.ui_state = UIState::Idle;
-           },
+                ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::Idle;
+                ui_affects_processing_context.egui_context.request_repaint();
+            }, 
         }
     }
 }

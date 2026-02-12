@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum UIAffect {
+pub enum UIAffect{
     QuitButtonPressed, 
     CreateNewProjectButtonPressed,
     CloseCreateNewProjectWindowButtonPressed,

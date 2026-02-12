@@ -60,7 +60,7 @@ pub fn handle_window_event(
                 graphics_data: handle_window_event_context.graphics_data, 
                 graphics_states: handle_window_event_context.graphics_states 
             }
-        )?;
+        )?; 
     } 
 
     if egui_response.consumed {

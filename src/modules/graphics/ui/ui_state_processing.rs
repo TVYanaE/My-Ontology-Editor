@@ -1,5 +1,4 @@
 
-
 use crate::{
     aliases::{
         EGUIContext,
@@ -16,7 +15,7 @@ use crate::{
             },
             graphics_states::{
                 ui_state::{
-                    ModalWindow, UIState
+                    ModalWindow, UIState, UIGeneralState,
                 },
             },
             ui::{
@@ -29,7 +28,7 @@ use crate::{
 };
 
 pub struct UIStateProcessingContext<'c> {
-    pub ui_state: &'c UIState,
+    pub ui_state: &'c mut UIState,
     pub egui_context: &'c EGUIContext,
     pub ui_data: &'c mut UIData,
     pub ui_affects: &'c mut UIAffects,
@@ -38,9 +37,10 @@ pub struct UIStateProcessingContext<'c> {
 pub fn ui_state_processing(
     ui_state_processing_context: UIStateProcessingContext,
 ) {
-    match &ui_state_processing_context.ui_state {
-        UIState::Idle => {},
-        UIState::ModalWindowOpen(modal_window) => {
+    
+    match &mut ui_state_processing_context.ui_state.ui_general_state {
+        UIGeneralState::Idle => {},
+        UIGeneralState::ModalWindowOpen(modal_window) => {
             match modal_window {
                 ModalWindow::CreateNewProjectWindow => {
                     create_new_project_window(
@@ -50,10 +50,14 @@ pub fn ui_state_processing(
                                 .ui_data
                                 .modal_windows_data
                                 .create_new_project_window_data, 
-                            ui_affects: ui_state_processing_context.ui_affects
+                            ui_affects: ui_state_processing_context.ui_affects,
+                            create_new_project_window_state: &mut ui_state_processing_context
+                                .ui_state
+                                .create_new_project_window_state
                         }
-                    ); 
-                },
+                    );
+                    ui_state_processing_context.egui_context.request_repaint();
+                }, 
             }
         }
     }

@@ -27,3 +27,6 @@ tracing-appender = "0.2.4"
 
 # For working with file system (For default paths in OS)
 directories = "6.0"
+
+# For file dialog 
+egui-file-dialog = "0.12.0"

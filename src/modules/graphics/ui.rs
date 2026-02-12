@@ -70,8 +70,8 @@ pub fn ui(ui_context: UIContext) {
         UIAffectsProcessingContext { 
             event_buffers: ui_context.event_buffers, 
             ui_state: ui_context.ui_state, 
+            egui_context: ui_context.egui_context,
         }
     );
 } 
-
 
