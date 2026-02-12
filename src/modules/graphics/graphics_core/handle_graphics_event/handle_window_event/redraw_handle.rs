@@ -10,6 +10,9 @@ use crate::{
         },
     },
 };
+use super::{
+    WindowEventError,
+};
 use self::{
     draw_phase::{
         draw_phase, DrawPhaseContext,
@@ -27,19 +30,23 @@ pub struct RedrawHandleContext<'c> {
 
 pub fn redraw_handle(
     redraw_handle_context: RedrawHandleContext,
-) {
+) -> Result<(), WindowEventError> {
     let wgpu_data = redraw_handle_context
         .graphics_data
         .graphics_backend_data
         .wgpu_data
         .as_ref()
-        .unwrap();
+        .ok_or_else(||{
+            WindowEventError::WGPUDataWasntFound
+        })?;
     let egui_data = redraw_handle_context
         .graphics_data
         .graphics_backend_data
         .egui_data
         .as_mut()
-        .unwrap();     
+        .ok_or_else(||{
+            WindowEventError::EGUIDataWasntFound
+        })?;     
         
 
     let full_output = prepare_phase(
@@ -57,5 +64,6 @@ pub fn redraw_handle(
             wgpu_data: wgpu_data,
             egui_data: egui_data,
         }
-    );
+    )?;
+    Ok(())
 }

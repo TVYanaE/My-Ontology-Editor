@@ -12,6 +12,9 @@ use wgpu::{
     SurfaceConfiguration,
     CompositeAlphaMode, PresentMode, 
 };
+use super::{
+    CustomEventError,
+};
 use crate::{
     modules::{
         graphics::{
@@ -36,9 +39,8 @@ pub struct InitWGPUContext<'c> {
 }
 
 pub fn init_wgpu(
-    init_wgpu_context: InitWGPUContext,
-    
-) {
+    init_wgpu_context: InitWGPUContext,    
+) -> Result<(), CustomEventError> {
     let current_wgpu_state = std::mem::replace(
         init_wgpu_context.wgpu_state, 
         WGPUState::Processing
@@ -46,17 +48,17 @@ pub fn init_wgpu(
 
     *init_wgpu_context.wgpu_state = match current_wgpu_state {
         WGPUState::NotInit => {
-            let wgpu_data = create_wgpu_data(init_wgpu_context.window);
+            let wgpu_data = create_wgpu_data(init_wgpu_context.window)?;
             *init_wgpu_context.wgpu_data = Some(wgpu_data); 
 
             WGPUState::Init
         },
         _ => current_wgpu_state
-    }
-
+    };
+    Ok(())
 }
 
-fn create_wgpu_data(window: Window) -> WGPUData {
+fn create_wgpu_data(window: Window) -> Result<WGPUData, CustomEventError> {
     let window = Arc::new(window);
     
     let instance_descriptor = InstanceDescriptor::default(); 
@@ -74,9 +76,9 @@ fn create_wgpu_data(window: Window) -> WGPUData {
         ..Default::default()
     };
 
-    let (device, queue) = pollster::block_on(adapter.request_device(&device_descriptor)).unwrap();
+    let (device, queue) = pollster::block_on(adapter.request_device(&device_descriptor))?;
     
-    let surface = instance.create_surface(window.clone()).unwrap();
+    let surface = instance.create_surface(window.clone())?;
 
     let window_size = window.inner_size();
     let surface_capabilities = surface.get_capabilities(&adapter); 
@@ -86,7 +88,9 @@ fn create_wgpu_data(window: Window) -> WGPUData {
         .formats
         .iter()
         .find(|texture_format| **texture_format == selected_format)
-        .unwrap();
+        .ok_or_else(||{
+            CustomEventError::TextureFormatIsntSupported
+        })?;
 
     let surface_configuration = SurfaceConfiguration {
         usage: TextureUsages::RENDER_ATTACHMENT,
@@ -112,5 +116,5 @@ fn create_wgpu_data(window: Window) -> WGPUData {
         surface_texture_format: *surface_texture_format
     };
 
-    return wgpu_data;
+    Ok(wgpu_data)
 }

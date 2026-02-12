@@ -7,6 +7,9 @@ use wgpu::{
     SurfaceConfiguration, TextureUsages,
     CompositeAlphaMode, PresentMode
 };
+use super::{
+    WindowEventError,
+};
 use crate::{
     modules::{
         graphics::{
@@ -22,13 +25,15 @@ pub struct ResizeHandleContext<'c> {
 pub fn resize_handle(
     physical_size: PhysicalSize<u32>,
     resize_handle_context: ResizeHandleContext,
-) {
+) -> Result<(), WindowEventError> {
     let wgpu_data = resize_handle_context
         .graphics_data
         .graphics_backend_data
         .wgpu_data
         .as_mut()
-        .unwrap();
+        .ok_or_else(||{
+            WindowEventError::WGPUDataWasntFound
+        })?;
 
     wgpu_data.window_size = physical_size;
         
@@ -45,4 +50,5 @@ pub fn resize_handle(
     wgpu_data.surface.configure(&wgpu_data.device, &surface_configuration);
     wgpu_data.surface_configuration = surface_configuration;
     wgpu_data.window.request_redraw();
+    Ok(())
 }

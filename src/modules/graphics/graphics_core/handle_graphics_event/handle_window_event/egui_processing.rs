@@ -1,6 +1,9 @@
 use winit::{
     event::WindowEvent,
 };
+use super::{
+    WindowEventError,
+};
 use crate::{
     aliases::{
         EGUIEventRespone,
@@ -20,19 +23,23 @@ pub struct EGUIProcessingContext<'c> {
 pub fn egui_processing(
     event: &WindowEvent,
     egui_processing_context: EGUIProcessingContext,
-) -> EGUIEventRespone {
+) -> Result<EGUIEventRespone, WindowEventError> {
     let egui_data = egui_processing_context
         .graphics_data
         .graphics_backend_data
         .egui_data
         .as_mut()
-        .unwrap();
+        .ok_or_else(||{
+            WindowEventError::EGUIDataWasntFound
+        })?;
     let wgpu_data = egui_processing_context
         .graphics_data
         .graphics_backend_data
         .wgpu_data
         .as_ref()
-        .unwrap();
+        .ok_or_else(||{
+            WindowEventError::WGPUDataWasntFound
+        })?;
 
     let egui_response = egui_data
         .egui_winit_state.on_window_event(
@@ -40,5 +47,5 @@ pub fn egui_processing(
             &event
         ); 
 
-    return egui_response;
+    Ok(egui_response)
 }

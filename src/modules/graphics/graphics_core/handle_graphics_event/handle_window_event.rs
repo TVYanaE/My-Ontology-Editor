@@ -2,6 +2,12 @@ mod egui_processing;
 mod redraw_handle;
 mod resize_handle;
 
+use thiserror::{
+    Error
+};
+use tracing::{
+    instrument
+};
 use winit::{
     event::WindowEvent
 };
@@ -35,16 +41,17 @@ pub struct HandleWindowEventContext<'c> {
     pub graphics_data: &'c mut GraphicsData,
 }
 
+#[instrument(skip_all, err)]
 pub fn handle_window_event(
     event: WindowEvent,
     handle_window_event_context: HandleWindowEventContext,
-) -> Option<GraphicsCoreState> {
+) -> Result<Option<GraphicsCoreState>, WindowEventError> {
     let egui_response = egui_processing(
         &event, 
         EGUIProcessingContext { 
             graphics_data: handle_window_event_context.graphics_data 
         },
-    );   
+    )?;   
  
     if egui_response.repaint {
         redraw_handle(
@@ -53,11 +60,11 @@ pub fn handle_window_event(
                 graphics_data: handle_window_event_context.graphics_data, 
                 graphics_states: handle_window_event_context.graphics_states 
             }
-        );
+        )?;
     } 
 
     if egui_response.consumed {
-        return None;
+        return Ok(None);
     }
 
     let new_graphic_state = match event {
@@ -68,12 +75,25 @@ pub fn handle_window_event(
                 ResizeHandleContext { 
                     graphics_data: handle_window_event_context.graphics_data 
                 }
-            );
+            )?;
 
             None
         }, 
         _ => None
     }; 
 
-    return new_graphic_state
+    return Ok(new_graphic_state)
+}
+
+#[derive(Debug, Error)]
+pub enum WindowEventError {
+    #[error("WGPU Data wasn't found")]
+    WGPUDataWasntFound,
+
+    #[error("EGUI Data wasn't found")]
+    EGUIDataWasntFound,
+
+    #[error("Get Current Surface Texture Error: {0}")]
+    SurfaceError(#[from] wgpu::SurfaceError),
+
 }

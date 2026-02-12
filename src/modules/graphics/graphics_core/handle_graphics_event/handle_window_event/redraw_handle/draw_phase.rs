@@ -6,6 +6,9 @@ use wgpu::{
     Operations, 
     RenderPassDescriptor, RenderPassColorAttachment,
 };
+use super::{
+    WindowEventError,
+};
 use crate::{
     aliases::{
         EGUIScreenDescriptor
@@ -30,11 +33,10 @@ pub struct DrawPhaseContext<'c> {
 pub fn draw_phase(
     full_output: FullOutput,
     draw_phase_context: DrawPhaseContext,
-) { 
+) -> Result<(), WindowEventError> { 
     let surface_texture = draw_phase_context.wgpu_data
         .surface
-        .get_current_texture()
-        .unwrap();
+        .get_current_texture()?;
 
     let window_surface_view = surface_texture
         .texture
@@ -148,4 +150,6 @@ pub fn draw_phase(
         .submit(Some(encoder.finish()));
     
     surface_texture.present();
+
+    Ok(())
 }

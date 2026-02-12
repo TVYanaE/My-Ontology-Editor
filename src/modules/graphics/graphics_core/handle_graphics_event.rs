@@ -1,5 +1,7 @@
 mod handle_custom_event;
+mod handle_error_shutdown;
 mod handle_window_event;
+
 
 use crate::{
     modules::{
@@ -21,6 +23,10 @@ use self::{
         handle_custom_event,
         CustomEventContext,
     },
+    handle_error_shutdown::{
+        handle_error_shutdown,
+        ErrorShutdownContext,
+    },
     handle_window_event::{
         handle_window_event,
         HandleWindowEventContext,
@@ -34,7 +40,10 @@ pub struct GraphicsApplicationContext<'c> {
     pub graphics_data: &'c mut GraphicsData,
 }
 
-pub fn handle_graphics_event(graphics_application_context: GraphicsApplicationContext, event: GraphicsEvent){
+pub fn handle_graphics_event(
+    graphics_application_context: GraphicsApplicationContext, 
+    event: GraphicsEvent
+) {
     let current_graphics_core_state = std::mem::replace(
         graphics_application_context.graphics_core_state,
         GraphicsCoreState::Processing,
@@ -52,8 +61,12 @@ pub fn handle_graphics_event(graphics_application_context: GraphicsApplicationCo
                             graphics_data: graphics_application_context.graphics_data, 
                         }
                     ) {
-                        Some(new_state) => new_state,
-                        None => GraphicsCoreState::Runnig 
+                        Ok(Some(new_state)) => new_state,
+                        Ok(None) => GraphicsCoreState::Runnig,
+                        Err(error) => {
+                            handle_error_shutdown(error.into());
+                            GraphicsCoreState::Shutdown
+                        },
                     }     
                 },
                 GraphicsEvent::CustomEvent(event) => {
@@ -64,12 +77,16 @@ pub fn handle_graphics_event(graphics_application_context: GraphicsApplicationCo
                             graphics_states: graphics_application_context.graphics_states,
                         },
                     ) {
-                        Some(new_state) => new_state,
-                        None => GraphicsCoreState::Runnig  
+                        Ok(Some(new_state)) => new_state,
+                        Ok(None) => GraphicsCoreState::Runnig,
+                        Err(error) => {
+                            handle_error_shutdown(error.into());
+                            GraphicsCoreState::Shutdown 
+                        },
                     } 
                 }, 
             } 
         },
         (current_state, _) => current_state.clone(), 
-    }     
+    };
 }
