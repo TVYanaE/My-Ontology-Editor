@@ -17,6 +17,9 @@ use winit::{
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
+        logic::{
+            logic_core::LogicCore,
+        },
         graphics::{
             events::{
                 CustomEvents,
@@ -44,13 +47,15 @@ pub struct GraphicsCore {
     graphics_data: GraphicsData,
     graphics_states: GraphicsStates,
     event_buffers: EventBuffers,
-    last_instance: Instant, 
+    last_instance: Instant,
+    logic_core: Option<LogicCore>,
 }
 
 impl GraphicsCore {
     pub fn new(
         custom_events: CustomEvents,
         app_dirs: Arc<ApplicationDirectories>,
+        logic_core: LogicCore,
     ) -> Self {
         Self { 
             graphics_core_state: GraphicsCoreState::default(), 
@@ -58,6 +63,7 @@ impl GraphicsCore {
             graphics_states: GraphicsStates::default(), 
             event_buffers: EventBuffers::new(custom_events), 
             last_instance: Instant::now(),
+            logic_core: Some(logic_core),
         }
     }
 }
@@ -119,6 +125,7 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
 pub enum GraphicsCoreState {
     Processing,
     Runnig,
+    Waiting,
     Shutdown,
 }
 
@@ -134,7 +141,8 @@ impl<'c> From<&'c mut GraphicsCore> for GraphicsApplicationContext<'c> {
             event_buffers: &mut value.event_buffers, 
             graphics_core_state: &mut value.graphics_core_state, 
             graphics_states: &mut value.graphics_states, 
-            graphics_data: &mut value.graphics_data 
+            graphics_data: &mut value.graphics_data,
+            logic_core: &mut value.logic_core,
         }
     }
 }

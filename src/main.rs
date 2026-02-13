@@ -4,6 +4,9 @@ mod modules;
 use std::{
     sync::Arc,
 };
+use flume::{
+    unbounded,
+};
 use anyhow::Context;
 use tracing::{instrument, error};
 use winit::{
@@ -12,6 +15,10 @@ use winit::{
 use modules::{
     app_dirs::{
         init_app_dirs,
+    },
+    logic::{
+        events::LogicEvent,
+        logic_core::LogicCore,
     },
     graphics::{
         events::graphics_event::CustomEvent,
@@ -39,11 +46,29 @@ fn run() -> anyhow::Result<()> {
         .context("failed to create event loop")?;
 
     event_loop.set_control_flow(ControlFlow::Wait);
+
+    // Theard Channels
     let event_loop_proxy = event_loop.create_proxy();
-    
+    let (
+        logic_event_channel_sender,
+        logic_event_channel_receiver
+    ) = unbounded::<LogicEvent>();
+
+
     let app_dirs = Arc::new(init_app_dirs()?);
 
-    let mut application = GraphicsCore::new(event_loop_proxy, app_dirs.clone());
+    let logic_core = LogicCore::start(
+        event_loop_proxy.clone(), 
+        logic_event_channel_sender,
+        logic_event_channel_receiver, 
+        app_dirs.clone()
+    );
+
+    let mut application = GraphicsCore::new(
+        event_loop_proxy, 
+        app_dirs,
+        logic_core
+    );
 
     event_loop.run_app(&mut application).context("event loop error exit")?;
 

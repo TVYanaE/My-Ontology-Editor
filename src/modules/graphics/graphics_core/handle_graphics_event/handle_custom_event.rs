@@ -1,4 +1,3 @@
-mod itc_event_handle;
 mod resumed_event_handle; 
 
 use thiserror::{
@@ -9,9 +8,13 @@ use tracing::{
 };
 use crate::{
     modules::{
+        logic::{
+            events::LogicEvent,
+            logic_core::LogicCore
+        },
         graphics::{
             events::{
-                graphics_event::CustomEvent,
+                graphics_event::{CustomEvent, ITCEvent},
             },
             graphics_data::GraphicsData,
             graphics_states::GraphicsStates,
@@ -20,7 +23,6 @@ use crate::{
     },
 };
 use self::{
-    itc_event_handle::itcevent_handle,
     resumed_event_handle::{
         resumed_event_handle,
         ResumedEventContext,
@@ -30,6 +32,7 @@ use self::{
 pub struct CustomEventContext<'c> {
     pub graphics_states: &'c mut GraphicsStates,
     pub graphics_data: &'c mut GraphicsData,
+    pub logic_core: &'c mut Option<LogicCore>,
 }
 
 #[instrument(skip_all, err)]
@@ -40,7 +43,16 @@ pub fn handle_custom_event(
     let new_state_opt = match event {
         CustomEvent::AppShutdownReq => {
             // TODO Logic For Graceful shutdown
-            Some(GraphicsCoreState::Shutdown)
+            if let Some(logic_core) = custom_event_context.logic_core.take() {
+                if let Err(_) = logic_core.logic_event_channel_sender.send(LogicEvent::Shutdown) {
+                    return Ok(Some(GraphicsCoreState::Shutdown));
+                }
+                logic_core.handle.join().unwrap();
+                Some(GraphicsCoreState::Shutdown)
+            }
+            else {
+                Some(GraphicsCoreState::Shutdown)
+            } 
         }, 
         CustomEvent::ResumedEvent(window) => {
             resumed_event_handle(
@@ -53,11 +65,28 @@ pub fn handle_custom_event(
 
             None
         },
+        CustomEvent::CreateProjectReq(req) => {
+             
+            Some(GraphicsCoreState::Waiting)
+        },
         CustomEvent::ITCEvent(event) => {
-            itcevent_handle(event)
+            itc_event_handle(event)? 
         },
     }; 
     Ok(new_state_opt)
+}
+
+pub fn itc_event_handle(
+    event: ITCEvent
+) -> Result<Option<GraphicsCoreState>, CustomEventError> {
+    match event {
+        ITCEvent::AppShutdownReq => {
+            Ok(Some(GraphicsCoreState::Shutdown))
+        }
+        ITCEvent::ResponseDone => {
+            Ok(Some(GraphicsCoreState::Runnig))
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -74,3 +103,4 @@ pub enum CustomEventError {
     #[error("Choosed Texture Format isn't supported")]
     TextureFormatIsntSupported,
 }
+

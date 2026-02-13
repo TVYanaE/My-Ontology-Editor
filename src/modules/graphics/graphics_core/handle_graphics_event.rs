@@ -5,10 +5,13 @@ mod handle_window_event;
 
 use crate::{
     modules::{
+        logic::{
+            logic_core::LogicCore,
+        },
         graphics::{
             events::{
                 graphics_event::{
-                    GraphicsEvent,
+                    GraphicsEvent, CustomEvent,
                 },
                 EventBuffers,
             },
@@ -22,6 +25,7 @@ use self::{
     handle_custom_event::{
         handle_custom_event,
         CustomEventContext,
+        itc_event_handle,
     },
     handle_grahic_event_error::{
         handle_graphic_event_error
@@ -38,6 +42,7 @@ pub struct GraphicsApplicationContext<'c> {
     pub graphics_core_state: &'c mut GraphicsCoreState,
     pub graphics_states: &'c mut GraphicsStates,
     pub graphics_data: &'c mut GraphicsData,
+    pub logic_core: &'c mut Option<LogicCore>
 }
 
 pub fn handle_graphics_event(
@@ -78,6 +83,7 @@ pub fn handle_graphics_event(
                         CustomEventContext {
                             graphics_data: graphics_application_context.graphics_data,
                             graphics_states: graphics_application_context.graphics_states,
+                            logic_core: graphics_application_context.logic_core 
                         },
                     ) {
                         Ok(Some(new_state)) => new_state,
@@ -92,7 +98,30 @@ pub fn handle_graphics_event(
                     } 
                 }, 
             } 
-        }, 
+        },
+        (GraphicsCoreState::Waiting, event) => {
+            match event {
+                GraphicsEvent::CustomEvent(event) => {
+                    match event {
+                        CustomEvent::ITCEvent(event) => {
+                            match itc_event_handle(event) {
+                                Ok(Some(new_state)) => new_state,
+                                Ok(None) => GraphicsCoreState::Waiting,
+                                Err(error) => {
+                                    handle_graphic_event_error(
+                                        error.into(),
+                                        &graphics_application_context.event_buffers.custom_events
+                                    );
+                                    GraphicsCoreState::Runnig 
+                                },
+                            } 
+                        },
+                        _ => {GraphicsCoreState::Waiting}
+                    }
+                },
+                _ => GraphicsCoreState::Waiting,
+            }
+        },
         (current_state, _) => current_state.clone(), 
     };
 }

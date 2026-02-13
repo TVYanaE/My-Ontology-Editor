@@ -3,6 +3,16 @@ use winit::{
     event::WindowEvent,
 };
 
+use crate::{
+    modules::{
+        graphics::{
+            ui::{
+                ui_affect::CreateProjectRequest
+            },
+        },
+    },
+};
+
 #[derive(Debug)]
 pub enum GraphicsEvent {
     WindowEvent(WindowEvent),
@@ -13,12 +23,14 @@ pub enum GraphicsEvent {
 pub enum CustomEvent {
     AppShutdownReq,
     ResumedEvent(Window),
-    ITCEvent(ITCEvent)
+    ITCEvent(ITCEvent),
+    CreateProjectReq(CreateProjectRequest),
 }
 
 #[derive(Debug)]
 pub enum ITCEvent { 
     AppShutdownReq,
+    ResponseDone,
 }
 
 impl From<WindowEvent> for GraphicsEvent {
@@ -38,3 +50,5 @@ impl From<ITCEvent> for CustomEvent {
         Self::ITCEvent(value)
     }
 }
+
+

@@ -36,7 +36,7 @@ pub fn ui_affects_processing(
                     .event_buffers
                     .custom_events
                     .send_event(CustomEvent::AppShutdownReq)
-                    .expect("Event Loop was closed");
+                    .expect("Critical Error: Event Loop was closed");
             },
             UIAffect::CreateNewProjectButtonPressed => {
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::ModalWindowOpen(
@@ -47,7 +47,11 @@ pub fn ui_affects_processing(
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::Idle;
             }, 
             UIAffect::CreateProjectReq(req) => {
-                 
+                ui_affects_processing_context
+                    .event_buffers
+                    .custom_events
+                    .send_event(CustomEvent::CreateProjectReq(req))
+                    .expect("Critical Error: Event Loop was closed");
             },
         }
     }
