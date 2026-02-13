@@ -9,7 +9,7 @@ use tracing::{
 use crate::{
     modules::{
         logic::{
-            events::LogicEvent,
+            events::{LogicEvent, ProjectDescriptor},
             logic_core::LogicCore
         },
         graphics::{
@@ -17,7 +17,13 @@ use crate::{
                 graphics_event::{CustomEvent, ITCEvent},
             },
             graphics_data::GraphicsData,
-            graphics_states::GraphicsStates,
+            graphics_states::{
+                GraphicsStates,
+                ui_state::{
+                    ui_general_state::UIGeneralState,
+                    UIState,
+                },
+            },
             graphics_core::GraphicsCoreState,
         },
     },
@@ -66,24 +72,49 @@ pub fn handle_custom_event(
             None
         },
         CustomEvent::CreateProjectReq(req) => {
-             
+            custom_event_context
+                .logic_core
+                .as_ref()
+                .ok_or_else(||{
+                    CustomEventError::LogicThreadWasntFound
+                })?
+                .logic_event_channel_sender
+                .send(LogicEvent::CreateProject(
+                    ProjectDescriptor { 
+                        project_name: req.project_name, 
+                        project_dir: req.project_dir 
+                    }
+                ))?;
+
+            custom_event_context.graphics_states.ui_state.ui_general_state = UIGeneralState::WaitingBlocingTask; 
             Some(GraphicsCoreState::Waiting)
         },
         CustomEvent::ITCEvent(event) => {
-            itc_event_handle(event)? 
+            itc_event_handle(
+                event,
+                ITCEventContext { 
+                    ui_state: &mut custom_event_context.graphics_states.ui_state
+                }
+            )? 
         },
     }; 
     Ok(new_state_opt)
 }
 
+pub struct ITCEventContext<'c> {
+    pub ui_state: &'c mut UIState,
+}
+
 pub fn itc_event_handle(
-    event: ITCEvent
+    event: ITCEvent,
+    itc_event_context: ITCEventContext,
 ) -> Result<Option<GraphicsCoreState>, CustomEventError> {
     match event {
         ITCEvent::AppShutdownReq => {
             Ok(Some(GraphicsCoreState::Shutdown))
         }
-        ITCEvent::ResponseDone => {
+        ITCEvent::TaskDone => { 
+            itc_event_context.ui_state.ui_general_state = UIGeneralState::Idle; 
             Ok(Some(GraphicsCoreState::Runnig))
         }
     }
@@ -102,5 +133,11 @@ pub enum CustomEventError {
 
     #[error("Choosed Texture Format isn't supported")]
     TextureFormatIsntSupported,
+
+    #[error("Critical Error. Logic Thread wasn't found")]
+    LogicThreadWasntFound,
+
+    #[error("Send error flume: {0}")]
+    SendError(#[from] flume::SendError<LogicEvent>),
 }
 

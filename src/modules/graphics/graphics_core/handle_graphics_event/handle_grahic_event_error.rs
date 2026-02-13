@@ -59,6 +59,16 @@ pub fn handle_graphic_event_error(
                         .send_event(CustomEvent::AppShutdownReq)
                         .expect("Critical Error.Event Loop Proxy has been closed.");
                 },
+                CustomEventError::SendError(_) => {
+                    custom_events
+                        .send_event(CustomEvent::AppShutdownReq)
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                CustomEventError::LogicThreadWasntFound => {
+                    custom_events
+                        .send_event(CustomEvent::AppShutdownReq)
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
             }
         },
         GraphicsEventError::WindowEventError(error) => {

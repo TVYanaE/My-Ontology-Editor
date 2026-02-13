@@ -2,6 +2,7 @@
 pub enum UIGeneralState{
     Idle,
     ModalWindowOpen(ModalWindow),
+    WaitingBlocingTask,
 }
 
 impl Default for UIGeneralState {

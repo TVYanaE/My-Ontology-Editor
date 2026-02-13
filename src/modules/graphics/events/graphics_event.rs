@@ -30,7 +30,7 @@ pub enum CustomEvent {
 #[derive(Debug)]
 pub enum ITCEvent { 
     AppShutdownReq,
-    ResponseDone,
+    TaskDone,
 }
 
 impl From<WindowEvent> for GraphicsEvent {

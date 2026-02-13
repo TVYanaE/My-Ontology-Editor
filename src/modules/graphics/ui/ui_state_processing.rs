@@ -1,4 +1,7 @@
-
+use egui::{
+    containers::Modal,
+    widgets::Spinner
+};
 use crate::{
     aliases::{
         EGUIContext,
@@ -59,6 +62,11 @@ pub fn ui_state_processing(
                     );
                 }, 
             }
+        }
+        UIGeneralState::WaitingBlocingTask => {
+            Modal::new("Waiting-Spinner".into()).show(ui_state_processing_context.egui_context, |ui|{
+                ui.add(Spinner::new());
+            });
         }
     }
 }

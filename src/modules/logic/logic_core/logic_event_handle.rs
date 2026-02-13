@@ -1,4 +1,6 @@
-
+use std::{
+    time::Duration,
+};
 use tracing::{
     instrument
 };
@@ -17,7 +19,10 @@ use crate::{
             },
         },
         graphics::{
-            events::CustomEvents,
+            events::{
+                graphics_event::{CustomEvent, ITCEvent},
+                CustomEvents, 
+            },
         },
     },
 };
@@ -35,6 +40,8 @@ pub fn logic_event_handle(
 
     match event {
         LogicEvent::CreateProject(project_descriptor) => {
+            std::thread::sleep(Duration::from_secs(2));
+            logice_event_context.custom_events.send_event(CustomEvent::ITCEvent(ITCEvent::TaskDone)).unwrap();
             Ok(None)
         },
         LogicEvent::Shutdown => {

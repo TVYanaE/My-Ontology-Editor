@@ -26,6 +26,7 @@ use self::{
         handle_custom_event,
         CustomEventContext,
         itc_event_handle,
+        ITCEventContext,
     },
     handle_grahic_event_error::{
         handle_graphic_event_error
@@ -83,7 +84,7 @@ pub fn handle_graphics_event(
                         CustomEventContext {
                             graphics_data: graphics_application_context.graphics_data,
                             graphics_states: graphics_application_context.graphics_states,
-                            logic_core: graphics_application_context.logic_core 
+                            logic_core: graphics_application_context.logic_core, 
                         },
                     ) {
                         Ok(Some(new_state)) => new_state,
@@ -104,7 +105,12 @@ pub fn handle_graphics_event(
                 GraphicsEvent::CustomEvent(event) => {
                     match event {
                         CustomEvent::ITCEvent(event) => {
-                            match itc_event_handle(event) {
+                            match itc_event_handle(
+                                event,
+                                ITCEventContext { 
+                                    ui_state: &mut graphics_application_context.graphics_states.ui_state 
+                                },
+                            ) {
                                 Ok(Some(new_state)) => new_state,
                                 Ok(None) => GraphicsCoreState::Waiting,
                                 Err(error) => {
