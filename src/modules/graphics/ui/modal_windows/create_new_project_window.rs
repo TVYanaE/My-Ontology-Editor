@@ -74,10 +74,10 @@ pub fn create_new_project_window(
             });
         },
         CreateNewProjectWindowState::FileDialog => {
-            create_new_project_window_context
+            /* create_new_project_window_context
                 .create_new_project_window_data
                 .file_dialog
-                .pick_directory();
+                .pick_directory(); */
             create_new_project_window_context
                 .create_new_project_window_data
                 .file_dialog
@@ -147,6 +147,7 @@ fn central_container(
             vertical_ui.horizontal(|horizontal_ui|{
                 if horizontal_ui.add(Button::new("Choose")).clicked() {
                     *create_new_project_window_state = CreateNewProjectWindowState::FileDialog; 
+                    create_new_project_window_data.file_dialog.pick_directory();
                 }   
 
                 horizontal_ui.add_sized(
