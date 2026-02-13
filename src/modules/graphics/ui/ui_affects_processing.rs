@@ -8,7 +8,10 @@ use crate::{
                 EventBuffers,
             },
             graphics_states::{
-                ui_state::{UIState, ModalWindow, UIGeneralState},
+                ui_state::{
+                    ui_general_state::{ModalWindow, UIGeneralState},
+                    UIState, 
+                },
             },
             ui::{
                 ui_affect::UIAffect
@@ -30,10 +33,10 @@ pub fn ui_affects_processing(
         match affect {
             UIAffect::QuitButtonPressed => {
                 ui_affects_processing_context
-                .event_buffers
-                .custom_events
-                .send_event(CustomEvent::AppShutdownReq)
-                .expect("Event Loop was closed");
+                    .event_buffers
+                    .custom_events
+                    .send_event(CustomEvent::AppShutdownReq)
+                    .expect("Event Loop was closed");
             },
             UIAffect::CreateNewProjectButtonPressed => {
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::ModalWindowOpen(
@@ -43,6 +46,9 @@ pub fn ui_affects_processing(
             UIAffect::CloseCreateNewProjectWindowButtonPressed => {
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::Idle;
             }, 
+            UIAffect::CreateProjectReq(req) => {
+                 
+            },
         }
     }
 }

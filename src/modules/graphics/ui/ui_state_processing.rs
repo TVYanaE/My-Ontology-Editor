@@ -15,7 +15,8 @@ use crate::{
             },
             graphics_states::{
                 ui_state::{
-                    ModalWindow, UIState, UIGeneralState,
+                    ui_general_state::{UIGeneralState, ModalWindow},
+                    UIState, 
                 },
             },
             ui::{
