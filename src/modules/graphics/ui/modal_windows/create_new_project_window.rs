@@ -147,9 +147,7 @@ fn central_container(
             vertical_ui.horizontal(|horizontal_ui|{
                 if horizontal_ui.add(Button::new("Choose")).clicked() {
                     *create_new_project_window_state = CreateNewProjectWindowState::FileDialog; 
-                }  
-
-                  
+                }   
 
                 horizontal_ui.add_sized(
                     horizontal_ui.available_size(),

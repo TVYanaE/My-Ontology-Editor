@@ -56,7 +56,6 @@ pub fn ui_state_processing(
                                 .create_new_project_window_state
                         }
                     );
-                    ui_state_processing_context.egui_context.request_repaint();
                 }, 
             }
         }

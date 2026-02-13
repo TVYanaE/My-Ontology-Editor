@@ -39,11 +39,9 @@ pub fn ui_affects_processing(
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::ModalWindowOpen(
                     ModalWindow::CreateNewProjectWindow
                 );
-                ui_affects_processing_context.egui_context.request_repaint();
             },
             UIAffect::CloseCreateNewProjectWindowButtonPressed => {
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::Idle;
-                ui_affects_processing_context.egui_context.request_repaint();
             }, 
         }
     }
