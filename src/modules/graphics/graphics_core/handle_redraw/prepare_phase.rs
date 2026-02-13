@@ -1,9 +1,6 @@
 use egui::{
     FullOutput
 };
-use super::{
-    WindowEventError,
-};
 use crate::{
     modules::{
         graphics::{

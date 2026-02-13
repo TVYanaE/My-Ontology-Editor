@@ -7,7 +7,7 @@ use wgpu::{
     RenderPassDescriptor, RenderPassColorAttachment,
 };
 use super::{
-    WindowEventError,
+    RedrawError,
 };
 use crate::{
     aliases::{
@@ -33,7 +33,7 @@ pub struct DrawPhaseContext<'c> {
 pub fn draw_phase(
     full_output: FullOutput,
     draw_phase_context: DrawPhaseContext,
-) -> Result<(), WindowEventError> { 
+) -> Result<(), RedrawError> { 
     let surface_texture = draw_phase_context.wgpu_data
         .surface
         .get_current_texture()?;

@@ -1,14 +1,17 @@
 mod handle_graphics_event;
+mod handle_redraw;
+mod redraw_error_handle;
 
 use std::{
     sync::{
         Arc,
     },
+    time::Instant,
 };
 use winit::{
     application::ApplicationHandler,
     event_loop::ActiveEventLoop,
-    event::WindowEvent,
+    event::{WindowEvent},
     window::{WindowId, WindowAttributes},
 };
 use crate::{
@@ -21,13 +24,16 @@ use crate::{
                 EventBuffers,
             },
             graphics_data::GraphicsData, 
-            graphics_states::GraphicsStates,
+            graphics_states::GraphicsStates, 
         },
     },
 };
 use self::{
     handle_graphics_event::{
         GraphicsApplicationContext, handle_graphics_event
+    },
+    handle_redraw::{
+        handle_redraw, HandleRedrawContext
     },
 };
 
@@ -37,6 +43,7 @@ pub struct GraphicsCore {
     graphics_data: GraphicsData,
     graphics_states: GraphicsStates,
     event_buffers: EventBuffers,
+    last_instance: Instant, 
 }
 
 impl GraphicsCore {
@@ -49,6 +56,7 @@ impl GraphicsCore {
             graphics_data: GraphicsData::new(app_dirs), 
             graphics_states: GraphicsStates::default(), 
             event_buffers: EventBuffers::new(custom_events), 
+            last_instance: Instant::now(),
         }
     }
 }
@@ -71,7 +79,26 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        handle_graphics_event(GraphicsApplicationContext::from(self), event.into());
+        let now = Instant::now();
+        let delt = now - self.last_instance;
+        println!("Time: {:?}", delt);
+        self.last_instance = now;
+
+        match event {
+            WindowEvent::RedrawRequested => {
+                handle_redraw(
+                    HandleRedrawContext { 
+                        event_buffers: &mut self.event_buffers, 
+                        graphics_data: &mut self.graphics_data, 
+                        graphics_states: &mut self.graphics_states 
+                    }
+                ).unwrap();
+            },
+            _ => {
+                handle_graphics_event(GraphicsApplicationContext::from(self), event.into());
+            },
+        }
+
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
@@ -79,11 +106,10 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
             GraphicsCoreState::Shutdown => {
                 event_loop.exit();
             },
-            _ => {
-                
+            _ => { 
             }
         }
-    }
+    } 
 }
 
 #[derive(Debug, Clone)]

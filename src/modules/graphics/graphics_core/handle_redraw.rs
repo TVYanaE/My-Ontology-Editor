@@ -1,6 +1,8 @@
 mod draw_phase;
 mod prepare_phase;
 
+use thiserror::{Error};
+use tracing::{instrument};
 use crate::{
     modules::{
         graphics::{
@@ -9,9 +11,6 @@ use crate::{
             graphics_states::GraphicsStates,
         },
     },
-};
-use super::{
-    WindowEventError,
 };
 use self::{
     draw_phase::{
@@ -22,30 +21,31 @@ use self::{
     },
 };
 
-pub struct RedrawHandleContext<'c> {
+pub struct HandleRedrawContext<'c> {
     pub event_buffers: &'c mut EventBuffers,
     pub graphics_data: &'c mut GraphicsData,
     pub graphics_states: &'c mut GraphicsStates,
 }
 
-pub fn redraw_handle(
-    redraw_handle_context: RedrawHandleContext,
-) -> Result<(), WindowEventError> {
-    let wgpu_data = redraw_handle_context
+#[instrument(skip_all, err)]
+pub fn handle_redraw(
+    handle_redraw_context: HandleRedrawContext,
+) -> Result<(), RedrawError> {
+    let wgpu_data = handle_redraw_context
         .graphics_data
         .graphics_backend_data
         .wgpu_data
         .as_ref()
         .ok_or_else(||{
-            WindowEventError::WGPUDataWasntFound
+            RedrawError::WGPUDataWasntFound
         })?;
-    let egui_data = redraw_handle_context
+    let egui_data = handle_redraw_context
         .graphics_data
         .graphics_backend_data
         .egui_data
         .as_mut()
         .ok_or_else(||{
-            WindowEventError::EGUIDataWasntFound
+            RedrawError::EGUIDataWasntFound
         })?;     
         
 
@@ -53,9 +53,9 @@ pub fn redraw_handle(
         PreparePhaseContext { 
             egui_data: egui_data,
             wgpu_data: wgpu_data,
-            ui_data: &mut redraw_handle_context.graphics_data.ui_data,
-            event_buffers: redraw_handle_context.event_buffers,
-            ui_state: &mut redraw_handle_context.graphics_states.ui_state
+            ui_data: &mut handle_redraw_context.graphics_data.ui_data,
+            event_buffers: handle_redraw_context.event_buffers,
+            ui_state: &mut handle_redraw_context.graphics_states.ui_state
         }
     );
     draw_phase(
@@ -66,4 +66,16 @@ pub fn redraw_handle(
         }
     )?;
     Ok(())
+}
+
+#[derive(Debug, Error)]
+pub enum RedrawError {
+    #[error("WGPU Data wasn't found")]
+    WGPUDataWasntFound,
+
+    #[error("EGUI Data wasn't found")]
+    EGUIDataWasntFound,
+
+    #[error("Get Current Surface Texture Error: {0}")]
+    SurfaceError(#[from] wgpu::SurfaceError),
 }

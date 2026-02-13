@@ -47,7 +47,7 @@ pub fn resumed_event_handle(
                 .wgpu_data, 
             window 
         }
-    );
+    )?;
     init_egui(
         InitEGUIContext { 
             egui_state: &mut resumed_event_context

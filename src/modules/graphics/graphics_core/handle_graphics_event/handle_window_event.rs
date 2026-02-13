@@ -1,5 +1,4 @@
 mod egui_processing;
-mod redraw_handle;
 mod resize_handle;
 
 use thiserror::{
@@ -26,10 +25,7 @@ use crate::{
 use self::{
     egui_processing::{
         egui_processing, EGUIProcessingContext,
-    },
-    redraw_handle::{
-        redraw_handle, RedrawHandleContext,
-    },
+    }, 
     resize_handle::{
         resize_handle, ResizeHandleContext,
     },
@@ -51,17 +47,11 @@ pub fn handle_window_event(
         EGUIProcessingContext { 
             graphics_data: handle_window_event_context.graphics_data 
         },
-    )?;   
- 
+    )?;      
+
     if egui_response.repaint {
-        redraw_handle(
-            RedrawHandleContext { 
-                event_buffers: handle_window_event_context.event_buffers, 
-                graphics_data: handle_window_event_context.graphics_data, 
-                graphics_states: handle_window_event_context.graphics_states 
-            }
-        )?; 
-    } 
+        handle_window_event_context.graphics_data.graphics_backend_data.wgpu_data.as_ref().unwrap().window.request_redraw();
+    }
 
     if egui_response.consumed {
         return Ok(None);
@@ -78,7 +68,7 @@ pub fn handle_window_event(
             )?;
 
             None
-        }, 
+        },
         _ => None
     }; 
 

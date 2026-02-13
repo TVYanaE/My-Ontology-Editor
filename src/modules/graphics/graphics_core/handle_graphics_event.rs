@@ -25,13 +25,13 @@ use self::{
     },
     handle_error_shutdown::{
         handle_error_shutdown,
-        ErrorShutdownContext,
     },
     handle_window_event::{
         handle_window_event,
         HandleWindowEventContext,
     }
 };
+
 
 pub struct GraphicsApplicationContext<'c> {
     pub event_buffers: &'c mut EventBuffers,

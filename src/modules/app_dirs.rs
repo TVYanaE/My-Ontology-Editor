@@ -55,16 +55,15 @@ pub fn init_app_dirs() -> Result<ApplicationDirectories, InitAppDirsError> {
  
 
 #[cfg(not(debug_assertions))]
-pub fn initialisation_application_directories(
-    application_directories_opt: &mut Option<ApplicationDirectories>,
-) -> Result<ApplicationDirectories, InitialisationApplicationDirectoriesError> {
+pub fn init_app_dirs(
+) -> Result<ApplicationDirectories, InitAppDirsError> {
 
     let app_directory = ProjectDirs::from(
         "wfoojjaec.eu.org", 
         "wfoojjaec", 
         "My-Ontology-Editor")
     .ok_or_else(||{
-        InitialisationApplicationDirectoriesError::ObtainingHomeDirPathError
+        InitAppDirsError::ObtainingHomeDirPathError
     })?;
 
     let config_directory_path = app_directory.config_dir().to_path_buf();

@@ -80,7 +80,7 @@ fn create_egui_data(
 
     egui_data.egui_winit_state.egui_ctx().set_request_repaint_callback(Box::new(move |_info|{
         window_clone.clone().request_redraw();
-    }));
+    })); 
 
     return egui_data;
 }
