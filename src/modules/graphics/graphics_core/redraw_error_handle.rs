@@ -2,11 +2,34 @@
 use crate::{
     modules::{
         graphics::{
+            events::{
+                graphics_event::CustomEvent,
+                CustomEvents,
+            },
             graphics_core::handle_redraw::RedrawError
         },
     },
 };
 
-pub fn redraw_error_handle(redraw_error: RedrawError) {
-
+pub fn redraw_error_handle(
+    error: RedrawError,
+    custom_events: &CustomEvents,    
+) {
+    match error {
+        RedrawError::WGPUDataWasntFound => {
+            custom_events
+                .send_event(CustomEvent::AppShutdownReq)
+                .expect("Critical Error.Event Loop Proxy has been closed.");
+        },
+        RedrawError::SurfaceError(_) => {
+            custom_events
+                .send_event(CustomEvent::AppShutdownReq)
+                .expect("Critical Error.Event Loop Proxy has been closed.");
+        },
+        RedrawError::EGUIDataWasntFound => {
+            custom_events
+                .send_event(CustomEvent::AppShutdownReq)
+                .expect("Critical Error.Event Loop Proxy has been closed.");
+        },
+    }
 }

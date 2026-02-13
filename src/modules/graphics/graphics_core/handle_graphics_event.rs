@@ -1,5 +1,5 @@
 mod handle_custom_event;
-mod handle_error_shutdown;
+mod handle_grahic_event_error;
 mod handle_window_event;
 
 
@@ -23,9 +23,9 @@ use self::{
         handle_custom_event,
         CustomEventContext,
     },
-    handle_error_shutdown::{
-        handle_error_shutdown,
-    },
+    handle_grahic_event_error::{
+        handle_graphic_event_error
+    }, 
     handle_window_event::{
         handle_window_event,
         HandleWindowEventContext,
@@ -64,8 +64,11 @@ pub fn handle_graphics_event(
                         Ok(Some(new_state)) => new_state,
                         Ok(None) => GraphicsCoreState::Runnig,
                         Err(error) => {
-                            handle_error_shutdown(error.into());
-                            GraphicsCoreState::Shutdown
+                            handle_graphic_event_error(
+                                error.into(), 
+                                &graphics_application_context.event_buffers.custom_events
+                            );
+                            GraphicsCoreState::Runnig
                         },
                     }     
                 },
@@ -80,13 +83,16 @@ pub fn handle_graphics_event(
                         Ok(Some(new_state)) => new_state,
                         Ok(None) => GraphicsCoreState::Runnig,
                         Err(error) => {
-                            handle_error_shutdown(error.into());
-                            GraphicsCoreState::Shutdown 
+                            handle_graphic_event_error(
+                                error.into(),
+                                &graphics_application_context.event_buffers.custom_events
+                            );
+                            GraphicsCoreState::Runnig 
                         },
                     } 
                 }, 
             } 
-        },
+        }, 
         (current_state, _) => current_state.clone(), 
     };
 }

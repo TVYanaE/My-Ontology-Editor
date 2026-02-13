@@ -35,6 +35,7 @@ use self::{
     handle_redraw::{
         handle_redraw, HandleRedrawContext
     },
+    redraw_error_handle::redraw_error_handle,
 };
 
 
@@ -86,13 +87,15 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
 
         match event {
             WindowEvent::RedrawRequested => {
-                handle_redraw(
+                if let Err(error) = handle_redraw(
                     HandleRedrawContext { 
                         event_buffers: &mut self.event_buffers, 
                         graphics_data: &mut self.graphics_data, 
                         graphics_states: &mut self.graphics_states 
                     }
-                ).unwrap();
+                ) {
+                    redraw_error_handle(error, &self.event_buffers.custom_events);
+                }
             },
             _ => {
                 handle_graphics_event(GraphicsApplicationContext::from(self), event.into());
