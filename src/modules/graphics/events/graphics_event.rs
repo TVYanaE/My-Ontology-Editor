@@ -21,14 +21,19 @@ pub enum GraphicsEvent {
 
 #[derive(Debug)]
 pub enum CustomEvent {
+    InternalEvent(InternalEvent), 
+    ExternalEvent(ExternalEvent),
+}
+
+#[derive(Debug)]
+pub enum InternalEvent {
     AppShutdownReq,
-    ResumedEvent(Window),
-    ITCEvent(ITCEvent),
+    ResumedEvent(Window), 
     CreateProjectReq(CreateProjectRequest),
 }
 
 #[derive(Debug)]
-pub enum ITCEvent { 
+pub enum ExternalEvent { 
     AppShutdownReq,
     TaskDone,
 }
@@ -44,10 +49,14 @@ impl From<CustomEvent> for GraphicsEvent {
         Self::CustomEvent(value)
     }
 }
-
-impl From<ITCEvent> for CustomEvent {
-    fn from(value: ITCEvent) -> Self {
-        Self::ITCEvent(value)
+impl From<ExternalEvent> for CustomEvent {
+    fn from(value: ExternalEvent) -> Self {
+        Self::ExternalEvent(value)
+    }
+}
+impl From<InternalEvent> for CustomEvent {
+    fn from(value: InternalEvent) -> Self {
+        Self::InternalEvent(value)
     }
 }
 

@@ -4,31 +4,35 @@ use crate::{
             events::{
                 CustomEvents,
                 graphics_event::{
-                    CustomEvent
+                    CustomEvent, InternalEvent
                 },
             },
         },
     },
 };
 use super::{
-    handle_custom_event::CustomEventError,
+    GraphicsEventError,
+    handle_external_event::ExternalEventError,
     handle_window_event::WindowEventError,
+    handle_internal_event::InternalEventError
 };
 
-pub enum GraphicsEventError {
-    CustomEventError(CustomEventError),
-    WindowEventError(WindowEventError),
-}
 
-impl From<CustomEventError> for GraphicsEventError {
-    fn from(value: CustomEventError) -> Self {
-        Self::CustomEventError(value)
-    }
+
+impl From<ExternalEventError> for GraphicsEventError {
+    fn from(value: ExternalEventError) -> Self {
+        Self::ExternalEventError(value)
+    }    
 }
 impl From<WindowEventError> for GraphicsEventError {
     fn from(value: WindowEventError) -> Self {
         Self::WindowEventError(value) 
     }
+}
+impl From<InternalEventError> for GraphicsEventError {
+    fn from(value: InternalEventError) -> Self {
+        Self::InternalEventError(value)
+    } 
 }
 
 
@@ -37,55 +41,60 @@ pub fn handle_graphic_event_error(
     custom_events: &CustomEvents 
 ) {
     match graphics_event_error {
-        GraphicsEventError::CustomEventError(error) => {
+        GraphicsEventError::ExternalEventError(error) => {
             match error {
-                CustomEventError::RequestDeviceError(_) => {
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                CustomEventError::CreateSurfaceError(_) => {
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                CustomEventError::RequestAdapterError(_) => {
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                CustomEventError::TextureFormatIsntSupported => { 
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                CustomEventError::SendError(_) => {
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                CustomEventError::LogicThreadWasntFound => {
-                    custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
+
             }
-        },
+        }, 
         GraphicsEventError::WindowEventError(error) => {
             match error {
                 WindowEventError::SurfaceError(_) => { 
                     custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
+                        .send_event(InternalEvent::AppShutdownReq.into())
                         .expect("Critical Error.Event Loop Proxy has been closed.");
                 },
                 WindowEventError::WGPUDataWasntFound => {
                     custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
+                        .send_event(InternalEvent::AppShutdownReq.into())
                         .expect("Critical Error.Event Loop Proxy has been closed.");
                 },
                 WindowEventError::EGUIDataWasntFound => {
                     custom_events
-                        .send_event(CustomEvent::AppShutdownReq)
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+            }
+        },
+        GraphicsEventError::InternalEventError(error) => {
+            match error {
+                InternalEventError::RequestDeviceError(_) => {
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                InternalEventError::CreateSurfaceError(_) => {
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                InternalEventError::RequestAdapterError(_) => {
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                InternalEventError::TextureFormatIsntSupported => { 
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                InternalEventError::SendError(_) => {
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
+                        .expect("Critical Error.Event Loop Proxy has been closed.");
+                },
+                InternalEventError::LogicThreadWasntFound => {
+                    custom_events
+                        .send_event(InternalEvent::AppShutdownReq.into())
                         .expect("Critical Error.Event Loop Proxy has been closed.");
                 },
             }

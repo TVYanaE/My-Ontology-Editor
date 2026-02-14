@@ -1,5 +1,6 @@
-mod handle_custom_event;
+mod handle_external_event;
 mod handle_grahic_event_error;
+mod handle_internal_event;
 mod handle_window_event;
 
 
@@ -22,18 +23,23 @@ use crate::{
     },
 };
 use self::{
-    handle_custom_event::{
-        handle_custom_event,
-        CustomEventContext,
-        itc_event_handle,
-        ITCEventContext,
-    },
+    handle_external_event::{
+        handle_external_event, 
+        ExternalEventContext,
+        ExternalEventError
+    }, 
     handle_grahic_event_error::{
         handle_graphic_event_error
     }, 
+    handle_internal_event::{
+        handle_internal_event, 
+        InternalEventContext,
+        InternalEventError
+    },
     handle_window_event::{
         handle_window_event,
         HandleWindowEventContext,
+        WindowEventError
     }
 };
 
@@ -79,23 +85,45 @@ pub fn handle_graphics_event(
                     }     
                 },
                 GraphicsEvent::CustomEvent(event) => {
-                    match handle_custom_event(
-                        event,
-                        CustomEventContext {
-                            graphics_data: graphics_application_context.graphics_data,
-                            graphics_states: graphics_application_context.graphics_states,
-                            logic_core: graphics_application_context.logic_core, 
+                    match event {
+                        CustomEvent::InternalEvent(event) => {
+                            match handle_internal_event(
+                                event,
+                                InternalEventContext {
+                                    graphics_data: graphics_application_context.graphics_data,
+                                    graphics_states: graphics_application_context.graphics_states,
+                                    logic_core: graphics_application_context.logic_core, 
+                                },
+                            ) {
+                                Ok(Some(new_state)) => new_state,
+                                Ok(None) => GraphicsCoreState::Runnig,
+                                Err(error) => {
+                                    handle_graphic_event_error(
+                                        error.into(),
+                                        &graphics_application_context.event_buffers.custom_events
+                                    );
+                                    GraphicsCoreState::Runnig 
+                                },
+                            }
                         },
-                    ) {
-                        Ok(Some(new_state)) => new_state,
-                        Ok(None) => GraphicsCoreState::Runnig,
-                        Err(error) => {
-                            handle_graphic_event_error(
-                                error.into(),
-                                &graphics_application_context.event_buffers.custom_events
-                            );
-                            GraphicsCoreState::Runnig 
-                        },
+                        CustomEvent::ExternalEvent(event) => {
+                            match handle_external_event(
+                                event,
+                                ExternalEventContext {
+                                    ui_state: &mut graphics_application_context.graphics_states.ui_state
+                                } 
+                            ) {
+                                Ok(Some(new_state)) => new_state,
+                                Ok(None) => GraphicsCoreState::Runnig,
+                                Err(error) => {
+                                    handle_graphic_event_error(
+                                        error.into(),
+                                        &graphics_application_context.event_buffers.custom_events
+                                    );
+                                    GraphicsCoreState::Runnig 
+                                },
+                            }
+                        }
                     } 
                 }, 
             } 
@@ -104,10 +132,10 @@ pub fn handle_graphics_event(
             match event {
                 GraphicsEvent::CustomEvent(event) => {
                     match event {
-                        CustomEvent::ITCEvent(event) => {
-                            match itc_event_handle(
+                        CustomEvent::ExternalEvent(event) => {
+                            match handle_external_event(
                                 event,
-                                ITCEventContext { 
+                                ExternalEventContext { 
                                     ui_state: &mut graphics_application_context.graphics_states.ui_state 
                                 },
                             ) {
@@ -130,4 +158,10 @@ pub fn handle_graphics_event(
         },
         (current_state, _) => current_state.clone(), 
     };
+}
+
+pub enum GraphicsEventError {
+    ExternalEventError(ExternalEventError),
+    WindowEventError(WindowEventError),
+    InternalEventError(InternalEventError)
 }

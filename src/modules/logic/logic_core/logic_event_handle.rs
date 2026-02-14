@@ -20,7 +20,7 @@ use crate::{
         },
         graphics::{
             events::{
-                graphics_event::{CustomEvent, ITCEvent},
+                graphics_event::{ExternalEvent},
                 CustomEvents, 
             },
         },
@@ -41,7 +41,7 @@ pub fn logic_event_handle(
     match event {
         LogicEvent::CreateProject(project_descriptor) => {
             std::thread::sleep(Duration::from_secs(2));
-            logice_event_context.custom_events.send_event(CustomEvent::ITCEvent(ITCEvent::TaskDone)).unwrap();
+            logice_event_context.custom_events.send_event(ExternalEvent::TaskDone.into()).unwrap();
             Ok(None)
         },
         LogicEvent::Shutdown => {

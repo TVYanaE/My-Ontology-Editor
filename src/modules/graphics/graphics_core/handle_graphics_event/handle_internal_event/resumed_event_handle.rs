@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use super::{
-    CustomEventError,
+    InternalEventError,
 };
 use self::{
     init_egui::{
@@ -34,7 +34,7 @@ pub struct ResumedEventContext<'c> {
 pub fn resumed_event_handle(
     window: Window,
     resumed_event_context: ResumedEventContext,
-) -> Result<(), CustomEventError> {
+) -> Result<(), InternalEventError> {
     init_wgpu(
         InitWGPUContext { 
             wgpu_state: &mut resumed_event_context

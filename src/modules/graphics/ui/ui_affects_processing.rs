@@ -4,7 +4,7 @@ use crate::{
     modules::{
         graphics::{
             events::{
-                graphics_event::{CustomEvent},
+                graphics_event::{InternalEvent},
                 EventBuffers,
             },
             graphics_states::{
@@ -35,7 +35,7 @@ pub fn ui_affects_processing(
                 ui_affects_processing_context
                     .event_buffers
                     .custom_events
-                    .send_event(CustomEvent::AppShutdownReq)
+                    .send_event(InternalEvent::AppShutdownReq.into())
                     .expect("Critical Error: Event Loop was closed");
             },
             UIAffect::CreateNewProjectButtonPressed => {
@@ -50,7 +50,7 @@ pub fn ui_affects_processing(
                 ui_affects_processing_context
                     .event_buffers
                     .custom_events
-                    .send_event(CustomEvent::CreateProjectReq(req))
+                    .send_event(InternalEvent::CreateProjectReq(req).into())
                     .expect("Critical Error: Event Loop was closed");
                 ui_affects_processing_context.ui_state.ui_general_state = UIGeneralState::Idle; 
             },

@@ -22,9 +22,11 @@ use crate::{
         },
         graphics::{
             events::{
-                CustomEvents,
-                graphics_event::{CustomEvent},
-                EventBuffers,
+                graphics_event::{
+                    CustomEvent,
+                    InternalEvent,
+                },
+                EventBuffers, CustomEvents
             },
             graphics_data::GraphicsData, 
             graphics_states::GraphicsStates, 
@@ -73,7 +75,12 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
         let window = event_loop
             .create_window(WindowAttributes::default())
             .expect("Create Window Error");
-        handle_graphics_event(GraphicsApplicationContext::from(self), CustomEvent::ResumedEvent(window).into()); 
+        handle_graphics_event(
+            GraphicsApplicationContext::from(self), 
+            CustomEvent::InternalEvent(
+                InternalEvent::ResumedEvent(window)
+            ).into()
+        ); 
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent) {

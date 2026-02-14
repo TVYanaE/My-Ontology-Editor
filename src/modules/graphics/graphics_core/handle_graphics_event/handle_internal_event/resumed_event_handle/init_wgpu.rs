@@ -13,7 +13,7 @@ use wgpu::{
     CompositeAlphaMode, PresentMode, 
 };
 use super::{
-    CustomEventError,
+    InternalEventError,
 };
 use crate::{
     modules::{
@@ -40,7 +40,7 @@ pub struct InitWGPUContext<'c> {
 
 pub fn init_wgpu(
     init_wgpu_context: InitWGPUContext,    
-) -> Result<(), CustomEventError> {
+) -> Result<(), InternalEventError> {
     let current_wgpu_state = std::mem::replace(
         init_wgpu_context.wgpu_state, 
         WGPUState::Processing
@@ -58,7 +58,7 @@ pub fn init_wgpu(
     Ok(())
 }
 
-fn create_wgpu_data(window: Window) -> Result<WGPUData, CustomEventError> {
+fn create_wgpu_data(window: Window) -> Result<WGPUData, InternalEventError> {
     let window = Arc::new(window);
     
     let instance_descriptor = InstanceDescriptor::default(); 
@@ -89,7 +89,7 @@ fn create_wgpu_data(window: Window) -> Result<WGPUData, CustomEventError> {
         .iter()
         .find(|texture_format| **texture_format == selected_format)
         .ok_or_else(||{
-            CustomEventError::TextureFormatIsntSupported
+            InternalEventError::TextureFormatIsntSupported
         })?;
 
     let surface_configuration = SurfaceConfiguration {
