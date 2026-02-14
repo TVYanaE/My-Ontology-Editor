@@ -1,12 +1,16 @@
 mod handle_graphics_event;
 mod handle_redraw;
-mod redraw_error_handle;
+mod handle_redraw_error;
 
 use std::{
     sync::{
         Arc,
     },
     time::Instant,
+    thread::JoinHandle,
+};
+use calloop::{
+    channel::Sender,
 };
 use winit::{
     application::ApplicationHandler,
@@ -16,9 +20,9 @@ use winit::{
 };
 use crate::{
     modules::{
-        app_dirs::ApplicationDirectories,
+        app_dirs::ApplicationDirectories, 
         logic::{
-            logic_core::LogicCore,
+            events::LogicEvent,
         },
         graphics::{
             events::{
@@ -40,9 +44,13 @@ use self::{
     handle_redraw::{
         handle_redraw, HandleRedrawContext
     },
-    redraw_error_handle::redraw_error_handle,
+    handle_redraw_error::handle_redraw_error,
 };
 
+pub struct LogicThreadDescriptor {
+    pub thread_handle: Option<JoinHandle<()>>,
+    pub sender: Sender<LogicEvent>, 
+}
 
 pub struct GraphicsCore {
     graphics_core_state: GraphicsCoreState,
@@ -50,14 +58,14 @@ pub struct GraphicsCore {
     graphics_states: GraphicsStates,
     event_buffers: EventBuffers,
     last_instance: Instant,
-    logic_core: Option<LogicCore>,
+    logic_thread_descriptor: LogicThreadDescriptor,
 }
 
 impl GraphicsCore {
     pub fn new(
         custom_events: CustomEvents,
         app_dirs: Arc<ApplicationDirectories>,
-        logic_core: LogicCore,
+        logic_thread_descriptor: LogicThreadDescriptor,
     ) -> Self {
         Self { 
             graphics_core_state: GraphicsCoreState::default(), 
@@ -65,7 +73,7 @@ impl GraphicsCore {
             graphics_states: GraphicsStates::default(), 
             event_buffers: EventBuffers::new(custom_events), 
             last_instance: Instant::now(),
-            logic_core: Some(logic_core),
+            logic_thread_descriptor: logic_thread_descriptor,
         }
     }
 }
@@ -107,7 +115,7 @@ impl ApplicationHandler<CustomEvent> for GraphicsCore {
                         graphics_states: &mut self.graphics_states 
                     }
                 ) {
-                    redraw_error_handle(error, &self.event_buffers.custom_events);
+                    handle_redraw_error(error, &self.event_buffers.custom_events);
                 }
             },
             _ => {
@@ -149,7 +157,7 @@ impl<'c> From<&'c mut GraphicsCore> for GraphicsApplicationContext<'c> {
             graphics_core_state: &mut value.graphics_core_state, 
             graphics_states: &mut value.graphics_states, 
             graphics_data: &mut value.graphics_data,
-            logic_core: &mut value.logic_core,
+            logic_thread_descriptor: &mut value.logic_thread_descriptor,
         }
     }
 }

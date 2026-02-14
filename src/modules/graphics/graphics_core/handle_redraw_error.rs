@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-pub fn redraw_error_handle(
+pub fn handle_redraw_error(
     error: RedrawError,
     custom_events: &CustomEvents,    
 ) {

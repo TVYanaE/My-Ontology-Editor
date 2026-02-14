@@ -7,10 +7,7 @@ use winit::{
     event::WindowEvent,
 };
 use crate::{
-    modules::{
-        logic::{
-            logic_core::LogicCore,
-        },
+    modules::{ 
         graphics::{
             events::{
                 graphics_event::{
@@ -18,7 +15,10 @@ use crate::{
                 },
                 EventBuffers,
             },
-            graphics_core::GraphicsCoreState,
+            graphics_core::{
+                GraphicsCoreState,
+                LogicThreadDescriptor,
+            },
             graphics_data::GraphicsData,
             graphics_states::GraphicsStates,
         },
@@ -51,7 +51,7 @@ pub struct GraphicsApplicationContext<'c> {
     pub graphics_core_state: &'c mut GraphicsCoreState,
     pub graphics_states: &'c mut GraphicsStates,
     pub graphics_data: &'c mut GraphicsData,
-    pub logic_core: &'c mut Option<LogicCore>
+    pub logic_thread_descriptor: &'c mut LogicThreadDescriptor,
 }
 
 pub fn handle_graphics_event(
@@ -94,7 +94,7 @@ pub fn handle_graphics_event(
                                 InternalEventContext {
                                     graphics_data: graphics_application_context.graphics_data,
                                     graphics_states: graphics_application_context.graphics_states,
-                                    logic_core: graphics_application_context.logic_core, 
+                                    logic_thread_descriptor: graphics_application_context.logic_thread_descriptor,
                                 },
                             ) {
                                 Ok(Some(new_state)) => new_state,

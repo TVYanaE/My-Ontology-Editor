@@ -8,8 +8,13 @@ pub enum LogicEvent {
     Shutdown,
 }
 
+
 #[derive(Debug)]
 pub struct ProjectDescriptor {
     pub project_name: String,
     pub project_dir: PathBuf,
 }
+
+
+
+

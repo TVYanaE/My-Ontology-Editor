@@ -4,7 +4,7 @@ use crate::{
             events::{
                 CustomEvents,
                 graphics_event::{
-                    CustomEvent, InternalEvent
+                    InternalEvent
                 },
             },
         },
@@ -87,12 +87,7 @@ pub fn handle_graphic_event_error(
                         .send_event(InternalEvent::AppShutdownReq.into())
                         .expect("Critical Error.Event Loop Proxy has been closed.");
                 },
-                InternalEventError::SendError(_) => {
-                    custom_events
-                        .send_event(InternalEvent::AppShutdownReq.into())
-                        .expect("Critical Error.Event Loop Proxy has been closed.");
-                },
-                InternalEventError::LogicThreadWasntFound => {
+                InternalEventError::MPSCError(_) => {
                     custom_events
                         .send_event(InternalEvent::AppShutdownReq.into())
                         .expect("Critical Error.Event Loop Proxy has been closed.");

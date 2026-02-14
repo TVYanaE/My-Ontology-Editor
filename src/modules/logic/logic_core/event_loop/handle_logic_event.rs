@@ -33,7 +33,7 @@ pub struct LogicEventContext<'c> {
 }
 
 #[instrument(skip_all,err)]
-pub fn logic_event_handle(
+pub fn handle_logic_event(
     event: LogicEvent,
     logice_event_context: LogicEventContext,
 ) -> Result<Option<LogicCoreState>, LogicEventError> {
@@ -41,6 +41,7 @@ pub fn logic_event_handle(
     match event {
         LogicEvent::CreateProject(project_descriptor) => {
             std::thread::sleep(Duration::from_secs(4));
+            println!("From separeted thread");
             logice_event_context.custom_events.send_event(ExternalEvent::TaskDone.into()).unwrap();
             Ok(None)
         },

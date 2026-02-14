@@ -8,6 +8,10 @@ use egui_wgpu::{
 use egui_winit::{
     State, EventResponse,
 };
+use winit::{
+    event_loop::EventLoop,
+};
+
 
 // egui aliases
 pub type EGUIContext = Context;
@@ -18,3 +22,5 @@ pub type EGUIRendererOptions = RendererOptions;
 pub type EGUIEventRespone = EventResponse;
 pub type EGUIScreenDescriptor = ScreenDescriptor;
 
+// winit aliases
+pub type WinitEventLoop<T> = EventLoop<T>;

@@ -10,7 +10,6 @@ use crate::{
     modules::{
         logic::{
             events::{LogicEvent, ProjectDescriptor},
-            logic_core::LogicCore
         },
         graphics::{
             events::{
@@ -23,7 +22,10 @@ use crate::{
                     ui_general_state::UIGeneralState,
                 },
             },
-            graphics_core::GraphicsCoreState,
+            graphics_core::{
+                GraphicsCoreState,
+                LogicThreadDescriptor,
+            },
         },
     },
 };
@@ -37,7 +39,7 @@ use self::{
 pub struct InternalEventContext<'c> {
     pub graphics_states: &'c mut GraphicsStates,
     pub graphics_data: &'c mut GraphicsData,
-    pub logic_core: &'c mut Option<LogicCore>,
+    pub logic_thread_descriptor: &'c mut LogicThreadDescriptor,
 }
 
 #[instrument(skip_all, err)]
@@ -48,12 +50,19 @@ pub fn handle_internal_event(
     let new_state_opt = match event {
         InternalEvent::AppShutdownReq => {
             // TODO Logic For Graceful shutdown
-            if let Some(logic_core) = internal_event_context.logic_core.take() {
-                if let Err(_) = logic_core.logic_event_channel_sender.send(LogicEvent::Shutdown) {
-                    return Ok(Some(GraphicsCoreState::Shutdown));
-                }
-                logic_core.handle.join().unwrap();
-                Some(GraphicsCoreState::Shutdown)
+            if let Some(logic_thread_handle) = internal_event_context
+                .logic_thread_descriptor
+                .thread_handle
+                .take() {
+                    if let Err(_) = internal_event_context
+                        .logic_thread_descriptor
+                        .sender
+                        .send(LogicEvent::Shutdown) { 
+                            return Ok(Some(GraphicsCoreState::Shutdown));
+                    }
+
+                    logic_thread_handle.join().unwrap();
+                    Some(GraphicsCoreState::Shutdown)
             }
             else {
                 Some(GraphicsCoreState::Shutdown)
@@ -72,12 +81,8 @@ pub fn handle_internal_event(
         },
         InternalEvent::CreateProjectReq(req) => {
             internal_event_context
-                .logic_core
-                .as_ref()
-                .ok_or_else(||{
-                    InternalEventError::LogicThreadWasntFound
-                })?
-                .logic_event_channel_sender
+                .logic_thread_descriptor
+                .sender
                 .send(LogicEvent::CreateProject(
                     ProjectDescriptor { 
                         project_name: req.project_name, 
@@ -106,12 +111,9 @@ pub enum InternalEventError {
     CreateSurfaceError(#[from] wgpu::CreateSurfaceError),
 
     #[error("Choosed Texture Format isn't supported")]
-    TextureFormatIsntSupported,
+    TextureFormatIsntSupported, 
 
-    #[error("Critical Error. Logic Thread wasn't found")]
-    LogicThreadWasntFound,
-
-    #[error("Send error flume: {0}")]
-    SendError(#[from] flume::SendError<LogicEvent>),
+    #[error("Send Event into Logic Thread: {0}")]
+    MPSCError(#[from] std::sync::mpsc::SendError<LogicEvent>),
 }
 
