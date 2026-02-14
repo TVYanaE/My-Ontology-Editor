@@ -3,7 +3,9 @@ mod handle_grahic_event_error;
 mod handle_internal_event;
 mod handle_window_event;
 
-
+use winit::{
+    event::WindowEvent,
+};
 use crate::{
     modules::{
         logic::{
@@ -153,7 +155,35 @@ pub fn handle_graphics_event(
                         _ => {GraphicsCoreState::Waiting}
                     }
                 },
-                _ => GraphicsCoreState::Waiting,
+                GraphicsEvent::WindowEvent(event) => {
+                    match event {
+                        WindowEvent::CloseRequested |
+                        WindowEvent::Resized(_)
+                        => {
+                            match handle_window_event(
+                                event, 
+                                HandleWindowEventContext { 
+                                    event_buffers: graphics_application_context.event_buffers, 
+                                    graphics_states: graphics_application_context.graphics_states, 
+                                    graphics_data: graphics_application_context.graphics_data 
+                                }
+                            ) {
+                                Ok(Some(new_state)) => new_state,
+                                Ok(None) => GraphicsCoreState::Waiting,
+                                Err(error) => {
+                                    handle_graphic_event_error(
+                                        error.into(),
+                                        &graphics_application_context.event_buffers.custom_events
+                                    );
+                                    GraphicsCoreState::Runnig
+                                },
+                            }
+                        }, 
+                        _ => {
+                            GraphicsCoreState::Waiting
+                        }
+                    }
+                },
             }
         },
         (current_state, _) => current_state.clone(), 
