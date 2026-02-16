@@ -1,4 +1,7 @@
 use egui::{
+    containers::{
+        CentralPanel
+    },
     Context, Ui,
 }; 
 use egui_wgpu::{
@@ -21,6 +24,9 @@ pub type EGUIWinitState = State;
 pub type EGUIRendererOptions = RendererOptions;
 pub type EGUIEventRespone = EventResponse;
 pub type EGUIScreenDescriptor = ScreenDescriptor;
+
+// egui containers 
+pub type EGUICentralPanel = CentralPanel;
 
 // winit aliases
 pub type WinitEventLoop<T> = EventLoop<T>;

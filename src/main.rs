@@ -2,7 +2,9 @@ mod aliases;
 mod modules;
 
 use std::{
-    sync::Arc,
+    sync::{
+        Arc,
+    },
 };
 use calloop::{
     channel::{
@@ -21,15 +23,16 @@ use modules::{
     app_dirs::{
         init_app_dirs,
     },
-    logic::{
+    logic_module::{
         events::LogicEvent,
         logic_core::init_logic, 
     },
-    graphics::{
-        events::graphics_event::CustomEvent,
-        graphics_core::{GraphicsCore, LogicThreadDescriptor}
+    graphics_module::{
+        GraphicsModule,
+        CustomEvent
     },
     logger::init_logger,
+    shared::LogicThreadDescriptor,
 };
 
 fn main() {
@@ -61,16 +64,13 @@ fn run() -> anyhow::Result<()> {
     //  Logic theard 
     let handle = init_logic(event_loop_proxy.clone(), app_dirs.clone(), channel);
 
-    let mut graphics_core = GraphicsCore::new(
-        event_loop_proxy, 
-        app_dirs,
-        LogicThreadDescriptor { 
-            thread_handle: Some(handle), 
-            sender: sender,
-        }
-    );
+    let logic_thread_descriptor = LogicThreadDescriptor { thread_handle: Some(handle), sender };
 
-    event_loop.run_app(&mut graphics_core).context("event loop error exit")?;
+    let mut graphics_module = GraphicsModule::new(app_dirs, logic_thread_descriptor, event_loop_proxy); 
+
+    event_loop.run_app(&mut graphics_module).context("event loop error exit")?;
 
     Ok(())
-} 
+}
+
+

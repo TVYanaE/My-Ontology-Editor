@@ -1,4 +1,3 @@
-
 use std::{
     env,
     path::PathBuf,
@@ -33,8 +32,16 @@ pub fn init_app_dirs() -> Result<ApplicationDirectories, InitAppDirsError> {
     let mut config_directory_path = execute_path.clone();
     config_directory_path.push("config");
 
+    if !config_directory_path.exists() {
+        std::fs::create_dir_all(&config_directory_path)?; 
+    }
+
     let mut cache_directory_path = execute_path.clone();
     cache_directory_path.push("cache");
+
+    if !cache_directory_path.exists() {
+        std::fs::create_dir_all(&cache_directory_path)?;
+    } 
 
     let cache_directory = CacheDirectory {
         directory_path: cache_directory_path,
@@ -68,6 +75,14 @@ pub fn init_app_dirs(
 
     let config_directory_path = app_directory.config_dir().to_path_buf();
     let cache_directory_path = app_directory.cache_dir().to_path_buf();
+
+    if !config_directory_path.exists() {
+        std::fs::create_dir_all(&config_directory_path)?; 
+    }
+    
+    if !cache_directory_path.exists() {
+        std::fs::create_dir_all(&cache_directory_path)?;
+    }
 
     let cache_directory = CacheDirectory {
         directory_path: cache_directory_path,

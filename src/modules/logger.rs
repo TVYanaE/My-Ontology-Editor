@@ -6,8 +6,6 @@ use tracing_subscriber::{
 };
 
 pub fn init_logger() -> WorkerGuard {
-    // Layer for profiler 
-    let tracy = tracing_tracy::TracyLayer::default();
 
     // Layer for log files 
     let file_appender = tracing_appender::rolling::daily("logs", "my_ontology_editor.log");
@@ -31,7 +29,6 @@ pub fn init_logger() -> WorkerGuard {
         .with(filter)
         .with(console_layer)
         .with(file_layer)
-        .with(tracy)
         .init();
 
     return guard;
