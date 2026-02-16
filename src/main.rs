@@ -9,10 +9,7 @@ use std::{
 use anyhow::Context;
 use tracing::{instrument, error};
 use winit::{
-    event_loop::{ControlFlow}
-};
-use aliases::{
-    WinitEventLoop
+    event_loop::{EventLoop, ControlFlow}
 };
 use modules::{
     app_dirs::{
@@ -42,7 +39,7 @@ fn main() {
 
 #[instrument(skip_all, err)]
 fn run() -> anyhow::Result<()> {
-    let event_loop = WinitEventLoop::<CustomEvent>::with_user_event()
+    let event_loop = EventLoop::<CustomEvent>::with_user_event()
         .build()
         .context("failed to create event loop")?;
 
@@ -51,17 +48,15 @@ fn run() -> anyhow::Result<()> {
     // Theard Channels
     let custom_events = event_loop.create_proxy(); 
     
-
     let app_dirs = Arc::new(init_app_dirs()?);
 
-    //  Logic theard 
+    // Logic Module 
     let logic_module_descriptor = LogicModule::init_logic_module(custom_events.clone(), app_dirs.clone());
 
+    // Graphics Module 
     let mut graphics_module = GraphicsModule::new(app_dirs, logic_module_descriptor, custom_events); 
 
     event_loop.run_app(&mut graphics_module).context("event loop error exit")?;
 
     Ok(())
 }
-
-

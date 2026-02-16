@@ -180,7 +180,3 @@ impl GraphicsCoreLogic {
         Ok(())
     }
 }
-
-
-
-
