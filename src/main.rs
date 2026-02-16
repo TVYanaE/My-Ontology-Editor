@@ -13,7 +13,8 @@ use winit::{
 };
 use modules::{
     app_dirs::{
-        init_app_dirs,
+        init_app_dirs, 
+        ApplicationDirectories,
     },
     logic_module::{
         LogicModule, 
@@ -26,19 +27,21 @@ use modules::{
 };
 
 fn main() {
-    let _guard = init_logger();
+    let app_dirs = init_app_dirs()
+        .expect("Application Directories initialisation error");
+    let _guard = init_logger(&app_dirs.cache_directory.log_dir_path);
    
     std::panic::set_hook(Box::new(|panic_info|{
         error!("panic occured: {panic_info}"); 
     }));
 
-    if let Err(err) = run() {
+    if let Err(err) = run(app_dirs) {
         error!(error = ?err, "application terminated");
     }
 }
 
 #[instrument(skip_all, err)]
-fn run() -> anyhow::Result<()> {
+fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
     let event_loop = EventLoop::<CustomEvent>::with_user_event()
         .build()
         .context("failed to create event loop")?;
@@ -46,9 +49,9 @@ fn run() -> anyhow::Result<()> {
     event_loop.set_control_flow(ControlFlow::Wait);
 
     // Theard Channels
-    let custom_events = event_loop.create_proxy(); 
+    let custom_events = event_loop.create_proxy();  
     
-    let app_dirs = Arc::new(init_app_dirs()?);
+    let app_dirs = Arc::new(app_dirs);
 
     // Logic Module 
     let logic_module_descriptor = LogicModule::init_logic_module(custom_events.clone(), app_dirs.clone());

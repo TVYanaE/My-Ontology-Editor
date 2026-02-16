@@ -4,10 +4,6 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Iana Vinnishchuk"]
 
-[profile.release]
-debug = true
-lto = false
-
 [dependencies]
 # Graphic crates
 wgpu = "27.0.1"
@@ -17,7 +13,7 @@ egui-winit = "0.33.3"
 egui-wgpu = {version = "0.33.3", features = ["wayland", "winit"]}
 
 # For blocking spawn async func
-pollster = "0.4"
+pollster = "0.4.0"
 
 # Error Handling
 anyhow = "1.0.101"
@@ -27,10 +23,13 @@ tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"]}
 tracing-appender = "0.2.4"
 
 # For working with file system (For default paths in OS)
-directories = "6.0"
+directories = "6.0.0"
 
 # For file dialog 
 egui-file-dialog = "0.12.0"
 
 # Event Loop crate
 calloop = { version = "0.14.4", features = []}
+
+# For SQLite
+rusqlite = { version = "0.38.0", features = ["bundled"] }

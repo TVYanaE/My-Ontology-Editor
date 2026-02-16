@@ -1,14 +1,17 @@
-use std::io;
+use std::{
+    io,
+    path::Path,
+};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
     fmt, prelude::*, Registry,
     EnvFilter,
 };
 
-pub fn init_logger() -> WorkerGuard {
+pub fn init_logger(log_path: impl AsRef<Path>) -> WorkerGuard {
 
     // Layer for log files 
-    let file_appender = tracing_appender::rolling::daily("logs", "my_ontology_editor.log");
+    let file_appender = tracing_appender::rolling::daily(log_path, "my_ontology_editor.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     let filter = EnvFilter::try_from_default_env()

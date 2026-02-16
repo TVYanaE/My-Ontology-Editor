@@ -11,16 +11,17 @@ use thiserror::{
 };
 
 pub struct ConfigurationDirectory { 
-    directory_path: PathBuf, 
+    pub directory_path: PathBuf, 
 }
 
 pub struct CacheDirectory {
-    directory_path: PathBuf
+    pub directory_path: PathBuf,
+    pub log_dir_path: PathBuf,
 }
 
 pub struct ApplicationDirectories {
-    configuration_directory: ConfigurationDirectory,
-    cache_directory: CacheDirectory,
+    pub configuration_directory: ConfigurationDirectory,
+    pub cache_directory: CacheDirectory,
 }
 
 #[cfg(debug_assertions)]
@@ -43,8 +44,16 @@ pub fn init_app_dirs() -> Result<ApplicationDirectories, InitAppDirsError> {
         std::fs::create_dir_all(&cache_directory_path)?;
     } 
 
+    let mut log_dir_path = cache_directory_path.clone();
+    log_dir_path.push("logs");
+
+    if !log_dir_path.exists() {
+        std::fs::create_dir_all(&log_dir_path)?;
+    } 
+
     let cache_directory = CacheDirectory {
         directory_path: cache_directory_path,
+        log_dir_path: log_dir_path, 
     };
 
     let configuration_directory = ConfigurationDirectory {
@@ -64,7 +73,6 @@ pub fn init_app_dirs() -> Result<ApplicationDirectories, InitAppDirsError> {
 #[cfg(not(debug_assertions))]
 pub fn init_app_dirs(
 ) -> Result<ApplicationDirectories, InitAppDirsError> {
-
     let app_directory = ProjectDirs::from(
         "wfoojjaec.eu.org", 
         "wfoojjaec", 
@@ -75,6 +83,9 @@ pub fn init_app_dirs(
 
     let config_directory_path = app_directory.config_dir().to_path_buf();
     let cache_directory_path = app_directory.cache_dir().to_path_buf();
+    
+    let mut log_directory_path = app_directory.cache_dir().to_path_buf();
+    log_directory_path.push("logs");
 
     if !config_directory_path.exists() {
         std::fs::create_dir_all(&config_directory_path)?; 
@@ -84,8 +95,13 @@ pub fn init_app_dirs(
         std::fs::create_dir_all(&cache_directory_path)?;
     }
 
+    if !log_directory_path.exists() {
+        std::fs::create_dir_all(&log_directory_path)?;
+    }
+
     let cache_directory = CacheDirectory {
         directory_path: cache_directory_path,
+        log_dir_path: log_directory_path,
     };
 
     let configuration_directory = ConfigurationDirectory {
