@@ -18,12 +18,14 @@ use crate::{
                 wgpu_backend::{
                     WGPUData
                 },
-            },
-            graphics_core::{
-                graphics_event::CustomEvents,
-            },
+            }, 
             ui::UI,
         },
+    },
+};
+use super::{
+    super::{
+        CustomEvents,
     },
 };
 use self::{

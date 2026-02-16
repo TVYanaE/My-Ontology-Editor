@@ -5,6 +5,7 @@ use std::{
 #[derive(Debug)]
 pub enum LogicEvent {
     CreateProject(ProjectDescriptor),
+    ProjectCreated,
     Shutdown,
 }
 

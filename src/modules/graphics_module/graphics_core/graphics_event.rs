@@ -9,8 +9,6 @@ use winit::{
     event_loop::EventLoopProxy,
 };
 
-pub type CustomEvents = EventLoopProxy<CustomEvent>;
-
 #[derive(Debug)]
 pub enum GraphicsEvent {
     WindowEvent(WindowEvent),

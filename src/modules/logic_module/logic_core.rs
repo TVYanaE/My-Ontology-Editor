@@ -1,3 +1,4 @@
+mod handle_logic_event_error;
 mod logic_core_logic;
 
 use crate::{
@@ -8,10 +9,13 @@ use crate::{
                 LogicEvent
             },
         },
-        graphics_module::CustomEvents,
     },
 };
+use super::{
+    CustomEvents, LogicEvents,
+};
 use self::{
+    handle_logic_event_error::handle_logic_event_error,
     logic_core_logic::LogicCoreLogic,
 };
 
@@ -43,6 +47,7 @@ impl LogicCore {
         &mut self, 
         event: LogicEvent,
         custom_events: &CustomEvents,
+        logic_events: &LogicEvents,
         app_dirs: &ApplicationDirectories, 
     ) {
         let current_state = std::mem::replace(
@@ -55,13 +60,14 @@ impl LogicCore {
                 match LogicCoreLogic::logic_event_handle(
                     event, 
                     app_dirs, 
-                    custom_events
+                    custom_events,
+                    logic_events, 
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Wait,
-                    Err(_error) => {
-                       
-                        LogicCoreState::Shutdown
+                    Err(error) => {
+                        handle_logic_event_error(error, logic_events); 
+                        LogicCoreState::Wait
                     },
                 }              
             },

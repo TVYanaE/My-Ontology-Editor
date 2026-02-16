@@ -33,6 +33,7 @@ pub fn init_event_loop<'e>(
                 event_loop_resource.logic_core.on_event(
                     logic_event, 
                     &event_loop_resource.custom_events, 
+                    &event_loop_resource.logic_events,
                     &event_loop_resource.app_dirs
                 ); 
             },

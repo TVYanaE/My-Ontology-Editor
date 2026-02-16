@@ -16,7 +16,7 @@ use crate::{
             },
             graphics_core::{
                 graphics_event::{
-                    CustomEvents, InternalEvent,
+                    InternalEvent,
                     CreateProjectDescriptor,
                 },
             },
@@ -27,7 +27,7 @@ use crate::{
     },
 };
 use super::{
-    EGUIData
+    CustomEvents, EGUIData,
 };
 
 impl EGUIBackendLogic {

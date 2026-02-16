@@ -1,5 +1,6 @@
 use super::{
-    graphics_event::{InternalEvent, CustomEvents},
+    CustomEvents,
+    graphics_event::InternalEvent,
     GraphicsEventError,
     ExternalEventError,
     WindowEventError,

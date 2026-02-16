@@ -12,6 +12,7 @@ use crate::{
     },
 };
 use super::{ 
+    CustomEvents,
     graphics_backend::{ 
         GraphicsBackend,
     },
@@ -23,7 +24,7 @@ use self::{
         InternalEventError, ExternalEventError, 
         WindowEventError, RedrawEventError,
     },
-    graphics_event::{GraphicsEvent, CustomEvent, InternalEvent, CustomEvents}, 
+    graphics_event::{GraphicsEvent, CustomEvent, InternalEvent}, 
     handle_graphics_event_error::handle_graphic_event_error,
 };
 

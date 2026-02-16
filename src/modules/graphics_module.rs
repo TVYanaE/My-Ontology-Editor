@@ -13,6 +13,7 @@ use winit::{
     window::{WindowId, WindowAttributes},
 };
 use crate::{
+    aliases::CustomEvents,
     modules::{
         app_dirs::ApplicationDirectories,
         shared::LogicModuleDescriptor,
@@ -26,7 +27,7 @@ use self::{
 pub use self::{
     graphics_core::{
         graphics_event::{
-            CustomEvent, CustomEvents,
+            CustomEvent,
             InternalEvent, ExternalEvent,
         }, 
     },

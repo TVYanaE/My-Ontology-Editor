@@ -9,15 +9,15 @@ use std::{
 use calloop::{
     LoopSignal,
     channel::{
-        channel 
+        channel, 
     },
 };
 use crate::{
+    aliases::{
+        LogicEvents, CustomEvents,
+    },
     modules::{
         app_dirs::ApplicationDirectories,
-        graphics_module::{
-            CustomEvents,
-        },
         shared::LogicModuleDescriptor,
     }, 
 };
@@ -29,9 +29,11 @@ pub use self::{
     events::{LogicEvent, ProjectDescriptor}
 };
 
+
 pub struct EventLoopResource {
     logic_core: LogicCore,
     custom_events: CustomEvents,
+    logic_events: LogicEvents,
     app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
 }
@@ -45,6 +47,8 @@ impl LogicModule {
     ) -> LogicModuleDescriptor {
         let (sender, channel) = channel::<LogicEvent>();
 
+        let cloned_sender = sender.clone();
+
         let handle = thread::spawn(move||{
             let mut event_loop = init_event_loop(channel)
                 .expect("Event Loop Error init calloop");
@@ -55,6 +59,7 @@ impl LogicModule {
             let mut event_loop_resource = EventLoopResource {
                 logic_core: logic_core,
                 custom_events: custom_events,
+                logic_events: cloned_sender,
                 app_dirs: app_dirs,
                 loop_signal: loop_signal,
             }; 

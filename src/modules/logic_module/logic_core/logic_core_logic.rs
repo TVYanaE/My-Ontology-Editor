@@ -1,6 +1,6 @@
 use std::{
-    thread,
     time::Duration,
+    thread::sleep,
 };
 use tracing::{
     instrument
@@ -12,13 +12,13 @@ use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
         graphics_module::{
-            CustomEvent, CustomEvents,
-            ExternalEvent,
+            CustomEvent, ExternalEvent,
         },
     },
 };
 use super::{
     super::{
+        LogicEvents, CustomEvents,
         events::{
             LogicEvent, ProjectDescriptor,
         }
@@ -31,7 +31,10 @@ pub struct LogicCoreLogic;
 #[derive(Debug, Error)]
 pub enum LogicEventError {
     #[error("Winit Event Loop is closed: {0}")]
-    EventLoopClosed(#[from] winit::event_loop::EventLoopClosed<CustomEvent>)
+    EventLoopClosed(#[from] winit::event_loop::EventLoopClosed<CustomEvent>),
+
+    #[error("MPSC Channel was closed {0}")]
+    MPSCChannelError(#[from] std::sync::mpsc::SendError<LogicEvent>),
 }
 
 impl LogicCoreLogic {
@@ -40,6 +43,7 @@ impl LogicCoreLogic {
         event: LogicEvent,
         app_dirs: &ApplicationDirectories,
         custom_events: &CustomEvents,
+        logic_events: &LogicEvents,
     ) -> Result<Option<LogicCoreState>, LogicEventError> {
         match event {
             LogicEvent::CreateProject(project_descriptor) => {
@@ -48,13 +52,16 @@ impl LogicCoreLogic {
                     app_dirs
                 )?;
                 println!("got task"); 
-                thread::sleep(Duration::from_secs(2));
+                sleep(Duration::from_secs(1));
                 println!("done task");
-
-
-                custom_events.send_event(ExternalEvent::TaskDone.into())?;
+                  
+                logic_events.send(LogicEvent::ProjectCreated)?; 
                 Ok(None)
             },
+            LogicEvent::ProjectCreated => { 
+                custom_events.send_event(ExternalEvent::TaskDone.into())?;
+                Ok(None)
+            }
             LogicEvent::Shutdown => {
                 // Logic for Graceful Shutdown  
                 Ok(Some(LogicCoreState::Shutdown))

@@ -3,7 +3,13 @@ use egui::{
         CentralPanel
     },
     Context, Ui,
-}; 
+};
+use winit::{
+    event_loop::EventLoopProxy,
+};
+use calloop::{
+    channel::Sender,
+};
 use egui_wgpu::{
     Renderer, RendererOptions,
     ScreenDescriptor
@@ -11,8 +17,16 @@ use egui_wgpu::{
 use egui_winit::{
     State, EventResponse,
 };
+use crate::{
+    modules::{
+        logic_module::LogicEvent,
+        graphics_module::CustomEvent
+    },
+};
 
-
+// Project aliases
+pub type LogicEvents = Sender<LogicEvent>;
+pub type CustomEvents = EventLoopProxy<CustomEvent>;
 
 // egui aliases
 pub type EGUIContext = Context;

@@ -33,8 +33,8 @@ use super::{
     graphics_event::{
         InternalEvent,
         ExternalEvent,
-        CustomEvents,
     },
+    CustomEvents,
     GraphicsCoreState,
 };
 use self::{
