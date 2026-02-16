@@ -11,7 +11,7 @@ use tracing::{
 };
 use crate::{
     modules::{
-        logic_module::events::{
+        logic_module::{
             LogicEvent,
             ProjectDescriptor,
         },
@@ -23,7 +23,7 @@ use crate::{
 use super::{
     super::{
         ui::UI,
-        LogicThreadDescriptor,  
+        LogicModuleDescriptor,  
         graphics_backend::{
             wgpu_backend::WGPUBackendError,
             egui_backend::EGUIBackendError,
@@ -83,17 +83,17 @@ impl GraphicsCoreLogic {
     pub fn internal_event_handle(
         event: InternalEvent,
         graphics_backend: &mut GraphicsBackend,
-        logic_thread_descriptor: &mut LogicThreadDescriptor,
+        logic_module_descriptor: &mut LogicModuleDescriptor,
         ui: &mut UI,
     ) -> Result<Option<GraphicsCoreState>, InternalEventError> {
         match event {
             InternalEvent::AppShutdownReq => {
                 // logic for shutdown
-                if let Err(_) = logic_thread_descriptor.sender.send(LogicEvent::Shutdown) {
+                if let Err(_) = logic_module_descriptor.sender.send(LogicEvent::Shutdown) {
                     return Ok(Some(GraphicsCoreState::Shutdown));
                 }
 
-                if let Some(handle) = logic_thread_descriptor.thread_handle.take() {
+                if let Some(handle) = logic_module_descriptor.thread_handle.take() {
                     handle.join();
                 }
 
@@ -107,7 +107,7 @@ impl GraphicsCoreLogic {
                 Ok(None)
             }
             InternalEvent::CreateProjectReq(descriptor) => {
-                logic_thread_descriptor.sender.send(LogicEvent::CreateProject(ProjectDescriptor { 
+                logic_module_descriptor.sender.send(LogicEvent::CreateProject(ProjectDescriptor { 
                     project_name: descriptor.project_name, 
                     project_dir: descriptor.project_dir 
                 }))?;

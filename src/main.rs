@@ -6,11 +6,6 @@ use std::{
         Arc,
     },
 };
-use calloop::{
-    channel::{
-        channel,
-    },
-};
 use anyhow::Context;
 use tracing::{instrument, error};
 use winit::{
@@ -24,15 +19,13 @@ use modules::{
         init_app_dirs,
     },
     logic_module::{
-        events::LogicEvent,
-        logic_core::init_logic, 
+        LogicModule, 
     },
     graphics_module::{
         GraphicsModule,
         CustomEvent
     },
     logger::init_logger,
-    shared::LogicThreadDescriptor,
 };
 
 fn main() {
@@ -56,17 +49,15 @@ fn run() -> anyhow::Result<()> {
     event_loop.set_control_flow(ControlFlow::Wait);
 
     // Theard Channels
-    let event_loop_proxy = event_loop.create_proxy(); 
-    let (sender, channel) = channel::<LogicEvent>();
+    let custom_events = event_loop.create_proxy(); 
+    
 
     let app_dirs = Arc::new(init_app_dirs()?);
 
     //  Logic theard 
-    let handle = init_logic(event_loop_proxy.clone(), app_dirs.clone(), channel);
+    let logic_module_descriptor = LogicModule::init_logic_module(custom_events.clone(), app_dirs.clone());
 
-    let logic_thread_descriptor = LogicThreadDescriptor { thread_handle: Some(handle), sender };
-
-    let mut graphics_module = GraphicsModule::new(app_dirs, logic_thread_descriptor, event_loop_proxy); 
+    let mut graphics_module = GraphicsModule::new(app_dirs, logic_module_descriptor, custom_events); 
 
     event_loop.run_app(&mut graphics_module).context("event loop error exit")?;
 

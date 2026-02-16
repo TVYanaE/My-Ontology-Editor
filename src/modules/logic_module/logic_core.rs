@@ -1,68 +1,87 @@
-mod event_loop;
+mod logic_core_logic;
 
-use std::{
-    sync::{Arc},
-    thread::{self, JoinHandle},
-};
-use calloop::{
-    LoopSignal,
-    channel::{
-        Channel, 
-    },
-};
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
-        graphics_module::CustomEvents,
         logic_module::{
             events::{
                 LogicEvent
             },
         },
+        graphics_module::CustomEvents,
     },
 };
 use self::{
-    event_loop::init_event_loop,
+    logic_core_logic::LogicCoreLogic,
 };
-
-pub struct LogicCore {
-    pub logic_core_state: LogicCoreState,
-    pub custom_events: CustomEvents,
-    pub app_dirs: Arc<ApplicationDirectories>,
-    pub loop_signal: LoopSignal,
-}
-
-pub fn init_logic(
-    custom_events: CustomEvents,
-    app_dirs: Arc<ApplicationDirectories>,
-    channel: Channel<LogicEvent>,
-) -> JoinHandle<()> {
-    let handle = thread::spawn(move||{
-        let mut event_loop = init_event_loop(channel)
-            .expect("Event Loop Error init calloop");
-        let loop_signal = event_loop.get_signal();
-
-        let mut logic_core = LogicCore {
-            logic_core_state: LogicCoreState::Wait,
-            custom_events: custom_events,
-            app_dirs: app_dirs,
-            loop_signal: loop_signal,
-        };
-        let _ = event_loop.run(None, &mut logic_core, |logic_core|{
-            match logic_core.logic_core_state {
-                LogicCoreState::Wait => {},
-                LogicCoreState::Shutdown => {
-                    logic_core.loop_signal.stop();
-                }
-            } 
-        }); 
-    });
-    
-    handle
-}
 
 #[derive(Debug)]
 pub enum LogicCoreState {
     Wait, 
     Shutdown,
+    Processing,
 }
+
+impl Default for LogicCoreState {
+    fn default() -> Self {
+        Self::Wait
+    }
+}
+
+pub struct LogicCore {
+    logic_core_state: LogicCoreState,  
+}
+
+impl LogicCore {
+    pub fn new() -> Self {
+        Self {
+            logic_core_state: LogicCoreState::default(),
+        }
+    }
+    
+    pub fn on_event(
+        &mut self, 
+        event: LogicEvent,
+        custom_events: &CustomEvents,
+        app_dirs: &ApplicationDirectories, 
+    ) {
+        let current_state = std::mem::replace(
+            &mut self.logic_core_state, 
+            LogicCoreState::Processing
+        ); 
+
+        self.logic_core_state = match (current_state, event) {
+            (LogicCoreState::Wait, event) => {
+                match LogicCoreLogic::logic_event_handle(
+                    event, 
+                    app_dirs, 
+                    custom_events
+                ) {
+                    Ok(Some(new_state)) => new_state,
+                    Ok(None) => LogicCoreState::Wait,
+                    Err(_error) => {
+                       
+                        LogicCoreState::Shutdown
+                    },
+                }              
+            },
+            (current_state,_) => current_state,
+        }
+    }
+
+    pub fn event_loop_closed_handle(&mut self) {
+        self.logic_core_state = LogicCoreState::Shutdown;
+    }
+
+    pub fn is_shutdown(&self) -> bool {
+        match &self.logic_core_state {
+            LogicCoreState::Shutdown => true,
+            _ => false
+        }
+    }
+}
+
+
+
+
+

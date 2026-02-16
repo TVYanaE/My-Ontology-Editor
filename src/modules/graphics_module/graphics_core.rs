@@ -8,7 +8,7 @@ use winit::{
 };
 use crate::{
     modules::{ 
-        shared::LogicThreadDescriptor,
+        shared::LogicModuleDescriptor,
     },
 };
 use super::{ 
@@ -44,18 +44,18 @@ impl Default for GraphicsCoreState {
 pub struct GraphicsCore {
     state: GraphicsCoreState,
     custom_events: CustomEvents,
-    logic_thread_descriptor: LogicThreadDescriptor,
+    logic_module_descriptor: LogicModuleDescriptor,
 }
 
 impl GraphicsCore {
     pub fn new(
-        logic_thread_descriptor: LogicThreadDescriptor,
+        logic_module_descriptor: LogicModuleDescriptor,
         custom_events: CustomEvents,
     ) -> Self {
         Self { 
             state: GraphicsCoreState::default(), 
             custom_events: custom_events,
-            logic_thread_descriptor: logic_thread_descriptor,
+            logic_module_descriptor: logic_module_descriptor,
         }
     }
     pub fn on_event(
@@ -77,7 +77,7 @@ impl GraphicsCore {
                                 match GraphicsCoreLogic::internal_event_handle(
                                     event,
                                     graphics_backend,
-                                    &mut self.logic_thread_descriptor,
+                                    &mut self.logic_module_descriptor,
                                     ui
                                 ) {
                                     Ok(Some(new_state)) => {
@@ -96,7 +96,7 @@ impl GraphicsCore {
                                 match GraphicsCoreLogic::external_event_handle(
                                     event,
                                     ui
-                              ) {
+                                ) {
                                     Ok(Some(new_state)) => {
                                         new_state
                                     },
@@ -179,7 +179,7 @@ impl GraphicsCore {
                                         if let Err(error) = GraphicsCoreLogic::internal_event_handle(
                                             event,
                                             graphics_backend,
-                                            &mut self.logic_thread_descriptor,
+                                            &mut self.logic_module_descriptor,
                                             ui,
                                         ) {
                                             handle_graphic_event_error(error.into(), &self.custom_events);

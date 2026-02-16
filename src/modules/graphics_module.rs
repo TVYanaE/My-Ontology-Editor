@@ -15,7 +15,7 @@ use winit::{
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
-        shared::LogicThreadDescriptor,
+        shared::LogicModuleDescriptor,
     },
 };
 use self::{
@@ -43,12 +43,12 @@ pub struct GraphicsModule {
 impl GraphicsModule {
     pub fn new(
         app_dirs: Arc<ApplicationDirectories>,
-        logic_thread_descriptor: LogicThreadDescriptor,
+        logic_module_descriptor: LogicModuleDescriptor,
         custom_events: CustomEvents,
     ) -> Self {
         Self { 
             graphics_backend: GraphicsBackend::default(), 
-            graphics_core: GraphicsCore::new(logic_thread_descriptor, custom_events), 
+            graphics_core: GraphicsCore::new(logic_module_descriptor, custom_events), 
             ui: UI::default(),
             app_dirs: app_dirs,
             last_instance: Instant::now(),
