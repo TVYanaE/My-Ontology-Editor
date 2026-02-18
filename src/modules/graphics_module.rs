@@ -16,7 +16,9 @@ use crate::{
     aliases::CustomEvents,
     modules::{
         app_dirs::ApplicationDirectories,
-        shared::LogicModuleDescriptor,
+        shared::{
+            logic_module_descriptor::LogicModuleDescriptor,
+        },
     },
 };
 use self::{

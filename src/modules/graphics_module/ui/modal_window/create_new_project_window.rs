@@ -27,7 +27,7 @@ use crate::{
 };
 use super::{
     super::{
-        ui_event::{UIEvent, CreateProjectRequest}
+        ui_event::UIEvent,
     },
 };
 
@@ -166,12 +166,10 @@ fn create_new_project(
                 return;
             }
         }
-    ui_events.push(UIEvent::CreateProjectReq(
-        CreateProjectRequest { 
-            project_name: create_new_project_window_data.project_name.clone(), 
-            project_dir: project_dir 
-        }
-    ));
+    ui_events.push(UIEvent::CreateProjectReq{ 
+        project_name: create_new_project_window_data.project_name.clone(), 
+        project_dir: project_dir 
+    });
 
     create_new_project_window_data.project_name.clear();
     create_new_project_window_data.project_path.clear();

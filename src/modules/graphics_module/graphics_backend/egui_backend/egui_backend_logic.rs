@@ -17,7 +17,6 @@ use crate::{
             graphics_core::{
                 graphics_event::{
                     InternalEvent,
-                    CreateProjectDescriptor,
                 },
             },
             ui::{
@@ -95,13 +94,11 @@ impl EGUIBackendLogic {
                 UIAffect::ExitRequested => {
                     custom_events.send_event(InternalEvent::AppShutdownReq.into());
                 },
-                UIAffect::CreateProjectReq(req) => {
-                    custom_events.send_event(InternalEvent::CreateProjectReq(
-                        CreateProjectDescriptor { 
-                            project_name: req.project_name.clone(), 
-                            project_dir: req.project_dir.clone(),
-                        }
-                    ).into());
+                UIAffect::CreateProjectReq{project_name, project_dir} => {
+                    custom_events.send_event(InternalEvent::CreateProjectReq{ 
+                        project_name: project_name, 
+                        project_dir: project_dir,
+                    }.into());
                 },
             } 
         }

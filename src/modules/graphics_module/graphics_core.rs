@@ -8,7 +8,9 @@ use winit::{
 };
 use crate::{
     modules::{ 
-        shared::LogicModuleDescriptor,
+        shared::{
+            logic_module_descriptor::LogicModuleDescriptor,
+        },
     },
 };
 use super::{ 

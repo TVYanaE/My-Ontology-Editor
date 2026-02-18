@@ -3,6 +3,9 @@ mod panels;
 mod ui_event;
 mod ui_logic;
 
+use std::{
+    path::PathBuf,
+};
 use crate::{
     aliases::{
         EGUIContext,
@@ -14,14 +17,14 @@ use self::{
     ui_event::{UIEvent, UIEvents},
     ui_logic::UILogic,
 };
-pub use self::{
-    ui_event::CreateProjectRequest
-};
 
 #[derive(Debug)]
 pub enum UIAffect {
     ExitRequested,
-    CreateProjectReq(CreateProjectRequest),
+    CreateProjectReq{
+        project_name: String,
+        project_dir: PathBuf,
+    },
 }
 
 #[derive(Debug)]

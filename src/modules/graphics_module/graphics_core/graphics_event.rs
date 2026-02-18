@@ -5,9 +5,7 @@ use winit::{
     window::Window,
     event::WindowEvent,
 };
-use winit::{
-    event_loop::EventLoopProxy,
-};
+
 
 #[derive(Debug)]
 pub enum GraphicsEvent {
@@ -25,13 +23,10 @@ pub enum CustomEvent {
 pub enum InternalEvent {
     AppShutdownReq,
     ResumedEvent(Window), 
-    CreateProjectReq(CreateProjectDescriptor),
-}
-
-#[derive(Debug)]
-pub struct CreateProjectDescriptor {
-    pub project_name: String,
-    pub project_dir: PathBuf,
+    CreateProjectReq{
+        project_name: String,
+        project_dir: PathBuf,
+    },
 }
 
 #[derive(Debug)]
@@ -61,5 +56,4 @@ impl From<InternalEvent> for CustomEvent {
         Self::InternalEvent(value)
     }
 }
-
 

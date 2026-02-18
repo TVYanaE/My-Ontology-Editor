@@ -1,21 +1,14 @@
 use std::{
     path::PathBuf,
-};
+}; 
 
 #[derive(Debug)]
 pub enum LogicEvent {
-    CreateProject(ProjectDescriptor),
+    CreateProject {
+        project_name: String,
+        project_dir: PathBuf,
+    },
     ProjectCreated,
     Shutdown,
 }
-
-
-#[derive(Debug)]
-pub struct ProjectDescriptor {
-    pub project_name: String,
-    pub project_dir: PathBuf,
-}
-
-
-
 

@@ -1,13 +1,4 @@
-use std::{ 
-    thread::JoinHandle,
-};
-use crate::{
-    aliases::{
-        LogicEvents,
-    },
-};
+pub mod logic_module_descriptor;
+pub mod project_manager;
 
-pub struct LogicModuleDescriptor {
-    pub thread_handle: Option<JoinHandle<()>>,
-    pub sender: LogicEvents, 
-}
+

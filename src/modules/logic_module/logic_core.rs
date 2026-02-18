@@ -1,6 +1,11 @@
 mod handle_logic_event_error;
 mod logic_core_logic;
 
+use std::{
+    sync::{
+        Arc, RwLock,
+    },
+};
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
@@ -9,10 +14,14 @@ use crate::{
                 LogicEvent
             },
         },
+        shared::{
+            project_manager::ProjectManager,
+        },
     },
 };
 use super::{
     CustomEvents, LogicEvents,
+    ExternalEvent,
 };
 use self::{
     handle_logic_event_error::handle_logic_event_error,
@@ -49,6 +58,7 @@ impl LogicCore {
         custom_events: &CustomEvents,
         logic_events: &LogicEvents,
         app_dirs: &ApplicationDirectories, 
+        project_manager: Arc<RwLock<ProjectManager>>
     ) {
         let current_state = std::mem::replace(
             &mut self.logic_core_state, 
@@ -62,11 +72,12 @@ impl LogicCore {
                     app_dirs, 
                     custom_events,
                     logic_events, 
+                    project_manager,
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Wait,
                     Err(error) => {
-                        handle_logic_event_error(error, logic_events); 
+                        handle_logic_event_error(error, logic_events, custom_events); 
                         LogicCoreState::Wait
                     },
                 }              
@@ -86,8 +97,3 @@ impl LogicCore {
         }
     }
 }
-
-
-
-
-

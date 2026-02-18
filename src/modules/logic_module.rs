@@ -4,7 +4,7 @@ mod logic_core;
 
 use std::{
     thread,
-    sync::Arc
+    sync::{Arc, RwLock},
 };
 use calloop::{
     LoopSignal,
@@ -18,7 +18,11 @@ use crate::{
     },
     modules::{
         app_dirs::ApplicationDirectories,
-        shared::LogicModuleDescriptor,
+        shared::{
+            logic_module_descriptor::LogicModuleDescriptor,
+            project_manager::ProjectManager,
+        },
+        graphics_module::{ExternalEvent},
     }, 
 };
 use self::{
@@ -26,7 +30,7 @@ use self::{
     logic_core::LogicCore,   
 };
 pub use self::{
-    events::{LogicEvent, ProjectDescriptor}
+    events::LogicEvent,
 };
 
 
@@ -34,6 +38,7 @@ pub struct EventLoopResource {
     logic_core: LogicCore,
     custom_events: CustomEvents,
     logic_events: LogicEvents,
+    project_manager: Arc<RwLock<ProjectManager>>,
     app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
 }
@@ -44,6 +49,7 @@ impl LogicModule {
     pub fn init_logic_module(
         custom_events: CustomEvents,
         app_dirs: Arc<ApplicationDirectories>,
+        project_manager: Arc<RwLock<ProjectManager>>,
     ) -> LogicModuleDescriptor {
         let (sender, channel) = channel::<LogicEvent>();
 
@@ -60,6 +66,7 @@ impl LogicModule {
                 logic_core: logic_core,
                 custom_events: custom_events,
                 logic_events: cloned_sender,
+                project_manager: project_manager,
                 app_dirs: app_dirs,
                 loop_signal: loop_signal,
             }; 

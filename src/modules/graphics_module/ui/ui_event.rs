@@ -12,13 +12,10 @@ pub enum UIEvent{
     OpenFileDialogReq,
     FileDialogClosed,
     DirPicked(String),
-    CreateProjectReq(CreateProjectRequest),
+    CreateProjectReq{
+        project_name: String,
+        project_dir: PathBuf,
+    },
     Error(String),
     NotificationClosed,
 }
-
-#[derive(Debug)]
-pub struct CreateProjectRequest {
-    pub project_name: String, 
-    pub project_dir: PathBuf, 
-} 

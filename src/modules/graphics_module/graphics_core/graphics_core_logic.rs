@@ -7,17 +7,17 @@ use thiserror::{
     Error
 };
 use tracing::{
-    instrument
+    instrument,
+    error,
 };
 use crate::{
     modules::{
         logic_module::{
             LogicEvent,
-            ProjectDescriptor,
         },
         graphics_module::{
             ui::UIInputEvent,
-        },
+        }, 
     },
 };
 use super::{
@@ -94,7 +94,10 @@ impl GraphicsCoreLogic {
                 }
 
                 if let Some(handle) = logic_module_descriptor.thread_handle.take() {
-                    handle.join();
+                    // Error will come due to panic in thread 
+                    if let Err(error) = handle.join() {
+                        error!(error = ?error, "Logic Thread Panic");                
+                    }
                 }
 
                 Ok(Some(GraphicsCoreState::Shutdown))
@@ -106,11 +109,11 @@ impl GraphicsCoreLogic {
 
                 Ok(None)
             }
-            InternalEvent::CreateProjectReq(descriptor) => {
-                logic_module_descriptor.sender.send(LogicEvent::CreateProject(ProjectDescriptor { 
-                    project_name: descriptor.project_name, 
-                    project_dir: descriptor.project_dir 
-                }))?;
+            InternalEvent::CreateProjectReq{project_name, project_dir} => {
+                logic_module_descriptor.sender.send(LogicEvent::CreateProject{ 
+                    project_name: project_name, 
+                    project_dir: project_dir 
+                })?;
 
                 ui.on_event(UIInputEvent::Waiting);
 

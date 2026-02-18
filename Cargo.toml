@@ -24,6 +24,8 @@ tracing-appender = "0.2.4"
 
 # For working with file system (For default paths in OS)
 directories = "6.0.0"
+# For declarative working with catalog structure
+tree-fs = "0.3.1"
 
 # For file dialog 
 egui-file-dialog = "0.12.0"
@@ -33,3 +35,12 @@ calloop = { version = "0.14.4", features = []}
 
 # For SQLite
 rusqlite = { version = "0.38.0", features = ["bundled"] }
+
+# For UUID 
+uuid = { version = "1.21.0", features = ["v4", "serde"] }
+
+# For Serialisation 
+serde = { version = "1.0.228", features = ["derive"]}
+toml = { version = "1.0.2", features = []}
+
+

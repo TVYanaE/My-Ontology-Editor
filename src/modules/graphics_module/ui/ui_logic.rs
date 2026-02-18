@@ -35,9 +35,12 @@ impl UILogic {
                 UIEvent::NotificationClosed => {
                     modal_window.on_event(ModalWindowEvent::NotificationClosed);
                 },
-                UIEvent::CreateProjectReq(req) => {
+                UIEvent::CreateProjectReq{project_name, project_dir} => {
                     modal_window.on_event(ModalWindowEvent::Reset);
-                    ui_affects.push(UIAffect::CreateProjectReq(req));
+                    ui_affects.push(UIAffect::CreateProjectReq{
+                        project_name: project_name,
+                        project_dir: project_dir
+                    });
                 },
                 UIEvent::CreateNewProjectButtonPressed => {
                     modal_window.on_event(ModalWindowEvent::CreateNewProjectReq);

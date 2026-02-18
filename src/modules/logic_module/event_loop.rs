@@ -34,7 +34,8 @@ pub fn init_event_loop<'e>(
                     logic_event, 
                     &event_loop_resource.custom_events, 
                     &event_loop_resource.logic_events,
-                    &event_loop_resource.app_dirs
+                    &event_loop_resource.app_dirs,
+                    event_loop_resource.project_manager.clone()
                 ); 
             },
             Event::Closed => {

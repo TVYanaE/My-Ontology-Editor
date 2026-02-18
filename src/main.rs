@@ -3,7 +3,7 @@ mod modules;
 
 use std::{
     sync::{
-        Arc,
+        Arc, RwLock,
     },
 };
 use anyhow::Context;
@@ -24,6 +24,9 @@ use modules::{
         CustomEvent
     },
     logger::init_logger,
+    shared::{
+        project_manager::ProjectManager,
+    },
 };
 
 fn main() {
@@ -53,8 +56,15 @@ fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
     
     let app_dirs = Arc::new(app_dirs);
 
+    // Project Manager 
+    let project_manager = Arc::new(RwLock::new(ProjectManager::new()));
+
     // Logic Module 
-    let logic_module_descriptor = LogicModule::init_logic_module(custom_events.clone(), app_dirs.clone());
+    let logic_module_descriptor = LogicModule::init_logic_module(
+        custom_events.clone(), 
+        app_dirs.clone(),
+        project_manager
+    );
 
     // Graphics Module 
     let mut graphics_module = GraphicsModule::new(app_dirs, logic_module_descriptor, custom_events); 

@@ -1,6 +1,7 @@
+mod create_project_handle;
+
 use std::{
-    time::Duration,
-    thread::sleep,
+    sync::{Arc, RwLock},
 };
 use tracing::{
     instrument
@@ -14,16 +15,28 @@ use crate::{
         graphics_module::{
             CustomEvent, ExternalEvent,
         },
+        shared::{
+            project_manager::{
+                ProjectManager, 
+                ProjectManagerError,
+            },
+        },
     },
 };
 use super::{
     super::{
         LogicEvents, CustomEvents,
         events::{
-            LogicEvent, ProjectDescriptor,
+            LogicEvent,
         }
     },
     LogicCoreState,
+};
+use self::{
+    create_project_handle::{
+        create_project_handle,
+        CreateProjectContext,
+    },
 };
 
 pub struct LogicCoreLogic;
@@ -35,6 +48,15 @@ pub enum LogicEventError {
 
     #[error("MPSC Channel was closed {0}")]
     MPSCChannelError(#[from] std::sync::mpsc::SendError<LogicEvent>),
+
+    #[error("Std IO Error: {0}")]
+    STDIOError(#[from] std::io::Error),
+
+    #[error("Project Manager Error: {0}")]
+    ProjectManagerError(#[from] ProjectManagerError),
+
+    #[error("Rwlock poison error")]
+    RwLockPoisonError
 }
 
 impl LogicCoreLogic {
@@ -44,17 +66,14 @@ impl LogicCoreLogic {
         app_dirs: &ApplicationDirectories,
         custom_events: &CustomEvents,
         logic_events: &LogicEvents,
+        project_manager: Arc<RwLock<ProjectManager>>,
     ) -> Result<Option<LogicCoreState>, LogicEventError> {
         match event {
-            LogicEvent::CreateProject(project_descriptor) => {
-                handle_create_project_event(
-                    project_descriptor, 
-                    app_dirs
-                )?;
-                println!("got task"); 
-                sleep(Duration::from_secs(1));
-                println!("done task");
-                  
+            LogicEvent::CreateProject{project_name, project_dir} => {
+                create_project_handle(
+                    CreateProjectContext { app_dirs, project_name, project_dir, project_manager } 
+                )?; 
+
                 logic_events.send(LogicEvent::ProjectCreated)?; 
                 Ok(None)
             },
@@ -70,10 +89,4 @@ impl LogicCoreLogic {
     } 
 }
 
-fn handle_create_project_event(
-    _project_descriptor: ProjectDescriptor,
-    _app_dirs: &ApplicationDirectories
-) -> Result<(), LogicEventError> {
-     
-    Ok(())
-}
+
