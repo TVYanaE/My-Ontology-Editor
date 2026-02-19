@@ -10,10 +10,14 @@ use std::{
 use thiserror::{
     Error,
 };
+use crate::{
+    aliases::{
+        DBEvents,
+    },
+};
 use self::{
-    project::{
-        
-        Project,
+    project::{    
+        Project, ProjectError,
     },
     project_cache::ProjectCache,
     project_manager_logic::{
@@ -34,16 +38,19 @@ impl Default for ProjectManagerState {
 }
 
 
-
 pub struct ProjectManager {
     state: ProjectManagerState,
+    db_events: DBEvents,
     project_cache: ProjectCache, 
 }
 
 impl ProjectManager {
-    pub fn new() -> Self {
+    pub fn new(
+        db_events: DBEvents,
+    ) -> Self {
         Self { 
             state: ProjectManagerState::default(),
+            db_events: db_events,
             project_cache: ProjectCache::new(),
         }
     }
@@ -58,7 +65,8 @@ impl ProjectManager {
             CreateProjectContext { 
                 projects_dir_cache_path: descriptor.projects_dir_cache_path, 
                 project_name: descriptor.project_name, 
-                project_dir: descriptor.project_dir 
+                project_dir: descriptor.project_dir,
+                db_events: self.db_events.clone()
             } 
         )?; 
 
@@ -81,4 +89,7 @@ pub enum ProjectManagerError {
 
     #[error("Std IO Error: {0}")]
     STDIOError(#[from] std::io::Error),
+
+    #[error("Project Error: {0}")]
+    ProjectError(#[from] ProjectError),
 }

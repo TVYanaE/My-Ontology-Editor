@@ -9,6 +9,7 @@ use uuid::{
     Uuid,
 };
 use super::{
+    DBEvents, Project,
     project_layouts::{
         project_dirs_layout::ProjectDirsLayout,
         project_main_files_layout::ProjectMainFilesLayout,
@@ -26,6 +27,7 @@ pub struct CreateProjectContext {
     pub projects_dir_cache_path: PathBuf,
     pub project_name: String,
     pub project_dir: PathBuf,
+    pub db_events: DBEvents,
 }
 
 impl ProjectManagerLogic {
@@ -79,6 +81,13 @@ impl ProjectManagerLogic {
             &project_main_files_payloads
         )?;
 
+        let project = Project::new(
+            &project_cache_dir, 
+            &project_dirs_layout.semantic_nodes_catalog.path, 
+            &project_main_files_layout.project_meta_file.path, 
+            context.db_events
+        )?;
+
         Ok(()) 
     }
 }
@@ -99,9 +108,6 @@ fn create_unpacked_project(
         )
         .create()?;
 
-    
-
     Ok(())
 }  
 
-fn create_db() {} 

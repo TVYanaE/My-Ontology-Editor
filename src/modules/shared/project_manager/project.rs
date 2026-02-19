@@ -1,4 +1,3 @@
-mod project_topology;
 
 use std::{
     path::{PathBuf, Path},
@@ -6,17 +5,20 @@ use std::{
 use thiserror::{
     Error,
 };
-use self::{
-    project_topology::{
-        ProjectTopology,
-        ProjectTopologyError,
+use crate::{
+    aliases::{
+        DBEvents,
+    },
+    modules::{
+        db_module::DBEvent,
     },
 };
+
 
 /// Descriptor of unpacked project
 pub struct Project {
     project_dirs_map: ProjectDirsMap,
-    project_topology: ProjectTopology,
+    db_events: DBEvents,
 }
 
 impl Project {
@@ -24,17 +26,18 @@ impl Project {
         project_root_path: &impl AsRef<Path>,
         semantic_nodes_dir_path: &impl AsRef<Path>,
         project_meta_file_path: &impl AsRef<Path>,
+        db_events: DBEvents,
     ) -> Result<Self, ProjectError> {
         let project_dirs_map = ProjectDirsMap {
             semantic_nodes_dir_path: semantic_nodes_dir_path.as_ref().to_path_buf(),
             project_meta_file_path: project_meta_file_path.as_ref().to_path_buf(),
         };
-
-        let project_topology = ProjectTopology::new(project_root_path)?;
-
+        
+        db_events.send(DBEvent::OpenConnection(project_root_path.as_ref().to_path_buf())).unwrap();
+        
         Ok(Self { 
             project_dirs_map: project_dirs_map, 
-            project_topology: project_topology,
+            db_events: db_events,
         })
 
     }
@@ -47,6 +50,5 @@ struct ProjectDirsMap {
 
 #[derive(Debug, Error)]
 pub enum ProjectError {
-    #[error("Project Topology Error: {0}")]
-    ProjectTopologyError(#[from] ProjectTopologyError)
+
 }

@@ -4,6 +4,7 @@ use crate::{
     },
 };
 use super::{
+    DBEvent,
     db_core_logic::DBEventError,
 };
 
@@ -12,6 +13,9 @@ pub fn handle_db_event_error(
     error: DBEventError,
 ) {
     match error {
-        // TODO Logic for error handling  
+        DBEventError::ProjectDBError(_) => {
+            // TODO: Logic for sending error to Logic Module
+            db_events.send(DBEvent::Shutdown).expect("Event Loop critical error. DB Module");
+        },
     }
 }

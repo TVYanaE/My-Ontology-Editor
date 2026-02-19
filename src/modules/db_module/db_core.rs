@@ -1,5 +1,6 @@
 mod db_core_logic;
 mod handle_db_event_error;
+mod project_db;
 
 use super::{
     DBEvent, DBEvents,
@@ -7,6 +8,7 @@ use super::{
 use self::{
     db_core_logic::DBCoreLogic,
     handle_db_event_error::handle_db_event_error,
+    project_db::ProjectDB,
 };
 
 enum DBCoreState {
@@ -22,13 +24,15 @@ impl Default for DBCoreState {
 }
 
 pub struct DBCore {
-    state: DBCoreState
+    state: DBCoreState,
+    project_db: ProjectDB,
 }
 
 impl DBCore {
     pub fn new() -> Self {
         Self { 
-            state: DBCoreState::default() 
+            state: DBCoreState::default(),
+            project_db: ProjectDB::new(),
         }
     }
 
@@ -51,7 +55,10 @@ impl DBCore {
 
         self.state = match (current_state, event) {
             (DBCoreState::Wait, event) => {
-                match DBCoreLogic::db_event_handle(event) {
+                match DBCoreLogic::db_event_handle(
+                    event,
+                    &mut self.project_db
+                ) {
                     Ok(Some(new_state)) => new_state, 
                     Ok(None) => DBCoreState::Wait,
                     Err(error) => {

@@ -1,5 +1,10 @@
-
+use std::{
+    path::{
+        PathBuf,
+    },
+};
 
 pub enum DBEvent {
-    Shutdown
+    Shutdown,
+    OpenConnection(PathBuf),
 }
