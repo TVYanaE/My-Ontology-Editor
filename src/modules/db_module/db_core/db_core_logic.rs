@@ -35,8 +35,14 @@ impl DBCoreLogic {
                 println!("DB Thread shutdown");
                 Ok(Some(DBCoreState::Shutdown))
             },
-            DBEvent::OpenConnection(project_root_path) => {
-                project_db.open_connection(&project_root_path)?;
+            DBEvent::OpenConnection{
+                project_root_path, 
+                response_target
+            } => {
+                project_db.open_connection(
+                    &project_root_path,
+                    response_target,
+                )?;
                 Ok(None)
             },
         } 

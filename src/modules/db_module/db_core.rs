@@ -10,6 +10,9 @@ use self::{
     handle_db_event_error::handle_db_event_error,
     project_db::ProjectDB,
 };
+pub use self::{
+    project_db::ProjectDBError,
+};
 
 enum DBCoreState {
     Wait, 

@@ -43,4 +43,6 @@ uuid = { version = "1.21.0", features = ["v4", "serde"] }
 serde = { version = "1.0.228", features = ["derive"]}
 toml = { version = "1.0.2", features = []}
 
+# For One-shot channel 
+oneshot = "0.1.13"
 

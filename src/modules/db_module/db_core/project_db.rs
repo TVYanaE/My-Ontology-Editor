@@ -11,6 +11,9 @@ use thiserror::{
 use rusqlite::{
     Connection,
 };
+use oneshot::{
+    Sender,
+};
 use self::{
     project_db_logic::ProjectDBLogic,
 };
@@ -30,7 +33,10 @@ impl Default for ProjectDBState {
 #[derive(Debug, Error)]
 pub enum ProjectDBError {
     #[error("Rusqlite Error: {0}")]
-    RusQliteError(#[from] rusqlite::Error) 
+    RusQliteError(#[from] rusqlite::Error),
+
+    #[error("OneShot Send Error: {0}")]
+    OneShotSendError(#[from] oneshot::SendError<Result<(), ProjectDBError>>),
 }
 
 pub struct ProjectDB {
@@ -62,9 +68,13 @@ impl ProjectDB {
 
     pub fn open_connection(
         &mut self,
-        project_root_path: &impl AsRef<Path>
+        project_root_path: &impl AsRef<Path>,
+        response_target: Sender<Result<(), ProjectDBError>>
     ) -> Result<(), ProjectDBError> {
-        match ProjectDBLogic::open_connection_handle(project_root_path) {
+        match ProjectDBLogic::open_connection_handle(
+            project_root_path,
+            response_target,
+        ) {
             Ok(connection) => {
                 self.state = ProjectDBState::Connected(connection);
                 Ok(())

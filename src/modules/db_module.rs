@@ -27,6 +27,7 @@ use self::{
 };
 pub use self::{
     events::DBEvent,
+    db_core::ProjectDBError,
 };
 
 struct EventLoopResource {
