@@ -16,6 +16,9 @@ use modules::{
         init_app_dirs, 
         ApplicationDirectories,
     },
+    db_module::{
+        DBModule,
+    },
     logic_module::{
         LogicModule, 
     },
@@ -59,11 +62,15 @@ fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
     // Project Manager 
     let project_manager = Arc::new(RwLock::new(ProjectManager::new()));
 
+    // DB module 
+    let db_module_handler = DBModule::init_db_module();
+
     // Logic Module 
     let logic_module_descriptor = LogicModule::init_logic_module(
         custom_events.clone(), 
         app_dirs.clone(),
-        project_manager
+        project_manager,
+        db_module_handler
     );
 
     // Graphics Module 

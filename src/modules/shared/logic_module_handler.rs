@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-pub struct LogicModuleDescriptor {
+pub struct LogicModuleHandler {
     pub thread_handle: Option<JoinHandle<()>>,
     pub sender: LogicEvents, 
 }

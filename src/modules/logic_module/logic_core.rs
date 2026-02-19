@@ -15,6 +15,7 @@ use crate::{
             },
         },
         shared::{
+            db_module_handler::DBModuleHandler,
             project_manager::ProjectManager,
         },
     },
@@ -58,7 +59,8 @@ impl LogicCore {
         custom_events: &CustomEvents,
         logic_events: &LogicEvents,
         app_dirs: &ApplicationDirectories, 
-        project_manager: Arc<RwLock<ProjectManager>>
+        project_manager: Arc<RwLock<ProjectManager>>,
+        db_module_handler: &mut DBModuleHandler
     ) {
         let current_state = std::mem::replace(
             &mut self.logic_core_state, 
@@ -73,6 +75,7 @@ impl LogicCore {
                     custom_events,
                     logic_events, 
                     project_manager,
+                    db_module_handler,
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Wait,

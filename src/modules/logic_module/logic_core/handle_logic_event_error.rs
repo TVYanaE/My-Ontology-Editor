@@ -18,7 +18,13 @@ pub fn handle_logic_event_error(
             custom_events.send_event(ExternalEvent::AppShutdownReq.into())
                 .expect("Winit Event Loop closed");
         },
-        LogicEventError::MPSCChannelError(_) => {
+        LogicEventError::MPSCChannelLogicEventError(_) => {
+            logic_events.send(LogicEvent::Shutdown)
+                .expect("Logic Event Loop Critical Error");
+            custom_events.send_event(ExternalEvent::AppShutdownReq.into())
+                .expect("Winit Event Loop closed");
+        },
+        LogicEventError::MPSCChannelDBEventError(_) => {
             logic_events.send(LogicEvent::Shutdown)
                 .expect("Logic Event Loop Critical Error");
             custom_events.send_event(ExternalEvent::AppShutdownReq.into())

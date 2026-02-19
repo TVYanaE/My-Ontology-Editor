@@ -19,12 +19,14 @@ use egui_winit::{
 };
 use crate::{
     modules::{
+        db_module::DBEvent,
         logic_module::LogicEvent,
         graphics_module::CustomEvent
     },
 };
 
 // Project aliases
+pub type DBEvents = Sender<DBEvent>;
 pub type LogicEvents = Sender<LogicEvent>;
 pub type CustomEvents = EventLoopProxy<CustomEvent>;
 

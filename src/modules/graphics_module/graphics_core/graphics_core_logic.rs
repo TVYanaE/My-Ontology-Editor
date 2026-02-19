@@ -23,7 +23,7 @@ use crate::{
 use super::{
     super::{
         ui::UI,
-        LogicModuleDescriptor,  
+        LogicModuleHandler,  
         graphics_backend::{
             wgpu_backend::WGPUBackendError,
             egui_backend::EGUIBackendError,
@@ -83,17 +83,17 @@ impl GraphicsCoreLogic {
     pub fn internal_event_handle(
         event: InternalEvent,
         graphics_backend: &mut GraphicsBackend,
-        logic_module_descriptor: &mut LogicModuleDescriptor,
+        logic_module_handler: &mut LogicModuleHandler,
         ui: &mut UI,
     ) -> Result<Option<GraphicsCoreState>, InternalEventError> {
         match event {
             InternalEvent::AppShutdownReq => {
                 // logic for shutdown
-                if let Err(_) = logic_module_descriptor.sender.send(LogicEvent::Shutdown) {
+                if let Err(_) = logic_module_handler.sender.send(LogicEvent::Shutdown) {
                     return Ok(Some(GraphicsCoreState::Shutdown));
                 }
 
-                if let Some(handle) = logic_module_descriptor.thread_handle.take() {
+                if let Some(handle) = logic_module_handler.thread_handle.take() {
                     // Error will come due to panic in thread 
                     if let Err(error) = handle.join() {
                         error!(error = ?error, "Logic Thread Panic");                
@@ -110,7 +110,7 @@ impl GraphicsCoreLogic {
                 Ok(None)
             }
             InternalEvent::CreateProjectReq{project_name, project_dir} => {
-                logic_module_descriptor.sender.send(LogicEvent::CreateProject{ 
+                logic_module_handler.sender.send(LogicEvent::CreateProject{ 
                     project_name: project_name, 
                     project_dir: project_dir 
                 })?;

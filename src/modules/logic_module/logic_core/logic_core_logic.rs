@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tracing::{
-    instrument
+    instrument, error,
 };
 use thiserror::{
     Error
@@ -12,10 +12,12 @@ use thiserror::{
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
+        db_module::DBEvent,
         graphics_module::{
             CustomEvent, ExternalEvent,
         },
         shared::{
+            db_module_handler::DBModuleHandler,
             project_manager::{
                 ProjectManager, 
                 ProjectManagerError,
@@ -47,7 +49,10 @@ pub enum LogicEventError {
     EventLoopClosed(#[from] winit::event_loop::EventLoopClosed<CustomEvent>),
 
     #[error("MPSC Channel was closed {0}")]
-    MPSCChannelError(#[from] std::sync::mpsc::SendError<LogicEvent>),
+    MPSCChannelLogicEventError(#[from] std::sync::mpsc::SendError<LogicEvent>),
+
+    #[error("MPSC Channel was closed {0}")]
+    MPSCChannelDBEventError(#[from] std::sync::mpsc::SendError<DBEvent>),
 
     #[error("Std IO Error: {0}")]
     STDIOError(#[from] std::io::Error),
@@ -67,6 +72,7 @@ impl LogicCoreLogic {
         custom_events: &CustomEvents,
         logic_events: &LogicEvents,
         project_manager: Arc<RwLock<ProjectManager>>,
+        db_module_handler: &mut DBModuleHandler
     ) -> Result<Option<LogicCoreState>, LogicEventError> {
         match event {
             LogicEvent::CreateProject{project_name, project_dir} => {
@@ -82,6 +88,15 @@ impl LogicCoreLogic {
                 Ok(None)
             }
             LogicEvent::Shutdown => {
+                db_module_handler.db_events.send(DBEvent::Shutdown)?;
+                
+                if let Some(handle) = db_module_handler.thread_handle.take() {
+                    // Error will come due to panic in thread 
+                    if let Err(error) = handle.join() {
+                        error!(error = ?error, "DB Thread Panic");                
+                    }
+                }
+
                 // Logic for Graceful Shutdown  
                 Ok(Some(LogicCoreState::Shutdown))
             }

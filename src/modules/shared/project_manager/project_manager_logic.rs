@@ -8,9 +8,6 @@ use tree_fs::{
 use uuid::{
     Uuid,
 };
-
-pub struct ProjectManagerLogic;
-
 use super::{
     project_layouts::{
         project_dirs_layout::ProjectDirsLayout,
@@ -22,6 +19,8 @@ use super::{
     },
     ProjectManagerError, 
 };
+
+pub struct ProjectManagerLogic;
 
 pub struct CreateProjectContext {
     pub projects_dir_cache_path: PathBuf,
@@ -66,30 +65,43 @@ impl ProjectManagerLogic {
             }
         )?;
 
+        /*
+            let project_map = ProjectDirsMap {
+                semantic_nodes_dir_path: project_dirs_layout.semantic_nodes_catalog.path,
+                project_meta_file_path: project_main_files_layout.project_meta_file.path, 
+            };
+        */
+
         create_unpacked_project(
             &project_cache_dir, 
-            project_dirs_layout, 
-            project_main_files_layout, 
-            project_main_files_payloads
+            &project_dirs_layout, 
+            &project_main_files_layout, 
+            &project_main_files_payloads
         )?;
+
         Ok(()) 
     }
 }
 
 fn create_unpacked_project(
     root: & impl AsRef<Path>,
-    project_dirs_layout: ProjectDirsLayout,
-    project_main_files_layout: ProjectMainFilesLayout,
-    project_main_files_payloads: ProjectMainFilesPayloads,
+    project_dirs_layout: &ProjectDirsLayout,
+    project_main_files_layout: &ProjectMainFilesLayout,
+    project_main_files_payloads: &ProjectMainFilesPayloads,
 ) -> Result<(), ProjectManagerError> {
     TreeBuilder::default()
         .drop(false)
         .root_folder(root)
-        .add_directory(project_dirs_layout.semantic_nodes_catalog.path)
+        .add_directory(&project_dirs_layout.semantic_nodes_catalog.path)
         .add_file(
-            project_main_files_layout.project_meta_file.path, 
+            &project_main_files_layout.project_meta_file.path, 
             &project_main_files_payloads.meta_file.data
         )
         .create()?;
+
+    
+
     Ok(())
 }  
+
+fn create_db() {} 

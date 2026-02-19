@@ -9,7 +9,7 @@ use winit::{
 use crate::{
     modules::{ 
         shared::{
-            logic_module_descriptor::LogicModuleDescriptor,
+            logic_module_handler::LogicModuleHandler,
         },
     },
 };
@@ -47,18 +47,18 @@ impl Default for GraphicsCoreState {
 pub struct GraphicsCore {
     state: GraphicsCoreState,
     custom_events: CustomEvents,
-    logic_module_descriptor: LogicModuleDescriptor,
+    logic_module_handler: LogicModuleHandler,
 }
 
 impl GraphicsCore {
     pub fn new(
-        logic_module_descriptor: LogicModuleDescriptor,
+        logic_module_handler: LogicModuleHandler,
         custom_events: CustomEvents,
     ) -> Self {
         Self { 
             state: GraphicsCoreState::default(), 
             custom_events: custom_events,
-            logic_module_descriptor: logic_module_descriptor,
+            logic_module_handler: logic_module_handler,
         }
     }
     pub fn on_event(
@@ -80,7 +80,7 @@ impl GraphicsCore {
                                 match GraphicsCoreLogic::internal_event_handle(
                                     event,
                                     graphics_backend,
-                                    &mut self.logic_module_descriptor,
+                                    &mut self.logic_module_handler,
                                     ui
                                 ) {
                                     Ok(Some(new_state)) => {
@@ -182,7 +182,7 @@ impl GraphicsCore {
                                         if let Err(error) = GraphicsCoreLogic::internal_event_handle(
                                             event,
                                             graphics_backend,
-                                            &mut self.logic_module_descriptor,
+                                            &mut self.logic_module_handler,
                                             ui,
                                         ) {
                                             handle_graphic_event_error(error.into(), &self.custom_events);

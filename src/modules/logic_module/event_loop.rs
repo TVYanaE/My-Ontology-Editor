@@ -1,4 +1,3 @@
-use anyhow::Context;
 use calloop::{
     channel::{
         Channel, Event, 
@@ -19,8 +18,8 @@ use super::{
 
 pub fn init_event_loop<'e>(
     channel: Channel<LogicEvent> 
-) -> Result<EventLoop<'e, EventLoopResource>, anyhow::Error>{
-    let event_loop: EventLoop<EventLoopResource> = EventLoop::try_new().context("Event Loop Error init calloop")?;
+) -> EventLoop<'e, EventLoopResource>{
+    let event_loop: EventLoop<EventLoopResource> = EventLoop::try_new().expect("Event Loop Error init calloop. Logic Module");
     let event_loop_handle = event_loop.handle();
     
     let _ = event_loop_handle.insert_source(channel, |
@@ -35,7 +34,8 @@ pub fn init_event_loop<'e>(
                     &event_loop_resource.custom_events, 
                     &event_loop_resource.logic_events,
                     &event_loop_resource.app_dirs,
-                    event_loop_resource.project_manager.clone()
+                    event_loop_resource.project_manager.clone(),
+                    &mut event_loop_resource.db_module_handler,
                 ); 
             },
             Event::Closed => {
@@ -44,5 +44,5 @@ pub fn init_event_loop<'e>(
         } 
     });
 
-    Ok(event_loop)
+    event_loop
 }

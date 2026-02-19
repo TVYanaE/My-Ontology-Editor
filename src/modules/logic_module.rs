@@ -19,7 +19,8 @@ use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
         shared::{
-            logic_module_descriptor::LogicModuleDescriptor,
+            db_module_handler::DBModuleHandler,
+            logic_module_handler::LogicModuleHandler,
             project_manager::ProjectManager,
         },
         graphics_module::{ExternalEvent},
@@ -34,13 +35,14 @@ pub use self::{
 };
 
 
-pub struct EventLoopResource {
+struct EventLoopResource {
     logic_core: LogicCore,
     custom_events: CustomEvents,
     logic_events: LogicEvents,
     project_manager: Arc<RwLock<ProjectManager>>,
     app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
+    db_module_handler: DBModuleHandler,
 }
 
 pub struct LogicModule;
@@ -50,14 +52,14 @@ impl LogicModule {
         custom_events: CustomEvents,
         app_dirs: Arc<ApplicationDirectories>,
         project_manager: Arc<RwLock<ProjectManager>>,
-    ) -> LogicModuleDescriptor {
+        db_module_handler: DBModuleHandler,
+    ) -> LogicModuleHandler {
         let (sender, channel) = channel::<LogicEvent>();
 
         let cloned_sender = sender.clone();
 
         let handle = thread::spawn(move||{
-            let mut event_loop = init_event_loop(channel)
-                .expect("Event Loop Error init calloop");
+            let mut event_loop = init_event_loop(channel);
             let loop_signal = event_loop.get_signal();
 
             let logic_core = LogicCore::new();
@@ -69,6 +71,7 @@ impl LogicModule {
                 project_manager: project_manager,
                 app_dirs: app_dirs,
                 loop_signal: loop_signal,
+                db_module_handler: db_module_handler,
             }; 
 
             let _ = event_loop.run(None, &mut event_loop_resource, |event_loop_resource|{
@@ -79,7 +82,7 @@ impl LogicModule {
             }); 
         });
         
-        LogicModuleDescriptor {
+        LogicModuleHandler {
             thread_handle: Some(handle),
             sender: sender,
         }

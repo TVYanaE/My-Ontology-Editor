@@ -1,20 +1,25 @@
 mod project;
+mod project_cache;
 mod project_layouts;
 mod project_manager_logic;
 mod project_main_files_payloads;
 
-use std::{
+use std::{ 
     path::PathBuf
 };
 use thiserror::{
     Error,
 };
 use self::{
+    project::{
+        
+        Project,
+    },
+    project_cache::ProjectCache,
     project_manager_logic::{
         CreateProjectContext,
         ProjectManagerLogic,
     },
-    project::Project,
 };
 
 enum ProjectManagerState {
@@ -28,14 +33,18 @@ impl Default for ProjectManagerState {
     }
 }
 
+
+
 pub struct ProjectManager {
-    state: ProjectManagerState
+    state: ProjectManagerState,
+    project_cache: ProjectCache, 
 }
 
 impl ProjectManager {
     pub fn new() -> Self {
         Self { 
             state: ProjectManagerState::default(),
+            project_cache: ProjectCache::new(),
         }
     }
 
@@ -51,7 +60,7 @@ impl ProjectManager {
                 project_name: descriptor.project_name, 
                 project_dir: descriptor.project_dir 
             } 
-        )?;        
+        )?; 
 
         Ok(())
     } 
