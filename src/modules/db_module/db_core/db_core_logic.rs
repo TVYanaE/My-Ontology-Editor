@@ -37,11 +37,9 @@ impl DBCoreLogic {
             },
             DBEvent::OpenConnection{
                 project_root_path, 
-                response_target
             } => {
                 project_db.open_connection(
                     &project_root_path,
-                    response_target,
                 )?;
                 Ok(None)
             },

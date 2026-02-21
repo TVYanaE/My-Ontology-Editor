@@ -46,3 +46,8 @@ toml = { version = "1.0.2", features = []}
 # For One-shot channel 
 oneshot = "0.1.13"
 
+# For CTRL+C Handling
+ctrlc = "3.5.2"
+
+# For Tar archive
+tar = "0.4.44"

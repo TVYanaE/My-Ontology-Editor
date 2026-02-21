@@ -1,5 +1,6 @@
 mod graphics_backend;
 mod graphics_core;
+mod events;
 mod ui;
 
 use std::{
@@ -13,7 +14,6 @@ use winit::{
     window::{WindowId, WindowAttributes},
 };
 use crate::{
-    aliases::CustomEvents,
     modules::{
         app_dirs::ApplicationDirectories,
         shared::{
@@ -25,14 +25,13 @@ use self::{
     graphics_backend::GraphicsBackend,
     graphics_core::GraphicsCore,
     ui::UI,
+    events::InternalEvent,
 };
 pub use self::{
-    graphics_core::{
-        graphics_event::{
-            CustomEvent,
-            InternalEvent, ExternalEvent,
-        }, 
-    },
+    events::{
+        CustomEvent, CustomEvents,
+        ExternalEvent,
+    }, 
 };
 
 pub struct GraphicsModule {
@@ -52,7 +51,7 @@ impl GraphicsModule {
         Self { 
             graphics_backend: GraphicsBackend::default(), 
             graphics_core: GraphicsCore::new(logic_module_handler, custom_events), 
-            ui: UI::default(),
+            ui: UI::new(),
             app_dirs: app_dirs,
             last_instance: Instant::now(),
         }

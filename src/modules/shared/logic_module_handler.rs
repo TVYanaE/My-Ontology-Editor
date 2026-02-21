@@ -2,8 +2,8 @@ use std::{
     thread::JoinHandle,
 };
 use crate::{
-    aliases::{
-        LogicEvents,
+    modules::{
+        logic_module::LogicEvents,
     },
 };
 

@@ -4,8 +4,17 @@ use std::{
 use winit::{
     window::Window,
     event::WindowEvent,
+    event_loop::EventLoopProxy,
+};
+use crate::{
+    modules::{
+        shared::{
+            task_id::TaskID,
+        },
+    },
 };
 
+pub type CustomEvents = EventLoopProxy<CustomEvent>;
 
 #[derive(Debug)]
 pub enum GraphicsEvent {
@@ -27,12 +36,20 @@ pub enum InternalEvent {
         project_name: String,
         project_dir: PathBuf,
     },
+    ConfirmationObtain {
+        task_id: TaskID,
+        confirm: bool,
+    }
 }
 
 #[derive(Debug)]
 pub enum ExternalEvent { 
     AppShutdownReq,
-    TaskDone,
+    TaskDone(TaskID),
+    ConfirmRequeired {
+        task_id: TaskID,
+        text: String,
+    },
 }
 
 impl From<WindowEvent> for GraphicsEvent {

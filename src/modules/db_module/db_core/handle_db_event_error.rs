@@ -1,12 +1,9 @@
-use crate::{
-    aliases::{
-        DBEvents
-    },
-};
 use super::{
+    super::events::DBEvents,
     DBEvent,
     db_core_logic::DBEventError,
 };
+
 
 pub fn handle_db_event_error(
     db_events: &DBEvents,

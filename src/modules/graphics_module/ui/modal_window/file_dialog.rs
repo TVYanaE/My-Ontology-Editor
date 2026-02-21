@@ -6,10 +6,16 @@ use crate::{
     aliases::{
         EGUIContext,
     },
+    modules::{
+        graphics_module::{
+            ui::{
+                events::{UIEvents, UIEvent},
+                ui_error::UIError,
+            },
+        },
+    },
 };
-use super::{
-    UIEvent,
-};
+
 
 pub struct FileDialogWrap {
     file_dialog: FileDialog
@@ -27,12 +33,12 @@ impl FileDialogWrap {
     pub fn prepare(
         &mut self,
         egui_context: &EGUIContext
-    ) -> Vec<UIEvent> {
-        let mut ui_events = Vec::with_capacity(4);
+    ) -> Result<UIEvents, UIError> {
+        let mut ui_events = UIEvents::with_capacity(4);
 
         prepare_file_dialog(&mut self.file_dialog, egui_context, &mut ui_events);    
 
-        ui_events
+        Ok(ui_events)
     }
 
     pub fn open_for_pick_directory(&mut self) {
@@ -49,12 +55,11 @@ impl FileDialogWrap {
 
     if let Some(project_path) = file_dialog.picked() {
         if let Some(project_path_str) = project_path.to_str() {
-            ui_events.push(UIEvent::DirPicked(project_path_str.to_string()));  
-             
+            ui_events.push(UIEvent::DirPicked(project_path_str.to_string()));              
         }
         else {
-            ui_events.push(
-                UIEvent::Error(
+            ui_events.push( 
+                UIEvent::ShowNotification(
                     "Invalid Symbols was found in path. Please Use UTF-8 Symbols Only".to_string()
                 )
             ); 

@@ -24,12 +24,16 @@ use crate::{
     aliases::{
         EGUIUI, EGUIContext,
     }, 
-};
-use super::{
-    super::{
-        ui_event::UIEvent,
+    modules::{
+        graphics_module::{
+            ui::{
+                events::{UIEvents, UIEvent},
+                ui_error::UIError,
+            },
+        },
     },
 };
+
 
 pub struct CreateNewProjectWindowData {
     pub project_path: String,
@@ -54,8 +58,8 @@ impl CreateNewProjectWindow {
     pub(super) fn prepare(
         &mut self,
         egui_context: &EGUIContext,
-    ) -> Vec<UIEvent> {
-        let mut ui_events = Vec::with_capacity(4);
+    ) -> Result<UIEvents, UIError> {
+        let mut ui_events = UIEvents::with_capacity(4);
         
         Modal::new("Create-New-Project-Window".into()).show(
             egui_context, |window_ui| {
@@ -77,7 +81,7 @@ impl CreateNewProjectWindow {
             }); 
         });
 
-        ui_events
+        Ok(ui_events)
     }
 
     pub fn set_project_dir(
@@ -96,7 +100,7 @@ fn bottom_container(
 ) {
     let (left_resp, right_resp) = Sides::new().show(bottom_ui, 
         |left_ui|{
-            left_ui.add(Button::new("Close"))  
+            left_ui.add(Button::new("Close")) 
         }, 
         |right_ui|{
             right_ui.add(Button::new("Create"))
@@ -104,7 +108,7 @@ fn bottom_container(
     ); 
 
     if left_resp.clicked() {
-        ui_events.push(UIEvent::CloseCreateNewProjectWindowButtonPressed);
+        ui_events.push(UIEvent::CloseCreateNewProjectWindow);
     }
     if right_resp.clicked() {
         create_new_project(
@@ -155,14 +159,14 @@ fn create_new_project(
                 if !meta.is_dir() {
                     let error_text = format!("Invalid Path: Is not directory");
 
-                    ui_events.push(UIEvent::Error(error_text));  
+                    ui_events.push(UIEvent::ShowNotification(error_text));  
                     return;
                 }
             },
             Err(error) => {
                 let error_text = format!("Invalid Path: {error}");
                 
-                ui_events.push(UIEvent::Error(error_text));
+                ui_events.push(UIEvent::ShowNotification(error_text));
                 return;
             }
         }

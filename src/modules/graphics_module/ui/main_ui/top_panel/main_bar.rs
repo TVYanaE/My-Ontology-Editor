@@ -12,10 +12,16 @@ use crate::{
     aliases::{
         EGUIUI,
     }, 
+    modules::{
+        graphics_module::{
+            ui::{
+                events::{UIEvents, UIEvent},
+                ui_error::UIError,
+            },
+        },
+    },
 };
-use super::{
-    UIEvent
-};
+
 
 #[derive(Default)]
 pub struct MainBar;
@@ -24,21 +30,21 @@ impl MainBar {
     pub(super) fn prepare(
         &mut self,
         egui_ui: &mut EGUIUI
-    ) -> Vec<UIEvent> {
-        let mut ui_affects = Vec::with_capacity(4);
+    ) -> Result<UIEvents, UIError> {
+        let mut ui_events = UIEvents::with_capacity(4);
         
         MenuBar::new().ui(egui_ui, |menu_bar_ui|{ 
             MenuButton::new("File").ui(menu_bar_ui, |file_menu_ui|{
                 if file_menu_ui.add(Button::new("Create New Project")).clicked() {
-                    ui_affects.push(UIEvent::CreateNewProjectButtonPressed);
+                    ui_events.push(UIEvent::OpenCreateNewProjectWindow);
                 }
 
                 if file_menu_ui.add(Button::new("Quit")).clicked() {
-                    ui_affects.push(UIEvent::QuitButtonPressed);
+                    ui_events.push(UIEvent::QuitApp);
                 };
             }); 
         }); 
 
-        ui_affects
+        Ok(ui_events)
     }
 }

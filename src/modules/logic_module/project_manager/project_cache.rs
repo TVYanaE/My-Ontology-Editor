@@ -15,7 +15,7 @@ pub struct ProjectID(Uuid);
 
 pub struct ProjectDescriptor{
     pub name: String,
-    pub full_path: PathBuf 
+    pub root_path: PathBuf 
 }
 
 pub struct ProjectCache {

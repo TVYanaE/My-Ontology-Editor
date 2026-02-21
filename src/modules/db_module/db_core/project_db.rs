@@ -69,11 +69,10 @@ impl ProjectDB {
     pub fn open_connection(
         &mut self,
         project_root_path: &impl AsRef<Path>,
-        response_target: Sender<Result<(), ProjectDBError>>
     ) -> Result<(), ProjectDBError> {
         match ProjectDBLogic::open_connection_handle(
             project_root_path,
-            response_target,
+            
         ) {
             Ok(connection) => {
                 self.state = ProjectDBState::Connected(connection);

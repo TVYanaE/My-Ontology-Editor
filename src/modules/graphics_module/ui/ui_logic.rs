@@ -1,68 +1,90 @@
-use super::{
-    modal_window::ModalWindowEvent,
-    UIEvent, UIInputEvent, UIAffect,
-    Panels, ModalWindow,
-};
+use crate::{
+    aliases::{
+        EGUIContext,
+    },
+    modules::{
+        graphics_module::{
+            ui::{
+                ui_affect::{UIAffects, UIAffect},
+                main_ui::MainUI,
+                modal_window::ModalWindow,
+                ui_error::UIError,
+                events::{UIEvent, UIEvents},
+                ui_state::{UIState, ModalWindowKind, Transition},
+            },
+        },
+    },
+}; 
 
 pub struct UILogic;
 
 impl UILogic {
-    pub fn ui_events_processing(
-        mut events: Vec<UIEvent>, 
-        _panels: &mut Panels,
-        modal_window: &mut ModalWindow,
-    ) -> Vec<UIAffect> {
-        let mut ui_affects = Vec::with_capacity(16);
+    pub fn prepare_main_ui(
+        main_ui: &mut MainUI,
+        egui_context: &EGUIContext
+    ) -> Result<UIEvents, UIError> {
+         
+        let main_ui_events = main_ui.prepare(egui_context)?;
 
-        while let Some(event) = events.pop() {
+        Ok(main_ui_events)
+    } 
+
+    pub fn prepare_modal_window(
+        modal_window_kind: ModalWindowKind,
+        modal_window: &mut ModalWindow,
+        egui_context: &EGUIContext,
+    ) -> Result<UIEvents, UIError> {
+        let modal_window_events = modal_window.prepare(egui_context, modal_window_kind)?;
+
+        Ok(modal_window_events)
+    }
+
+    pub fn ui_events_handle(
+        mut ui_events: UIEvents,
+        ui_affects: &mut UIAffects,
+        modal_window: &mut ModalWindow,
+    ) -> Result<Transition, UIError> {
+        let mut transition  = Transition::Stay;
+        for event in ui_events.drain(..) {
             match event {
-                UIEvent::FileDialogClosed => {
-                    modal_window.on_event(ModalWindowEvent::FileDialogClosed);
-                },
-                UIEvent::Error(error_text) => {
-                    modal_window.on_event(ModalWindowEvent::ShowNotificationReq(error_text));
-                },
-                UIEvent::DirPicked(dir_path) => {
-                    modal_window.create_new_project_window.set_project_dir(dir_path);
-                    modal_window.on_event(ModalWindowEvent::FileDialogClosed);
-                },
-                UIEvent::QuitButtonPressed => {
+                UIEvent::QuitApp => {
                     ui_affects.push(UIAffect::ExitRequested);
                 },
+                UIEvent::OpenCreateNewProjectWindow => {
+                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::CreateNewProject));
+                },
+                UIEvent::DirPicked(dir) => {
+                    modal_window.create_new_project_window.set_project_dir(dir);   
+                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::CreateNewProject));
+                },
+                UIEvent::FileDialogClosed => {
+                    transition = Transition::Rollback; 
+                },
                 UIEvent::OpenFileDialogReq => {
-                    modal_window.on_event(ModalWindowEvent::FileDialogOpenReq);
+                    modal_window.file_dialog.open_for_pick_directory();
+                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::FileDialog));
+                },
+                UIEvent::Confirmation { task_id, confirm } => {
+                    ui_affects.push(UIAffect::Confirmation { task_id, confirm });
+                    transition = Transition::Rollback;
                 },
                 UIEvent::NotificationClosed => {
-                    modal_window.on_event(ModalWindowEvent::NotificationClosed);
+                    transition = Transition::Rollback;
                 },
-                UIEvent::CreateProjectReq{project_name, project_dir} => {
-                    modal_window.on_event(ModalWindowEvent::Reset);
-                    ui_affects.push(UIAffect::CreateProjectReq{
-                        project_name: project_name,
-                        project_dir: project_dir
-                    });
+                UIEvent::ShowNotification(text) => {
+                    modal_window.notification.set_notification_text(&text);
+                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::Notification));
                 },
-                UIEvent::CreateNewProjectButtonPressed => {
-                    modal_window.on_event(ModalWindowEvent::CreateNewProjectReq);
+                UIEvent::CreateProjectReq { project_name, project_dir } => {
+                    ui_affects.push(UIAffect::CreateProjectReq { project_name, project_dir }); 
+                    transition = Transition::Next(UIState::Default);
                 },
-                UIEvent::CloseCreateNewProjectWindowButtonPressed => {
-                    modal_window.on_event(ModalWindowEvent::Reset);
+                UIEvent::CloseCreateNewProjectWindow => {
+                    transition = Transition::Next(UIState::Default);
                 },
-            }
-        }  
-        ui_affects
-    }
-    pub fn ui_input_event_processing(
-        event: UIInputEvent,
-        modal_window: &mut ModalWindow,
-    ) { 
-        match event {
-            UIInputEvent::Waiting => {
-                modal_window.on_event(ModalWindowEvent::ShowWaitingWindowReq);
-            },
-            UIInputEvent::StopWaiting => {
-                modal_window.on_event(ModalWindowEvent::Reset);
             }
         }
-    }
+
+        Ok(transition) 
+    } 
 }

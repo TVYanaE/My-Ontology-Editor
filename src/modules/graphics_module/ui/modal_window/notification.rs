@@ -12,10 +12,16 @@ use crate::{
     aliases::{
         EGUIContext,
     },
+    modules::{
+        graphics_module::{
+            ui::{
+                events::{UIEvent, UIEvents},
+                ui_error::UIError,
+            },
+        },
+    },
 };
-use super::{
-    UIEvent,
-};
+
 
 pub struct NotificationData {
     text: String,
@@ -38,11 +44,12 @@ impl Notification {
     pub fn prepare(
         &mut self,
         egui_context: &EGUIContext
-    ) -> Vec<UIEvent> {
-        let mut ui_events = Vec::with_capacity(4);
-        prepare_notification(egui_context, &mut ui_events, &self.data.text);
-        ui_events
+    ) -> Result<UIEvents, UIError> {
+        let mut ui_events = UIEvents::with_capacity(4);
+            prepare_notification(egui_context, &mut ui_events, &self.data.text);
+        Ok(ui_events)
     }
+
     pub fn set_notification_text(&mut self, text: &str) {
         self.data.text.clear();
         self.data.text.push_str(text);

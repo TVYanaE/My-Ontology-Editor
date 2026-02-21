@@ -1,8 +1,5 @@
 mod create_project_handle;
 
-use std::{
-    sync::{Arc, RwLock},
-};
 use tracing::{
     instrument, error,
 };
@@ -17,11 +14,7 @@ use crate::{
             CustomEvent, ExternalEvent,
         },
         shared::{
-            db_module_handler::DBModuleHandler,
-            project_manager::{
-                ProjectManager, 
-                ProjectManagerError,
-            },
+            db_module_handler::DBModuleHandler, 
         },
     },
 };
@@ -30,7 +23,11 @@ use super::{
         LogicEvents, CustomEvents,
         events::{
             LogicEvent,
-        }
+        },
+        project_manager::{
+            ProjectManager, 
+            ProjectManagerError,
+        },
     },
     LogicCoreState,
 };
@@ -71,22 +68,33 @@ impl LogicCoreLogic {
         app_dirs: &ApplicationDirectories,
         custom_events: &CustomEvents,
         logic_events: &LogicEvents,
-        project_manager: Arc<RwLock<ProjectManager>>,
+        project_manager: &mut ProjectManager,
         db_module_handler: &mut DBModuleHandler
     ) -> Result<Option<LogicCoreState>, LogicEventError> {
         match event {
-            LogicEvent::CreateProject{project_name, project_dir} => {
-                create_project_handle(
-                    CreateProjectContext { app_dirs, project_name, project_dir, project_manager } 
-                )?; 
-
-                logic_events.send(LogicEvent::ProjectCreated)?; 
+            LogicEvent::CreateProject{
+                task_id,
+                project_name, 
+                project_dir
+            } => {
+                /* create_project_handle(
+                    CreateProjectContext { 
+                        app_dirs: app_dirs, 
+                        project_name: project_name, 
+                        project_dir: project_dir, 
+                        project_manager: project_manager,
+                        custom_events: custom_events
+                    } 
+                )?; */ 
+                std::thread::sleep(std::time::Duration::from_secs(1));
+                
+                custom_events.send_event(ExternalEvent::TaskDone(task_id).into())?;
                 Ok(None)
             },
-            LogicEvent::ProjectCreated => { 
-                custom_events.send_event(ExternalEvent::TaskDone.into())?;
+            LogicEvent::Confirmation { task_id, confirm } => {
+                
                 Ok(None)
-            }
+            }, 
             LogicEvent::Shutdown => {
                 db_module_handler.db_events.send(DBEvent::Shutdown)?;
                 

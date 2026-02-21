@@ -1,40 +1,45 @@
+mod graphic_core_state_handle;
+mod graphic_event_error;
 mod graphics_core_logic;
-pub mod graphics_event;
-mod handle_graphics_event_error;
+mod graphics_event_error_handle;
+mod pending_task;
 
 
-use winit::{
-    event::WindowEvent,
-};
 use crate::{
     modules::{ 
         shared::{
             logic_module_handler::LogicModuleHandler,
+            task_id::TaskID,
         },
     },
 };
 use super::{ 
-    CustomEvents,
+    events::{
+        CustomEvents, GraphicsEvent, 
+    },
     graphics_backend::{ 
         GraphicsBackend,
     },
     ui::UI,
 };
 use self::{
-    graphics_core_logic::{
-        GraphicsCoreLogic,
-        InternalEventError, ExternalEventError, 
-        WindowEventError, RedrawEventError,
-    },
-    graphics_event::{GraphicsEvent, CustomEvent, InternalEvent}, 
-    handle_graphics_event_error::handle_graphic_event_error,
+    graphic_core_state_handle::{
+        GraphicCoreStateHandle,
+        RunningStateContext,
+        WaitingTaskStateContext, 
+    }, 
+    pending_task::PendingTask,
+    graphics_event_error_handle::graphic_event_error_handle,
 };
 
 #[derive(Debug, Clone)]
 pub enum GraphicsCoreState {
     Processing,
     Runnig,
-    Waiting,
+    WaitingTask {
+        task_id: TaskID, 
+        pending_task: PendingTask
+    },
     Shutdown,
 }
 
@@ -62,7 +67,8 @@ impl GraphicsCore {
         }
     }
     pub fn on_event(
-        &mut self, event: GraphicsEvent,
+        &mut self, 
+        event: GraphicsEvent,
         graphics_backend: &mut GraphicsBackend,
         ui: &mut UI,
     ) {
@@ -73,146 +79,54 @@ impl GraphicsCore {
 
         self.state = match (current_state, event) {
             (GraphicsCoreState::Runnig, event) => {
-                match event {
-                    GraphicsEvent::CustomEvent(event) => {
-                        match event {
-                            CustomEvent::InternalEvent(event) => {
-                                match GraphicsCoreLogic::internal_event_handle(
-                                    event,
-                                    graphics_backend,
-                                    &mut self.logic_module_handler,
-                                    ui
-                                ) {
-                                    Ok(Some(new_state)) => {
-                                        new_state
-                                    },
-                                    Ok(None) => {
-                                        GraphicsCoreState::Runnig        
-                                    },
-                                    Err(error) => {
-                                        handle_graphic_event_error(error.into(), &self.custom_events);
-                                        GraphicsCoreState::Runnig
-                                    },
-                                } 
-                            },
-                            CustomEvent::ExternalEvent(event) => {
-                                match GraphicsCoreLogic::external_event_handle(
-                                    event,
-                                    ui
-                                ) {
-                                    Ok(Some(new_state)) => {
-                                        new_state
-                                    },
-                                    Ok(None) => {
-                                        GraphicsCoreState::Runnig        
-                                    },
-                                    Err(error) => {
-                                        handle_graphic_event_error(error.into(), &self.custom_events);
-                                        GraphicsCoreState::Runnig
-                                    },
-                                } 
-                            },
-                        } 
+                match GraphicCoreStateHandle::running_state_handle(
+                    RunningStateContext { 
+                        graphics_backend, 
+                        ui, 
+                        logic_module_handler: &mut self.logic_module_handler,
+                        custom_events: &self.custom_events
+                    }, 
+                    event
+                ) {
+                    Ok(Some(new_state)) => {
+                        new_state
                     },
-                    GraphicsEvent::WindowEvent(event) => {
-                        match event {
-                            WindowEvent::RedrawRequested => {
-                                if let Err(error) = GraphicsCoreLogic::redraw_event_handle(
-                                    graphics_backend,
-                                    ui,
-                                    &self.custom_events
-                                ) {
-                                    handle_graphic_event_error(error.into(), &self.custom_events);
-                                }
-                                 
-                                GraphicsCoreState::Runnig
-                            },
-                            _ => {
-                                match GraphicsCoreLogic::window_event_handle(
-                                    event,
-                                    graphics_backend
-                                ) {
-                                    Ok(Some(new_state)) => {
-                                        new_state
-                                    },
-                                    Ok(None) => {
-                                        GraphicsCoreState::Runnig        
-                                    },
-                                    Err(error) => {
-                                        handle_graphic_event_error(error.into(), &self.custom_events);
-                                        GraphicsCoreState::Runnig
-                                    },
-                                }
-                            },
-                        }  
+                    Ok(None) => {
+                        GraphicsCoreState::Runnig        
+                    },
+                    Err(error) => {
+                        graphic_event_error_handle(error.into(), &self.custom_events);
+                        GraphicsCoreState::Runnig
+                    },
+                }         
+            }
+            (GraphicsCoreState::WaitingTask { 
+                task_id, 
+                pending_task 
+            }, event) => {
+                match GraphicCoreStateHandle::waiting_task_state_handle(
+                    WaitingTaskStateContext {
+                        graphics_backend: graphics_backend,
+                        ui: ui,
+                        custom_events: &self.custom_events,
+                        logic_module_handler: &mut self.logic_module_handler,
+                        pending_task: pending_task.clone(),
+                        pending_task_id: task_id.clone()
+                    },
+                    event
+                ) {
+                    Ok(Some(new_state)) => {
+                        new_state
+                    },
+                    Ok(None) => {
+                        GraphicsCoreState::WaitingTask{task_id: task_id, pending_task: pending_task} 
+                    },
+                    Err(error) => {
+                        graphic_event_error_handle(error.into(), &self.custom_events);
+                        GraphicsCoreState::Runnig
                     },
                 }
-            }
-            (GraphicsCoreState::Waiting, event) => {
-                match event {
-                    GraphicsEvent::WindowEvent(event) => {
-                        match event {
-                            WindowEvent::Resized(_) => {
-                                if let Err(error) = GraphicsCoreLogic::window_event_handle(
-                                    event,
-                                    graphics_backend
-                                ) {
-                                    handle_graphic_event_error(error.into(), &self.custom_events);
-                                }
-                                GraphicsCoreState::Waiting
-                            }
-                            WindowEvent::RedrawRequested => {
-                                if let Err(error) = GraphicsCoreLogic::redraw_event_handle(
-                                    graphics_backend,
-                                    ui,
-                                    &self.custom_events
-                                ) {
-                                    handle_graphic_event_error(error.into(), &self.custom_events);
-                                } 
-                                GraphicsCoreState::Waiting
-                            },
-                            _ => GraphicsCoreState::Waiting
-                        }
-                    }
-                    GraphicsEvent::CustomEvent(event) => {
-                        match event {
-                            CustomEvent::InternalEvent(event) => {
-                                match event {
-                                    InternalEvent::AppShutdownReq => {
-                                        if let Err(error) = GraphicsCoreLogic::internal_event_handle(
-                                            event,
-                                            graphics_backend,
-                                            &mut self.logic_module_handler,
-                                            ui,
-                                        ) {
-                                            handle_graphic_event_error(error.into(), &self.custom_events);
-                                        }
-                                        GraphicsCoreState::Shutdown
-                                    }
-                                    _ => GraphicsCoreState::Waiting,
-                                }
-                            },
-                            CustomEvent::ExternalEvent(event) => {
-                                match GraphicsCoreLogic::external_event_handle(
-                                    event,
-                                    ui,
-                                ) {
-                                    Ok(Some(new_state)) => {
-                                        new_state
-                                    },
-                                    Ok(None) => {
-                                        GraphicsCoreState::Runnig        
-                                    },
-                                    Err(error) => {
-                                        handle_graphic_event_error(error.into(), &self.custom_events);
-                                        GraphicsCoreState::Runnig
-                                    },
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            }, 
             (current_state,_) => current_state,
         }
     }
@@ -226,9 +140,3 @@ impl GraphicsCore {
 }
 
 
-pub enum GraphicsEventError {
-    InternalEventError(InternalEventError),
-    ExternalEventError(ExternalEventError),
-    WindowEventError(WindowEventError),
-    RedrawEventError(RedrawEventError),
-}

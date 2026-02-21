@@ -10,9 +10,10 @@ use std::{
 use thiserror::{
     Error,
 };
-use crate::{
-    aliases::{
-        DBEvents,
+use crate::{ 
+    modules::{
+        graphics_module::{CustomEvent, CustomEvents},
+        db_module::DBEvents,
     },
 };
 use self::{
@@ -21,7 +22,7 @@ use self::{
     },
     project_cache::ProjectCache,
     project_manager_logic::{
-        CreateProjectContext,
+        CreateUnpackedProjectContext,
         ProjectManagerLogic,
     },
 };
@@ -58,15 +59,17 @@ impl ProjectManager {
     pub fn create_project(
         &mut self, 
         descriptor: CreateProjectDescriptor,
+        custom_events: &CustomEvents,
     ) -> Result<(), ProjectManagerError> {
         // TODO Logic for check alredy opened project 
          
-        ProjectManagerLogic::create_project(
-            CreateProjectContext { 
+        let project = ProjectManagerLogic::create_unpacked_project(
+            CreateUnpackedProjectContext { 
                 projects_dir_cache_path: descriptor.projects_dir_cache_path, 
                 project_name: descriptor.project_name, 
                 project_dir: descriptor.project_dir,
-                db_events: self.db_events.clone()
+                db_events: self.db_events.clone(),
+                custom_events: custom_events,
             } 
         )?; 
 
@@ -92,4 +95,10 @@ pub enum ProjectManagerError {
 
     #[error("Project Error: {0}")]
     ProjectError(#[from] ProjectError),
+
+    #[error("Winit Event Loop closed: {0}")]
+    WinitEventLoopError(#[from] winit::event_loop::EventLoopClosed<CustomEvent>),
+
+    #[error("One Shot Recv Error")]
+    OneShotRecvErro(#[from] oneshot::RecvError)
 }

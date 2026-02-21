@@ -2,10 +2,16 @@ use crate::{
     aliases::{
         EGUIContext, EGUICentralPanel
     }, 
+    modules::{
+        graphics_module::{
+            ui::{
+                events::UIEvents,
+                ui_error::UIError,
+            },
+        },
+    },
 };
-use super::{
-    UIEvent,
-};
+
 
 #[derive(Default)]
 pub struct CentralPanel;
@@ -14,13 +20,13 @@ impl CentralPanel {
     pub(super) fn prepare(
         &mut self,
         egui_context: &EGUIContext
-    ) -> Vec<UIEvent> {
+    ) -> Result<UIEvents, UIError> {
         let ui_events = Vec::with_capacity(4);
         EGUICentralPanel::default().show(egui_context, |_central_panel_ui|{
          
         });
         
-        ui_events
+        Ok(ui_events)
     } 
 }
 

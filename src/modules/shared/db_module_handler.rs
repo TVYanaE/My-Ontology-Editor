@@ -2,7 +2,7 @@ use std::{
     thread::JoinHandle,
 };
 use crate::{
-    aliases::DBEvents, 
+    modules::db_module::DBEvents,
 };
 
 pub struct DBModuleHandler {

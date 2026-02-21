@@ -18,7 +18,6 @@ pub struct ProjectDBLogic;
 impl ProjectDBLogic {
     pub fn open_connection_handle(
         project_root_path: &impl AsRef<Path>,
-        response_target: Sender<Result<(), ProjectDBError>>
     ) -> Result<Connection, ProjectDBError> {
         let mut db_path = project_root_path.as_ref().to_path_buf();
         db_path.push("project_db");
@@ -26,11 +25,19 @@ impl ProjectDBLogic {
        
         let connection = Connection::open(db_path)?; 
 
-        response_target.send(Ok(()))?; 
-         
+        // Migrations
+        connection.execute(
+            r#"
+                CREATE TABLE IF NOT EXISTS semantic_nodes (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    name TEXT
+                )
+            "#, 
+            ()
+        )?;
 
-        // TODO: Logic for migration
-
+        //response_target.send(Ok(()))?; 
+        
         Ok(connection)
     } 
 }

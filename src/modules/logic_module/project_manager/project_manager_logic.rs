@@ -1,6 +1,14 @@
 use std::{
-    fs, 
+    fs::{
+        self, File,
+    }, 
     path::{PathBuf, Path},
+};
+use tar::{
+    Builder,
+};
+use oneshot::{
+    Sender, channel,
 };
 use tree_fs::{
     TreeBuilder,
@@ -8,8 +16,15 @@ use tree_fs::{
 use uuid::{
     Uuid,
 };
+use crate::{
+    modules::{
+        graphics_module::{
+            ExternalEvent,
+        },
+    },
+};
 use super::{
-    DBEvents, Project,
+    DBEvents, Project, CustomEvents, 
     project_layouts::{
         project_dirs_layout::ProjectDirsLayout,
         project_main_files_layout::ProjectMainFilesLayout,
@@ -23,17 +38,18 @@ use super::{
 
 pub struct ProjectManagerLogic;
 
-pub struct CreateProjectContext {
+pub struct CreateUnpackedProjectContext<'c> {
     pub projects_dir_cache_path: PathBuf,
     pub project_name: String,
     pub project_dir: PathBuf,
     pub db_events: DBEvents,
+    pub custom_events: &'c CustomEvents,
 }
 
 impl ProjectManagerLogic {
-    pub fn create_project(
-        context: CreateProjectContext,
-    ) -> Result<(), ProjectManagerError> {
+    pub fn create_unpacked_project(
+        context: CreateUnpackedProjectContext,
+    ) -> Result<Project, ProjectManagerError> {
 
         // Generate project unique ID
         let project_id = Uuid::new_v4();
@@ -65,16 +81,9 @@ impl ProjectManagerLogic {
                 project_id, 
                 project_name: &context.project_name 
             }
-        )?;
+        )?; 
 
-        /*
-            let project_map = ProjectDirsMap {
-                semantic_nodes_dir_path: project_dirs_layout.semantic_nodes_catalog.path,
-                project_meta_file_path: project_main_files_layout.project_meta_file.path, 
-            };
-        */
-
-        create_unpacked_project(
+        create_main_dirs_files(
             &project_cache_dir, 
             &project_dirs_layout, 
             &project_main_files_layout, 
@@ -85,14 +94,23 @@ impl ProjectManagerLogic {
             &project_cache_dir, 
             &project_dirs_layout.semantic_nodes_catalog.path, 
             &project_main_files_layout.project_meta_file.path, 
-            context.db_events
+            context.db_events,
+            project_id
         )?;
 
-        Ok(()) 
+        pack_project(
+            &project, 
+            &context.project_dir, 
+            &context.project_name,
+            context.custom_events
+        )?;
+
+        Ok(project) 
     }
+ 
 }
 
-fn create_unpacked_project(
+fn create_main_dirs_files(
     root: & impl AsRef<Path>,
     project_dirs_layout: &ProjectDirsLayout,
     project_main_files_layout: &ProjectMainFilesLayout,
@@ -111,3 +129,43 @@ fn create_unpacked_project(
     Ok(())
 }  
 
+fn pack_project(
+    project: &Project,
+    project_dir: &impl AsRef<Path>,
+    project_name: &str,
+    custom_events: &CustomEvents,
+) -> Result<(), ProjectManagerError> {
+    // Create destination project file 
+    
+    let mut project_file_path = project_dir.as_ref().to_path_buf(); 
+    project_file_path.push(project_name);
+    project_file_path.set_extension("vontov");
+
+   /*  if project_file_path.exists() {
+        let (sender, recv) = channel::<bool>(); 
+        custom_events.send_event(ExternalEvent::ConfirmRequeired { task_id: (), text: () } { 
+            text: "Project Already Exsist. Replace?".into(), 
+            response_targer: sender, 
+        }.into()
+        )?; 
+
+        if !recv.recv()? {
+            return Ok(());
+        }
+    } */
+
+    // TODO: Create handling of existing file
+    let project_file = File::create_new(&project_file_path)?;
+     
+    // Logic for replace existing project 
+
+    let project_root = project.get_project_root();
+
+    let mut archive_builder = Builder::new(project_file);
+
+    archive_builder.append_dir_all("", project_root)?;
+
+    archive_builder.finish()?;
+
+    Ok(())
+}

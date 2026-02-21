@@ -12,15 +12,14 @@ use crate::{
     modules::{
         graphics_module::{
             graphics_backend::{
-                wgpu_backend::WGPUData
-            },
-            graphics_core::{
-                graphics_event::{
-                    InternalEvent,
-                },
-            },
+                wgpu_backend::WGPUData,
+                egui_backend::EGUIBackendError,
+            },  
             ui::{
-                UI, UIAffect,
+                UI, UIAffect, UIInputEvent,
+            },
+            events::{
+                InternalEvent,
             },
         },
     },
@@ -74,20 +73,22 @@ impl EGUIBackendLogic {
         wgpu_data: &WGPUData,
         ui: &mut UI,
         custom_events: &CustomEvents
-    ) -> FullOutput {
+    ) -> Result<FullOutput, EGUIBackendError> {
         let raw_input = egui_data
         .egui_winit_state
         .take_egui_input(&wgpu_data.window);
 
-        let mut ui_affects = Vec::with_capacity(32); 
+        let mut ui_result = None;  
 
         let full_output = egui_data
             .egui_winit_state
             .egui_ctx()
             .run(raw_input, |egui_context|{
-                let affects = ui.prepare_ui(egui_context);
-                ui_affects.extend(affects);
+                ui_result = Some(ui.on_event(UIInputEvent::PrepareUI(egui_context)));
             }); 
+     
+        // Fix unwrap here
+        let ui_affects = ui_result.unwrap()?;
 
         for affect in ui_affects {
             match affect {
@@ -100,10 +101,16 @@ impl EGUIBackendLogic {
                         project_dir: project_dir,
                     }.into());
                 },
+                UIAffect::Confirmation { task_id, confirm } => {
+                    custom_events.send_event(InternalEvent::ConfirmationObtain { 
+                        task_id: task_id, 
+                        confirm: confirm, 
+                    }.into());
+                },
             } 
         }
 
-        full_output
+        Ok(full_output)
     }
 
     pub fn window_event_handle(

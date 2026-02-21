@@ -1,5 +1,6 @@
 mod egui_backend_logic;
 
+use wgpu::wgc::error;
 use winit::{
     event::WindowEvent,
 };
@@ -19,7 +20,7 @@ use crate::{
                     WGPUData
                 },
             }, 
-            ui::UI,
+            ui::{UI, UIError}
         },
     },
 };
@@ -44,6 +45,9 @@ pub enum EGUIState {
 pub enum EGUIBackendError {
     #[error("EGUI Backend wasn't initialised")]
     EGUIBackendWasntInit,
+
+    #[error("UI Error: {0}")]
+    UIError(#[from] UIError),
 }
 
 impl Default for EGUIState {
@@ -101,7 +105,7 @@ impl EGUIBackend {
                 EGUIBackendError::EGUIBackendWasntInit
             })?;
 
-        let full_output = EGUIBackendLogic::prepare_ui(egui_data, wgpu_data, ui, custom_events);
+        let full_output = EGUIBackendLogic::prepare_ui(egui_data, wgpu_data, ui, custom_events)?;
 
         Ok(full_output)
     }

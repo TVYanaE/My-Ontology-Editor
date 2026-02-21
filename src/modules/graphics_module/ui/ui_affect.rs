@@ -1,8 +1,5 @@
 use std::{
     path::PathBuf,
-}; 
-use calloop::{
-    channel::Sender
 };
 use crate::{
     modules::{
@@ -12,12 +9,12 @@ use crate::{
     },
 };
 
-pub type LogicEvents = Sender<LogicEvent>;
+pub type UIAffects = Vec<UIAffect>;
 
 #[derive(Debug)]
-pub enum LogicEvent {
-    CreateProject {
-        task_id: TaskID,
+pub enum UIAffect {
+    ExitRequested,
+    CreateProjectReq {
         project_name: String,
         project_dir: PathBuf,
     },
@@ -25,6 +22,4 @@ pub enum LogicEvent {
         task_id: TaskID,
         confirm: bool,
     },
-    Shutdown,
 }
-

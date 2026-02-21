@@ -1,10 +1,11 @@
 mod event_loop;
 mod events;
 mod logic_core;
+mod project_manager;
 
 use std::{
     thread,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 use calloop::{
     LoopSignal,
@@ -12,26 +13,23 @@ use calloop::{
         channel, 
     },
 };
-use crate::{
-    aliases::{
-        LogicEvents, CustomEvents,
-    },
+use crate::{ 
     modules::{
         app_dirs::ApplicationDirectories,
         shared::{
             db_module_handler::DBModuleHandler,
             logic_module_handler::LogicModuleHandler,
-            project_manager::ProjectManager,
         },
-        graphics_module::{ExternalEvent},
+        graphics_module::{ExternalEvent, CustomEvents},
     }, 
 };
 use self::{
     event_loop::init_event_loop,
     logic_core::LogicCore,   
+    project_manager::ProjectManager,
 };
 pub use self::{
-    events::LogicEvent,
+    events::{LogicEvent, LogicEvents},
 };
 
 
@@ -39,7 +37,7 @@ struct EventLoopResource {
     logic_core: LogicCore,
     custom_events: CustomEvents,
     logic_events: LogicEvents,
-    project_manager: Arc<RwLock<ProjectManager>>,
+    project_manager: ProjectManager,
     app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
     db_module_handler: DBModuleHandler,
@@ -51,7 +49,6 @@ impl LogicModule {
     pub fn init_logic_module(
         custom_events: CustomEvents,
         app_dirs: Arc<ApplicationDirectories>,
-        project_manager: Arc<RwLock<ProjectManager>>,
         db_module_handler: DBModuleHandler,
     ) -> LogicModuleHandler {
         let (sender, channel) = channel::<LogicEvent>();
@@ -63,6 +60,7 @@ impl LogicModule {
             let loop_signal = event_loop.get_signal();
 
             let logic_core = LogicCore::new();
+            let project_manager = ProjectManager::new(db_module_handler.db_events.clone());
 
             let mut event_loop_resource = EventLoopResource {
                 logic_core: logic_core,

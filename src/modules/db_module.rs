@@ -11,10 +11,7 @@ use calloop::{
     },
     LoopSignal,
 };
-use crate::{
-    aliases::{
-        DBEvents,
-    },
+use crate::{ 
     modules::{
         shared::{
             db_module_handler::DBModuleHandler,
@@ -26,7 +23,7 @@ use self::{
     event_loop::init_event_loop,
 };
 pub use self::{
-    events::DBEvent,
+    events::{DBEvent, DBEvents},
     db_core::ProjectDBError,
 };
 
