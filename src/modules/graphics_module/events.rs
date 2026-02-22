@@ -13,7 +13,7 @@ use crate::{
                 TaskID, TaskKind,
                 ConfirmationID, ConfirmationKind,
                 DecisionKind,
-                ResultKind,
+                TaskResult,
             }
         }, 
     },
@@ -53,7 +53,7 @@ pub enum ExternalEvent {
     TaskRespone {
         task_id: TaskID,
         task_kind: TaskKind,
-        task_result: ResultKind,
+        task_result: TaskResult,
     }, 
     ConfirmationRequested {
         confirmation_id: ConfirmationID,

@@ -1,6 +1,5 @@
 mod egui_backend_logic;
 
-use wgpu::wgc::error;
 use winit::{
     event::WindowEvent,
 };
@@ -26,7 +25,7 @@ use crate::{
 };
 use super::{
     super::{
-        CustomEvents,
+        CustomEvents, CustomEvent,
     },
 };
 use self::{
@@ -41,13 +40,16 @@ pub enum EGUIState {
 }
 
 
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error)]
 pub enum EGUIBackendError {
     #[error("EGUI Backend wasn't initialised")]
     EGUIBackendWasntInit,
 
     #[error("UI Error: {0}")]
     UIError(#[from] UIError),
+
+    #[error("Winit Event Loop Proxy Error")]
+    WinitEventLoopProxyErro(#[from] winit::event_loop::EventLoopClosed<CustomEvent>),
 }
 
 impl Default for EGUIState {

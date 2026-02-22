@@ -19,7 +19,7 @@ use crate::{
             events::{
                 LogicCommand, 
                 TaskID, TaskKind,
-                ResultKind, ErrorKind,
+                TaskResult, TaskError,
                 DecisionKind, 
                 ConfirmationID, ConfirmationKind,
             }, 
@@ -111,7 +111,7 @@ impl GraphicsCoreLogic {
         waiting_task_id: TaskID,
         done_task_id: TaskID,
         done_task_kind: TaskKind,
-        done_task_result: ResultKind,
+        done_task_result: TaskResult,
         ui: &mut UI,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> 
     {
@@ -122,14 +122,14 @@ impl GraphicsCoreLogic {
                     project_path 
                 } => {
                     match done_task_result {
-                        ResultKind::Ok => {
+                        TaskResult::Ok => {
                             ui.on_event(UIInputEvent::ShowMainUI)?;
 
                             Ok(Some(GraphicsCoreState::Runnig))
                         },
-                        ResultKind::Error(error_kind) => {
+                        TaskResult::Error(error_kind) => {
                             match error_kind {
-                                ErrorKind::PathError(err_text) => {
+                                TaskError::PathError(err_text) => {
                                     let project_path_str = project_path.to_str().unwrap().to_string();
 
                                     ui.on_event(

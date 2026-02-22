@@ -54,13 +54,13 @@ pub enum ConfirmationKind {
 
 
 #[derive(Debug, Clone)]
-pub enum ResultKind {
+pub enum TaskResult {
     Ok,
-    Error(ErrorKind),  
+    Error(TaskError),  
 }
 
 #[derive(Debug, Clone)]
-pub enum ErrorKind {
+pub enum TaskError {
     PathError(String), 
 }
 
@@ -79,7 +79,7 @@ pub enum LogicEvent {
     TaskRespone {
         task_id: TaskID,
         task_kind: TaskKind,
-        result: ResultKind,
+        task_result: TaskResult,
     }, 
     ConfirmationRequested {
         confirmation_id: ConfirmationID,

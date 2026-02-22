@@ -42,12 +42,12 @@ impl EventSender for LogicAdapter {
             LogicEvent::TaskRespone { 
                 task_id, 
                 task_kind, 
-                result
+                task_result
             } => {
                 self.custom_events.send_event(ExternalEvent::TaskRespone { 
                     task_id: task_id, 
                     task_kind: task_kind,
-                    task_result: result
+                    task_result: task_result
                 }.into())?;
             }, 
             LogicEvent::ConfirmationRequested { 

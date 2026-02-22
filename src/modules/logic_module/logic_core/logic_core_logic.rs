@@ -9,9 +9,9 @@ use crate::{
 use super::{
     super::{
         events::{
-            LogicEvent, ErrorKind,
+            LogicEvent, TaskError,
             EventSender, TaskKind,
-            ResultKind, TaskID,
+            TaskResult, TaskID,
         }, 
     },
     LogicCoreState,
@@ -50,7 +50,7 @@ impl LogicCoreLogic {
                         project_name: context.project_name, 
                         project_path: context.project_path 
                     }, 
-                    result: ResultKind::Error(ErrorKind::PathError(error_text)) 
+                    task_result: TaskResult::Error(TaskError::PathError(error_text)) 
                     }
                 ).map_err(|error|
                     LogicCoreError::EventSenderError(error)
@@ -68,7 +68,7 @@ impl LogicCoreLogic {
                     project_name: context.project_name, 
                     project_path: context.project_path 
                 }, 
-                result: ResultKind::Error(ErrorKind::PathError(error_text)) 
+                task_result: TaskResult::Error(TaskError::PathError(error_text)) 
                 }
             ).map_err(|error|
                 LogicCoreError::EventSenderError(error)
@@ -93,7 +93,7 @@ impl LogicCoreLogic {
                 project_name: context.project_name, 
                 project_path: context.project_path 
             }, 
-            result: ResultKind::Ok, 
+            task_result: TaskResult::Ok, 
         } 
     ).map_err(|error|
         LogicCoreError::EventSenderError(error)
