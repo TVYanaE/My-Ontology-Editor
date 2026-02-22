@@ -2,7 +2,7 @@ mod event_loop;
 pub mod events;
 mod logic_core;
 pub mod logic_module_handler;
-mod project_manager;
+//mod project;
 
 use std::{
     thread,

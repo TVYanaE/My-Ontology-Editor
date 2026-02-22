@@ -15,7 +15,13 @@ pub type LogicCommands = Sender<LogicCommand>;
 pub struct TaskID(pub Uuid);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConfirmationID(pub Uuid);
+pub struct ConfirmationID(Uuid);
+
+impl ConfirmationID {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum TaskKind {

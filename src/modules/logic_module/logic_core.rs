@@ -13,7 +13,6 @@ use crate::{
             events::{
                 LogicCommand, EventSender,
             },
-            project_manager::ProjectManagerError,
         },
         db_module::DBEvent, 
     },
@@ -37,11 +36,7 @@ pub enum LogicCoreError<S: EventSender>{
     EventSenderError(#[source] S::Error),
 
     #[error("Std IO Error: {0}")]
-    STDIOError(#[from] std::io::Error),
-
-    #[error("Project Manager Error: {0}")]
-    ProjectManagerError(#[from] ProjectManagerError),
-
+    STDIOError(#[from] std::io::Error), 
 }
 
 impl LogicCore {
@@ -80,6 +75,29 @@ impl LogicCore {
                         } 
                     },
                 }              
+            },
+            (LogicCoreState::WaitConfirmation { 
+                confirmation_id, 
+                work_after_confirmation 
+            }, command) => {
+                match LogicCoreStateHandle::waiting_confirmation_handle(
+                    command, 
+                    app_dirs,
+                    event_sender,
+                    work_after_confirmation,
+                    confirmation_id,
+                ) {
+                    Ok(Some(new_state)) => new_state,
+                    Ok(None) => LogicCoreState::Ready,
+                    Err(error) => {
+                        if let Some(new_state) = logic_core_error_handle(error, event_sender) {
+                            new_state
+                        } 
+                        else {
+                            LogicCoreState::Ready
+                        } 
+                    },
+                }
             },
             (current_state,_) => current_state,
         }

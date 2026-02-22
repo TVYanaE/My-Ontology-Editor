@@ -26,11 +26,6 @@ where
             sender.send_event(LogicEvent::Shutdown)
                 .expect("Logic Event Loop Critical Error"); 
             Some(LogicCoreState::Shutdown)
-        },
-        LogicCoreError::ProjectManagerError(_) => {
-            sender.send_event(LogicEvent::Shutdown)
-                .expect("Logic Event Loop Critical Error"); 
-            Some(LogicCoreState::Shutdown)
         },  
     }
 }

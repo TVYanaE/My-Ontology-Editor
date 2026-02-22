@@ -1,10 +1,8 @@
-use uuid::{Uuid};
+/* use uuid::{Uuid};
 use serde::{
     Serialize, Deserialize,
 };
-use super::{
-    ProjectManagerError,
-};
+
 
 pub struct MainFilesPayloadsDescriptor<'c> {
     pub project_id: Uuid,
@@ -54,4 +52,4 @@ impl ProjectMetaFilePayload {
 struct ProjectMetaFileData {
     project_id: Uuid,
     project_name: String,
-}
+} */
