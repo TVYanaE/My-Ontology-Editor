@@ -15,7 +15,7 @@ use crate::{
     modules::{
         graphics_module::{
             ui::{
-                events::{UIEvents, UIEvent},
+                events::{UIEvents, UIEvent, ChosedModalWindow},
                 ui_error::UIError,
             },
         },
@@ -36,7 +36,12 @@ impl MainBar {
         MenuBar::new().ui(egui_ui, |menu_bar_ui|{ 
             MenuButton::new("File").ui(menu_bar_ui, |file_menu_ui|{
                 if file_menu_ui.add(Button::new("Create New Project")).clicked() {
-                    ui_events.push(UIEvent::OpenCreateNewProjectWindow);
+                    ui_events.push(UIEvent::ShowModalWindow(
+                        ChosedModalWindow::CreateNewProject { 
+                            project_name: None, 
+                            project_path: None, 
+                        }
+                    ));
                 }
 
                 if file_menu_ui.add(Button::new("Quit")).clicked() {

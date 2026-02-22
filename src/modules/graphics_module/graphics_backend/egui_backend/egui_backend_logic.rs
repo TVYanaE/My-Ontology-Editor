@@ -93,18 +93,23 @@ impl EGUIBackendLogic {
         for affect in ui_affects {
             match affect {
                 UIAffect::ExitRequested => {
-                    custom_events.send_event(InternalEvent::AppShutdownReq.into());
+                    custom_events.send_event(InternalEvent::ShutdownReq.into());
                 },
-                UIAffect::CreateProjectReq{project_name, project_dir} => {
+                UIAffect::CreateProjectReq{project_name, project_path} => {
                     custom_events.send_event(InternalEvent::CreateProjectReq{ 
                         project_name: project_name, 
-                        project_dir: project_dir,
+                        project_path: project_path,
                     }.into());
                 },
-                UIAffect::Confirmation { task_id, confirm } => {
-                    custom_events.send_event(InternalEvent::ConfirmationObtain { 
-                        task_id: task_id, 
-                        confirm: confirm, 
+                UIAffect::ConfirmationDecision { 
+                    confirmation_id, 
+                    decision, 
+                    decision_kind 
+                } => {
+                    custom_events.send_event(InternalEvent::ConfirmationDecision { 
+                        confirmation_id: confirmation_id, 
+                        decision: decision,
+                        decision_kind: decision_kind,
                     }.into());
                 },
             } 

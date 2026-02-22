@@ -22,5 +22,5 @@ pub enum ModalWindowKind {
     FileDialog,
     Notification,
     WaitingWindow,
-    ConfirmationWindow,
+    ConfirmationWindow, 
 }

@@ -24,7 +24,7 @@ use self::{
     }
 };
 pub use self::{
-    events::UIInputEvent,
+    events::{UIInputEvent, ChosedModalWindow},
     ui_error::UIError,
     ui_affect::UIAffect,
 };

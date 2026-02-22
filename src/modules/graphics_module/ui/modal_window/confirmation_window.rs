@@ -15,22 +15,24 @@ use crate::{
                 ui_error::UIError,
             },
         },
-        shared::{
-            task_id::TaskID,
+        logic_module::{
+            events::{ConfirmationID, ConfirmationKind}
         },
     },
 }; 
 
 pub struct ConfirmationWindow {
     text: String,
-    task_id: Option<TaskID>,
+    confirmation_id: Option<ConfirmationID>,
+    confirmation_kind: Option<ConfirmationKind>,
 }
 
 impl Default for ConfirmationWindow {
     fn default() -> Self {
         Self { 
             text: String::with_capacity(64), 
-            task_id: None, 
+            confirmation_id: None,
+            confirmation_kind: None,
         }
     }
 }
@@ -54,18 +56,32 @@ impl ConfirmationWindow {
             ); 
 
             if left_resp.clicked() {
-                ui_events.push(UIEvent::Confirmation { task_id: self.task_id.take().unwrap(), confirm: true });
+                ui_events.push(UIEvent::ConfirmationDecision { 
+                    confirmation_id: self.confirmation_id.take().unwrap(), 
+                    decision: true, 
+                    decision_kind: self.confirmation_kind.take().unwrap().into(),
+                });
             }
             if right_resp.clicked() {       
-                ui_events.push(UIEvent::Confirmation { task_id: self.task_id.take().unwrap(), confirm: false });
+                ui_events.push(UIEvent::ConfirmationDecision { 
+                    confirmation_id: self.confirmation_id.take().unwrap(), 
+                    decision: false, 
+                    decision_kind: self.confirmation_kind.take().unwrap().into(),
+                });
             }
         }); 
 
         Ok(ui_events)
     }
     
-    pub fn set_task(&mut self, task_id: TaskID, text: &str) {
-        self.task_id = Some(task_id);
+    pub fn set_confirmation(
+        &mut self, 
+        confirmation_id: ConfirmationID, 
+        text: &str,
+        confirmation_kind: ConfirmationKind,
+    ) {
+        self.confirmation_id = Some(confirmation_id);
+        self.confirmation_kind = Some(confirmation_kind);
         self.text.clear(); 
         self.text.push_str(text);
     }

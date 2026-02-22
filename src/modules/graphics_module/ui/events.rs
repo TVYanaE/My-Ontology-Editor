@@ -6,19 +6,41 @@ use crate::{
         EGUIContext,
     },
     modules::{
-        shared::task_id::TaskID,
+        logic_module::{
+            events::{
+                ConfirmationID, DecisionKind,
+                ConfirmationKind,
+            },
+        },
     },
 };
 
-#[derive(Debug)]
-pub enum UIInputEvent<'e> {
-    Waiting,
-    StopWaiting,
-    ShowConfirmationWindow{
-        task_id: TaskID,
+#[derive(Debug, Clone)]
+pub enum ChosedModalWindow {
+    CreateNewProject{
+        project_name: Option<String>,
+        project_path: Option<String>,
+    },
+    FileDialog,
+    Notification {
         text: String,
     },
+    WaitingWindow {
+        text: String
+    },
+    ConfirmationWindow {
+        confirmation_id: ConfirmationID,
+        confirmation_kind: ConfirmationKind,
+        text: String,
+    },
+}
+
+
+#[derive(Debug)]
+pub enum UIInputEvent<'e> {
+    ShowModalWindow(ChosedModalWindow), 
     PrepareUI(&'e EGUIContext),
+    ShowMainUI,
 }
 
 pub type UIEvents = Vec<UIEvent>;
@@ -26,19 +48,17 @@ pub type UIEvents = Vec<UIEvent>;
 #[derive(Debug)]
 pub enum UIEvent{
     QuitApp, 
-    OpenCreateNewProjectWindow,
-    CloseCreateNewProjectWindow,
-    OpenFileDialogReq,
-    FileDialogClosed,
-    ShowNotification(String),
-    DirPicked(String),
+    ModalWindowClose,
+    ShowMainUI,
+    ShowModalWindow(ChosedModalWindow),
+    PathPicked(String),
     CreateProjectReq{
         project_name: String,
-        project_dir: PathBuf,
+        project_path: PathBuf,
     },
-    Confirmation{
-        task_id: TaskID,
-        confirm: bool,
+    ConfirmationDecision{
+        confirmation_id: ConfirmationID,
+        decision: bool,
+        decision_kind: DecisionKind,
     },
-    NotificationClosed,
 }

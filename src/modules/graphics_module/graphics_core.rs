@@ -2,14 +2,12 @@ mod graphic_core_state_handle;
 mod graphic_event_error;
 mod graphics_core_logic;
 mod graphics_event_error_handle;
-mod pending_task;
-
 
 use crate::{
     modules::{ 
-        shared::{
+        logic_module::{
             logic_module_handler::LogicModuleHandler,
-            task_id::TaskID,
+            events::TaskID,
         },
     },
 };
@@ -28,7 +26,6 @@ use self::{
         RunningStateContext,
         WaitingTaskStateContext, 
     }, 
-    pending_task::PendingTask,
     graphics_event_error_handle::graphic_event_error_handle,
 };
 
@@ -38,7 +35,6 @@ pub enum GraphicsCoreState {
     Runnig,
     WaitingTask {
         task_id: TaskID, 
-        pending_task: PendingTask
     },
     Shutdown,
 }
@@ -95,14 +91,19 @@ impl GraphicsCore {
                         GraphicsCoreState::Runnig        
                     },
                     Err(error) => {
-                        graphic_event_error_handle(error.into(), &self.custom_events);
-                        GraphicsCoreState::Runnig
+                        if let Some(new_state) = graphic_event_error_handle(
+                            error.into(), &mut self.logic_module_handler
+                        ) {
+                            new_state 
+                        }
+                        else {       
+                            GraphicsCoreState::Runnig
+                        }
                     },
                 }         
             }
             (GraphicsCoreState::WaitingTask { 
                 task_id, 
-                pending_task 
             }, event) => {
                 match GraphicCoreStateHandle::waiting_task_state_handle(
                     WaitingTaskStateContext {
@@ -110,8 +111,7 @@ impl GraphicsCore {
                         ui: ui,
                         custom_events: &self.custom_events,
                         logic_module_handler: &mut self.logic_module_handler,
-                        pending_task: pending_task.clone(),
-                        pending_task_id: task_id.clone()
+                        waiting_task_id: task_id.clone(),
                     },
                     event
                 ) {
@@ -119,16 +119,23 @@ impl GraphicsCore {
                         new_state
                     },
                     Ok(None) => {
-                        GraphicsCoreState::WaitingTask{task_id: task_id, pending_task: pending_task} 
+                        GraphicsCoreState::WaitingTask{task_id: task_id} 
                     },
                     Err(error) => {
-                        graphic_event_error_handle(error.into(), &self.custom_events);
-                        GraphicsCoreState::Runnig
+                        if let Some(new_state) = graphic_event_error_handle(
+                            error.into(), 
+                            &mut self.logic_module_handler,
+                        ) {
+                            new_state
+                        }
+                        else {       
+                            GraphicsCoreState::Runnig
+                        }
                     },
                 }
             }, 
-            (current_state,_) => current_state,
-        }
+            (current_state,_) => current_state, 
+        };
     }
 
     pub fn is_shutdown(&self) -> bool {

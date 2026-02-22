@@ -11,13 +11,7 @@ use calloop::{
     },
     LoopSignal,
 };
-use crate::{ 
-    modules::{
-        shared::{
-            db_module_handler::DBModuleHandler,
-        },
-    },
-};
+
 use self::{
     db_core::DBCore,
     event_loop::init_event_loop,
@@ -36,7 +30,7 @@ struct EventLoopResource {
 pub struct DBModule; 
 
 impl DBModule {
-    pub fn init_db_module() -> DBModuleHandler {
+    pub fn init_db_module() -> () {
         let (db_events, channel) = channel::<DBEvent>(); 
 
         let db_events_cloned = db_events.clone(); 
@@ -60,9 +54,10 @@ impl DBModule {
             });
         });
 
-        DBModuleHandler {
+        /* DBModuleHandler {
             db_events: db_events,
             thread_handle: Some(thread_handle), 
-        }
+        } */
+        ()
     } 
 }

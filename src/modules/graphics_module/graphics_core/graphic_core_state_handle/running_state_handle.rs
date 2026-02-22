@@ -21,7 +21,7 @@ use crate::{
             },
             ui::UI,
         },
-        shared::{
+        logic_module::{
             logic_module_handler::LogicModuleHandler,
         },
     },
@@ -48,9 +48,9 @@ impl GraphicCoreStateHandle {
                 match event {
                     CustomEvent::InternalEvent(event) => {
                         match event {
-                            InternalEvent::AppShutdownReq => {
+                            InternalEvent::ShutdownReq => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                                    context.logic_module_handler
+                                    context.logic_module_handler,
                                 )?;
 
                                 Ok(new_state)
@@ -63,20 +63,25 @@ impl GraphicCoreStateHandle {
 
                                 Ok(new_state)
                             },
-                            InternalEvent::CreateProjectReq { project_name, project_dir } => {
+                            InternalEvent::CreateProjectReq { project_name, project_path } => {
                                 let new_state = GraphicsCoreLogic::create_project_req_handle(
                                     context.logic_module_handler, 
                                     context.ui, 
                                     project_name, 
-                                    project_dir
+                                    project_path
                                 )?;
 
                                 Ok(new_state)
                             },
-                            InternalEvent::ConfirmationObtain { task_id, confirm } => {
+                            InternalEvent::ConfirmationDecision { 
+                                confirmation_id, 
+                                decision,
+                                decision_kind,
+                            } => {
                                 let new_state = GraphicsCoreLogic::confirmation_obtain_handle(
-                                    task_id, 
-                                    confirm, 
+                                    confirmation_id, 
+                                    decision,
+                                    decision_kind,
                                     context.logic_module_handler
                                 )?;
 
@@ -86,22 +91,25 @@ impl GraphicCoreStateHandle {
                     },
                     CustomEvent::ExternalEvent(event) => {
                         match event {
-                            ExternalEvent::AppShutdownReq => {
+                            ExternalEvent::Shutdown => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                                    context.logic_module_handler
-                                )?;
-
-                                Ok(new_state)
-                            }, 
-                            ExternalEvent::ConfirmRequeired { task_id, text } => {
-                                let new_state = GraphicsCoreLogic::confirmation_required_handle(
-                                    context.ui, 
-                                    task_id, 
-                                    &text
+                                    context.logic_module_handler,
                                 )?;
 
                                 Ok(new_state)
                             },
+                            ExternalEvent::ConfirmationRequested { 
+                                confirmation_id, 
+                                confirmation_kind 
+                            } => {
+                                let new_state = GraphicsCoreLogic::confirmation_required_handle(
+                                    context.ui, 
+                                    confirmation_id, 
+                                    confirmation_kind
+                                )?;
+
+                                Ok(new_state)
+                            }, 
                             _ => Ok(None)
                         } 
                     },
@@ -128,7 +136,7 @@ impl GraphicCoreStateHandle {
                     },
                     WindowEvent::CloseRequested => {
                         let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                            context.logic_module_handler
+                            context.logic_module_handler,
                         )?;
 
                         Ok(new_state)

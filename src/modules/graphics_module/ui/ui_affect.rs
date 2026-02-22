@@ -3,8 +3,10 @@ use std::{
 };
 use crate::{
     modules::{
-        shared::{
-            task_id::TaskID,
+        logic_module::{
+            events::{
+                ConfirmationID, DecisionKind
+            }
         },
     },
 };
@@ -16,10 +18,11 @@ pub enum UIAffect {
     ExitRequested,
     CreateProjectReq {
         project_name: String,
-        project_dir: PathBuf,
+        project_path: PathBuf,
     },
-    Confirmation {
-        task_id: TaskID,
-        confirm: bool,
+    ConfirmationDecision {
+        confirmation_id: ConfirmationID,
+        decision: bool,
+        decision_kind: DecisionKind, 
     },
 }

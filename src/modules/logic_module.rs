@@ -1,6 +1,7 @@
 mod event_loop;
-mod events;
+pub mod events;
 mod logic_core;
+pub mod logic_module_handler;
 mod project_manager;
 
 use std::{
@@ -10,66 +11,59 @@ use std::{
 use calloop::{
     LoopSignal,
     channel::{
-        channel, 
+        channel, Channel, 
     },
+    EventLoop,
 };
 use crate::{ 
     modules::{
         app_dirs::ApplicationDirectories,
-        shared::{
-            db_module_handler::DBModuleHandler,
-            logic_module_handler::LogicModuleHandler,
-        },
-        graphics_module::{ExternalEvent, CustomEvents},
+        
     }, 
 };
 use self::{
     event_loop::init_event_loop,
     logic_core::LogicCore,   
-    project_manager::ProjectManager,
-};
-pub use self::{
-    events::{LogicEvent, LogicEvents},
+    events::{
+        LogicCommand, EventSender
+    },
+    logic_module_handler::LogicModuleHandler,
 };
 
 
-struct EventLoopResource {
+struct EventLoopResource<S> 
+where 
+    S: EventSender + Send + 'static
+{
     logic_core: LogicCore,
-    custom_events: CustomEvents,
-    logic_events: LogicEvents,
-    project_manager: ProjectManager,
+    event_sender: S,
     app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
-    db_module_handler: DBModuleHandler,
 }
 
 pub struct LogicModule;
 
-impl LogicModule {
-    pub fn init_logic_module(
-        custom_events: CustomEvents,
+impl LogicModule{
+    pub fn init_logic_module<S>(
+        event_sender: S,
         app_dirs: Arc<ApplicationDirectories>,
-        db_module_handler: DBModuleHandler,
-    ) -> LogicModuleHandler {
-        let (sender, channel) = channel::<LogicEvent>();
-
-        let cloned_sender = sender.clone();
+    ) -> LogicModuleHandler 
+    where 
+        S: EventSender + Send + 'static 
+    {
+        let (sender, channel) = channel::<LogicCommand>();
 
         let handle = thread::spawn(move||{
-            let mut event_loop = init_event_loop(channel);
+            let mut event_loop: EventLoop<'_, EventLoopResource<S>> = init_event_loop(channel);
             let loop_signal = event_loop.get_signal();
 
             let logic_core = LogicCore::new();
-            let project_manager = ProjectManager::new(db_module_handler.db_events.clone());
 
             let mut event_loop_resource = EventLoopResource {
                 logic_core: logic_core,
-                custom_events: custom_events,
-                logic_events: cloned_sender,
-                project_manager: project_manager,
+                event_sender: event_sender,
                 app_dirs: app_dirs,
                 loop_signal: loop_signal,
-                db_module_handler: db_module_handler,
             }; 
 
             let _ = event_loop.run(None, &mut event_loop_resource, |event_loop_resource|{
@@ -82,7 +76,7 @@ impl LogicModule {
         
         LogicModuleHandler {
             thread_handle: Some(handle),
-            sender: sender,
+            logic_commands: sender,
         }
     }
 }

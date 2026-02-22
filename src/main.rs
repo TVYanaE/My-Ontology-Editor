@@ -15,17 +15,15 @@ use modules::{
     app_dirs::{
         init_app_dirs, 
         ApplicationDirectories,
-    },
-    db_module::{
-        DBModule,
-    },
+    }, 
     logic_module::{
         LogicModule, 
     },
     graphics_module::{
         GraphicsModule,
         ExternalEvent,
-        CustomEvent
+        CustomEvent,
+        logic_adapter::LogicAdapter,
     },
     logger::init_logger,
     
@@ -59,19 +57,20 @@ fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
     let custom_events_cloned = custom_events.clone();
 
     ctrlc::set_handler(move||{
-        custom_events_cloned.send_event(ExternalEvent::AppShutdownReq.into()).expect("winit event loop was closed. CTRL C Hook");
+        custom_events_cloned.send_event(ExternalEvent::Shutdown.into()).expect("winit event loop was closed. CTRL C Hook");
     }).context("ctrlc set handler error")?;
 
     let app_dirs = Arc::new(app_dirs);
 
     // DB module 
-    let db_module_handler = DBModule::init_db_module();
- 
+    //let db_module_handler = DBModule::init_db_module();
+
+    let logic_adapter = LogicAdapter::new(custom_events.clone());
+
     // Logic Module 
     let logic_module_descriptor = LogicModule::init_logic_module(
-        custom_events.clone(), 
+        logic_adapter,
         app_dirs.clone(),
-        db_module_handler
     );
 
     // Graphics Module 

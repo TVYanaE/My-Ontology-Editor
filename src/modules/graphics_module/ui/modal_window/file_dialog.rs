@@ -9,7 +9,7 @@ use crate::{
     modules::{
         graphics_module::{
             ui::{
-                events::{UIEvents, UIEvent},
+                events::{UIEvents, UIEvent, ChosedModalWindow},
                 ui_error::UIError,
             },
         },
@@ -55,12 +55,14 @@ impl FileDialogWrap {
 
     if let Some(project_path) = file_dialog.picked() {
         if let Some(project_path_str) = project_path.to_str() {
-            ui_events.push(UIEvent::DirPicked(project_path_str.to_string()));              
+            ui_events.push(UIEvent::PathPicked(project_path_str.to_string()));              
         }
         else {
-            ui_events.push( 
-                UIEvent::ShowNotification(
-                    "Invalid Symbols was found in path. Please Use UTF-8 Symbols Only".to_string()
+            ui_events.push(
+                UIEvent::ShowModalWindow(
+                    ChosedModalWindow::Notification { 
+                        text: "Invalid Symbols was found in path. Please Use UTF-8 Symbols Only".to_string() 
+                    }
                 )
             ); 
         }
@@ -69,7 +71,7 @@ impl FileDialogWrap {
         // For close and cancel handling
         match file_dialog.state() {
             DialogState::Closed | DialogState::Cancelled => {
-                ui_events.push(UIEvent::FileDialogClosed); 
+                ui_events.push(UIEvent::ModalWindowClose); 
             },
             _ => {}
         }

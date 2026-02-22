@@ -9,7 +9,7 @@ use crate::{
                 main_ui::MainUI,
                 modal_window::ModalWindow,
                 ui_error::UIError,
-                events::{UIEvent, UIEvents},
+                events::{UIEvent, UIEvents, ChosedModalWindow},
                 ui_state::{UIState, ModalWindowKind, Transition},
             },
         },
@@ -50,38 +50,71 @@ impl UILogic {
                 UIEvent::QuitApp => {
                     ui_affects.push(UIAffect::ExitRequested);
                 },
-                UIEvent::OpenCreateNewProjectWindow => {
-                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::CreateNewProject));
-                },
-                UIEvent::DirPicked(dir) => {
-                    modal_window.create_new_project_window.set_project_dir(dir);   
-                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::CreateNewProject));
-                },
-                UIEvent::FileDialogClosed => {
-                    transition = Transition::Rollback; 
-                },
-                UIEvent::OpenFileDialogReq => {
-                    modal_window.file_dialog.open_for_pick_directory();
-                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::FileDialog));
-                },
-                UIEvent::Confirmation { task_id, confirm } => {
-                    ui_affects.push(UIAffect::Confirmation { task_id, confirm });
+                UIEvent::ShowModalWindow(choosed_window) => {
+                    match choosed_window {
+                        ChosedModalWindow::FileDialog => {
+                            modal_window.file_dialog.open_for_pick_directory();
+                            transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::FileDialog));
+                        },
+                        ChosedModalWindow::CreateNewProject { 
+                            project_name, 
+                            project_path 
+                        } => {
+                            if let Some(project_name) = project_name {
+                                modal_window.create_new_project_window.set_project_name(&project_name);
+                            }
+                            if let Some(project_path) = project_path {
+                                modal_window.create_new_project_window.set_project_path(&project_path);
+                            }
+                            transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::CreateNewProject));
+                        },
+                        ChosedModalWindow::Notification { text } => {
+                            modal_window.notification.set_notification_text(&text);
+                            transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::Notification));
+                        },
+                        ChosedModalWindow::WaitingWindow { text } => {
+                            modal_window.waiting_window.set_text(&text);
+                            transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::WaitingWindow));
+                        },
+                        ChosedModalWindow::ConfirmationWindow { 
+                            confirmation_id, 
+                            confirmation_kind,
+                            text,
+                        } => {
+                            modal_window.confirmation_window.set_confirmation(confirmation_id.clone(), &text, confirmation_kind.clone());
+                            transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::ConfirmationWindow));
+                        },
+                    }
+                }, 
+                UIEvent::ModalWindowClose => {
                     transition = Transition::Rollback;
                 },
-                UIEvent::NotificationClosed => {
+                UIEvent::ShowMainUI => {
+                    transition = Transition::Next(UIState::Default);
+                },
+                UIEvent::PathPicked(path) => {
+                    modal_window.create_new_project_window.set_project_path(&path);   
+                    transition = Transition::Next(
+                        UIState::ModalWindow(ModalWindowKind::CreateNewProject)
+                    );
+                },
+                 
+                UIEvent::ConfirmationDecision { 
+                    confirmation_id, 
+                    decision, 
+                    decision_kind 
+                } => {
+                    ui_affects.push(UIAffect::ConfirmationDecision { 
+                        confirmation_id, 
+                        decision,
+                        decision_kind,
+                    });
                     transition = Transition::Rollback;
-                },
-                UIEvent::ShowNotification(text) => {
-                    modal_window.notification.set_notification_text(&text);
-                    transition = Transition::Next(UIState::ModalWindow(ModalWindowKind::Notification));
-                },
-                UIEvent::CreateProjectReq { project_name, project_dir } => {
-                    ui_affects.push(UIAffect::CreateProjectReq { project_name, project_dir }); 
-                    transition = Transition::Next(UIState::Default);
-                },
-                UIEvent::CloseCreateNewProjectWindow => {
-                    transition = Transition::Next(UIState::Default);
-                },
+                }, 
+                UIEvent::CreateProjectReq { project_name, project_path } => {
+                    ui_affects.push(UIAffect::CreateProjectReq { project_name, project_path }); 
+                    transition = Transition::Stay;
+                }, 
             }
         }
 

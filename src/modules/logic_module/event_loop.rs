@@ -4,22 +4,19 @@ use calloop::{
     },
     EventLoop,  
 };
-use crate::{
-    modules::{
-        logic_module::{
-            events::LogicEvent,
-        }, 
-    },
-};
 use super::{
-    EventLoopResource
+    EventLoopResource,
+    events::{EventSender, LogicCommand},
 };
 
 
-pub fn init_event_loop<'e>(
-    channel: Channel<LogicEvent> 
-) -> EventLoop<'e, EventLoopResource>{
-    let event_loop: EventLoop<EventLoopResource> = EventLoop::try_new().expect("Event Loop Error init calloop. Logic Module");
+pub fn init_event_loop<'e, S>(
+    channel: Channel<LogicCommand> 
+) -> EventLoop<'e, EventLoopResource<S>>
+where 
+    S:EventSender + Send + 'static 
+{
+    let event_loop: EventLoop<EventLoopResource<S>> = EventLoop::try_new().expect("Event Loop Error init calloop. Logic Module");
     let event_loop_handle = event_loop.handle();
     
     let _ = event_loop_handle.insert_source(channel, |
@@ -28,14 +25,11 @@ pub fn init_event_loop<'e>(
         event_loop_resource
     |{
         match event {
-            Event::Msg(logic_event) => {
-                event_loop_resource.logic_core.on_event(
-                    logic_event, 
-                    &event_loop_resource.custom_events, 
-                    &event_loop_resource.logic_events,
+            Event::Msg(logic_command) => {
+                event_loop_resource.logic_core.on_command(
+                    logic_command,
                     &event_loop_resource.app_dirs,
-                    &mut event_loop_resource.project_manager,
-                    &mut event_loop_resource.db_module_handler,
+                    &event_loop_resource.event_sender,
                 ); 
             },
             Event::Closed => {

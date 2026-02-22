@@ -1,43 +1,47 @@
-mod handle_logic_event_error;
+mod logic_core_error_handle;
 mod logic_core_logic;
+mod logic_core_state;
+mod logic_core_state_handle;
 
+use thiserror::{
+    Error,
+};
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
         logic_module::{
             events::{
-                LogicEvent
+                LogicCommand, EventSender,
             },
+            project_manager::ProjectManagerError,
         },
-        shared::{
-            db_module_handler::DBModuleHandler,
-        },
+        db_module::DBEvent, 
     },
 };
-use super::{
-    CustomEvents, LogicEvents,
-    ExternalEvent, ProjectManager,
-};
 use self::{
-    handle_logic_event_error::handle_logic_event_error,
-    logic_core_logic::LogicCoreLogic,
+    logic_core_error_handle::logic_core_error_handle,
+    logic_core_state::LogicCoreState,
+    logic_core_state_handle::LogicCoreStateHandle,
 };
-
-#[derive(Debug)]
-pub enum LogicCoreState {
-    Wait, 
-    Shutdown,
-    Processing,
-}
-
-impl Default for LogicCoreState {
-    fn default() -> Self {
-        Self::Wait
-    }
-}
 
 pub struct LogicCore {
     logic_core_state: LogicCoreState,  
+}
+
+#[derive(Debug, Error)]
+pub enum LogicCoreError<S: EventSender>{ 
+    #[error("MPSC Channel was closed {0}")]
+    MPSCChannelDBEventError(#[from] std::sync::mpsc::SendError<DBEvent>),
+
+    #[error("Event Sender Error: {0}")]
+    EventSenderError(#[source] S::Error),
+
+    #[error("Std IO Error: {0}")]
+    STDIOError(#[from] std::io::Error),
+
+    #[error("Project Manager Error: {0}")]
+    ProjectManagerError(#[from] ProjectManagerError),
+
 }
 
 impl LogicCore {
@@ -47,35 +51,33 @@ impl LogicCore {
         }
     }
     
-    pub fn on_event(
+    pub fn on_command<S: EventSender>(
         &mut self, 
-        event: LogicEvent,
-        custom_events: &CustomEvents,
-        logic_events: &LogicEvents,
+        command: LogicCommand,
         app_dirs: &ApplicationDirectories, 
-        project_manager: &mut ProjectManager,
-        db_module_handler: &mut DBModuleHandler
+        event_sender: &S,
     ) {
         let current_state = std::mem::replace(
             &mut self.logic_core_state, 
             LogicCoreState::Processing
         ); 
 
-        self.logic_core_state = match (current_state, event) {
-            (LogicCoreState::Wait, event) => {
-                match LogicCoreLogic::logic_event_handle(
-                    event, 
+        self.logic_core_state = match (current_state, command) {
+            (LogicCoreState::Ready, command) => {
+                match LogicCoreStateHandle::ready_handle(
+                    command, 
                     app_dirs, 
-                    custom_events,
-                    logic_events, 
-                    project_manager,
-                    db_module_handler,
+                    event_sender
                 ) {
                     Ok(Some(new_state)) => new_state,
-                    Ok(None) => LogicCoreState::Wait,
+                    Ok(None) => LogicCoreState::Ready,
                     Err(error) => {
-                        handle_logic_event_error(error, logic_events, custom_events); 
-                        LogicCoreState::Wait
+                        if let Some(new_state) = logic_core_error_handle(error, event_sender) {
+                            new_state
+                        } 
+                        else {
+                            LogicCoreState::Ready
+                        } 
                     },
                 }              
             },

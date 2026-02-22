@@ -9,7 +9,6 @@ use crate::{
                 graphics_core_logic::{
                     GraphicsCoreLogic
                 },             
-                pending_task::PendingTask,
                 graphic_event_error::GraphicsEventError,
                 GraphicsCoreState,
             },
@@ -23,9 +22,9 @@ use crate::{
             },
             ui::UI,
         },
-        shared::{
+        logic_module::{
             logic_module_handler::LogicModuleHandler,
-            task_id::TaskID,
+            events::TaskID,
         },
     },
 };
@@ -38,8 +37,7 @@ pub struct WaitingTaskStateContext<'c> {
     pub ui: &'c mut UI,
     pub custom_events: &'c CustomEvents,
     pub logic_module_handler: &'c mut LogicModuleHandler,
-    pub pending_task_id: TaskID,
-    pub pending_task: PendingTask,
+    pub waiting_task_id: TaskID,
 }
 
 impl GraphicCoreStateHandle {
@@ -69,7 +67,7 @@ impl GraphicCoreStateHandle {
                     },
                     WindowEvent::CloseRequested => {
                         let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                            context.logic_module_handler
+                            context.logic_module_handler,
                         )?;
 
                         Ok(new_state)
@@ -96,17 +94,22 @@ impl GraphicCoreStateHandle {
                 match event {
                     CustomEvent::InternalEvent(event) => {
                         match event {
-                            InternalEvent::AppShutdownReq => {
+                            InternalEvent::ShutdownReq => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                                    context.logic_module_handler
+                                    context.logic_module_handler,
                                 )?;
 
                                 Ok(new_state) 
                             }
-                            InternalEvent::ConfirmationObtain { task_id, confirm } => {
+                            InternalEvent::ConfirmationDecision { 
+                                confirmation_id, 
+                                decision,
+                                decision_kind,
+                            } => {
                                 let new_state = GraphicsCoreLogic::confirmation_obtain_handle(
-                                    task_id, 
-                                    confirm, 
+                                    confirmation_id, 
+                                    decision,
+                                    decision_kind,
                                     context.logic_module_handler
                                 )?;
 
@@ -117,29 +120,36 @@ impl GraphicCoreStateHandle {
                     },
                     CustomEvent::ExternalEvent(event) => {
                         match event {
-                            ExternalEvent::AppShutdownReq => {
+                            ExternalEvent::Shutdown => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
-                                    context.logic_module_handler
+                                    context.logic_module_handler,
                                 )?;
 
                                 Ok(new_state) 
                             },
-                            ExternalEvent::TaskDone(done_task_id) => {
-                                println!("Task Done");
-                                let new_state = GraphicsCoreLogic::pending_task_handle(
-                                    context.pending_task_id, 
-                                    context.pending_task, 
-                                    done_task_id, 
+                            ExternalEvent::TaskRespone { 
+                                task_id,
+                                task_kind,
+                                task_result,
+                            } => {
+                                let new_state = GraphicsCoreLogic::task_response_handle(
+                                    context.waiting_task_id, 
+                                    task_id, 
+                                    task_kind, 
+                                    task_result, 
                                     context.ui
                                 )?;
 
                                 Ok(new_state)
-                            },
-                            ExternalEvent::ConfirmRequeired { task_id, text } => {
+                            }, 
+                            ExternalEvent::ConfirmationRequested { 
+                                confirmation_id, 
+                                confirmation_kind 
+                            } => {
                                 let new_state = GraphicsCoreLogic::confirmation_required_handle(
                                     context.ui, 
-                                    task_id, 
-                                    &text
+                                    confirmation_id, 
+                                    confirmation_kind
                                 )?;
 
                                 Ok(new_state)

@@ -65,7 +65,7 @@ fn prepare_notification(
         egui_context, |notificatio_ui| {
             notificatio_ui.add(Label::new(text));
             if notificatio_ui.add(Button::new("Ok")).clicked() {
-                ui_events.push(UIEvent::NotificationClosed); 
+                ui_events.push(UIEvent::ModalWindowClose); 
             } 
         }
     ); 

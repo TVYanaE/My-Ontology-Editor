@@ -16,26 +16,28 @@ use tracing::{
 use crate::{
     modules::{
         logic_module::{
-            LogicEvent,
+            events::{
+                LogicCommand, 
+                TaskID, TaskKind,
+                ResultKind, ErrorKind,
+                DecisionKind, 
+                ConfirmationID, ConfirmationKind,
+            }, 
+            logic_module_handler::LogicModuleHandler,
         },
         graphics_module::{
             graphics_core::{
                 graphic_event_error::GraphicsEventError,
                 GraphicsCoreState,
-                pending_task::PendingTask,
             },
             graphics_backend::{
                 GraphicsBackend,
             },
-            ui::{UI, UIInputEvent},
+            ui::{UI, UIInputEvent, ChosedModalWindow},
             events::{
                 CustomEvents
             },
-        }, 
-        shared::{
-            logic_module_handler::LogicModuleHandler,
-            task_id::TaskID,
-        },
+        },  
     },
 };
 use self::{
@@ -58,10 +60,10 @@ impl GraphicsCoreLogic {
     }
 
     pub fn app_shutdown_handle(
-        logic_module_handler: &mut LogicModuleHandler
+        logic_module_handler: &mut LogicModuleHandler,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
         // logic for shutdown
-        if let Err(_) = logic_module_handler.sender.send(LogicEvent::Shutdown) {
+        if let Err(_) = logic_module_handler.logic_commands.send(LogicCommand::Shutdown) {
             return Ok(Some(GraphicsCoreState::Shutdown));
         }
 
@@ -71,7 +73,7 @@ impl GraphicsCoreLogic {
                 error!(error = ?error, "Logic Thread Panic");                
             }
         }
-
+       
         Ok(Some(GraphicsCoreState::Shutdown)) 
     }
 
@@ -79,36 +81,79 @@ impl GraphicsCoreLogic {
         logic_module_handler: &mut LogicModuleHandler,
         ui: &mut UI,
         project_name: String,
-        project_dir: PathBuf,
+        project_path: PathBuf,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
-        let task_id = Uuid::new_v4(); 
-        logic_module_handler.sender.send(LogicEvent::CreateProject{ 
-            task_id: TaskID(task_id),
-            project_name: project_name, 
-            project_dir: project_dir 
-        })?;
+        let task_id = TaskID(Uuid::new_v4()); 
+        logic_module_handler.logic_commands.send(
+            LogicCommand::Task { 
+                task_id: task_id.clone(), 
+                task_kind: TaskKind::CreateProject { 
+                    project_name: project_name, 
+                    project_path: project_path 
+                } 
+            }
+        )?;
 
-        ui.on_event(UIInputEvent::Waiting)?;
+        ui.on_event(
+            UIInputEvent::ShowModalWindow(
+                ChosedModalWindow::WaitingWindow { 
+                    text: "Creating Project. Please Wait".into() 
+                }
+            )
+        )?; 
 
         Ok(Some(GraphicsCoreState::WaitingTask {
-            task_id: TaskID(task_id), 
-            pending_task: PendingTask::CreateProject,
+            task_id: task_id, 
         }))
     }
        
-    pub fn pending_task_handle(
-        pending_task_id: TaskID,
-        pending_task: PendingTask,
+    pub fn task_response_handle(
+        waiting_task_id: TaskID,
         done_task_id: TaskID,
+        done_task_kind: TaskKind,
+        done_task_result: ResultKind,
         ui: &mut UI,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> 
     {
-        if pending_task_id == done_task_id {
-            match pending_task {
-                PendingTask::CreateProject => {
-                    ui.on_event(UIInputEvent::StopWaiting)?;
-                    Ok(Some(GraphicsCoreState::Runnig))
-                }
+        if waiting_task_id == done_task_id {
+            match done_task_kind {
+                TaskKind::CreateProject { 
+                    project_name, 
+                    project_path 
+                } => {
+                    match done_task_result {
+                        ResultKind::Ok => {
+                            ui.on_event(UIInputEvent::ShowMainUI)?;
+
+                            Ok(Some(GraphicsCoreState::Runnig))
+                        },
+                        ResultKind::Error(error_kind) => {
+                            match error_kind {
+                                ErrorKind::PathError(err_text) => {
+                                    let project_path_str = project_path.to_str().unwrap().to_string();
+
+                                    ui.on_event(
+                                        UIInputEvent::ShowModalWindow(
+                                            ChosedModalWindow::CreateNewProject { 
+                                                project_name: Some(project_name), 
+                                                project_path: Some(project_path_str) 
+                                            }
+                                        )
+                                    )?; 
+                                    ui.on_event(
+                                        UIInputEvent::ShowModalWindow(
+                                            ChosedModalWindow::Notification { 
+                                                text: err_text 
+                                            }
+                                        )
+                                    )?;
+                                     
+                                    Ok(Some(GraphicsCoreState::Runnig))
+                                },
+                            }
+                        },
+                    }
+                },
             } 
         }
         else {       
@@ -116,23 +161,42 @@ impl GraphicsCoreLogic {
         }
     } 
 
-
     pub fn confirmation_required_handle(
         ui: &mut UI,
-        task_id: TaskID,
-        text: &str,
+        confirmation_id: ConfirmationID,
+        confirmation_kind: ConfirmationKind,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
-        ui.on_event(UIInputEvent::ShowConfirmationWindow { task_id, text: text.to_string() })?; 
+        match confirmation_kind.clone() {
+            ConfirmationKind::Owerrite { project_name, .. } => {
+                let confirmation_text = format!("Project {} already extists. Replace?", project_name);
 
-        Ok(None)
+                ui.on_event(
+                    UIInputEvent::ShowModalWindow(
+                        ChosedModalWindow::ConfirmationWindow { 
+                            confirmation_id, 
+                            confirmation_kind, 
+                            text: confirmation_text 
+                        }
+                    )
+                )?; 
+                Ok(None)
+            },
+        }
     } 
 
     pub fn confirmation_obtain_handle(
-        task_id: TaskID,
-        confirm: bool,
+        confirmation_id: ConfirmationID,
+        decision: bool,
+        decision_kind: DecisionKind,
         logic_module_handler: &mut LogicModuleHandler,
     ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
-        logic_module_handler.sender.send(LogicEvent::Confirmation { task_id, confirm })?;
+        logic_module_handler.logic_commands.send(
+            LogicCommand::ConfirmationDecision { 
+                confirmation_id: confirmation_id, 
+                decision: decision, 
+                decision_kind: decision_kind, 
+            }
+        )?;
 
         Ok(None)
     }

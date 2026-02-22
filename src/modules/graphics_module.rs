@@ -1,6 +1,7 @@
 mod graphics_backend;
 mod graphics_core;
 mod events;
+pub mod logic_adapter;
 mod ui;
 
 use std::{
@@ -16,7 +17,7 @@ use winit::{
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
-        shared::{
+        logic_module::{
             logic_module_handler::LogicModuleHandler,
         },
     },

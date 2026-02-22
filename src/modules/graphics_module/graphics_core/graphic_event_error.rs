@@ -10,7 +10,7 @@ use crate::{
             },         
             ui::UIError,
         },
-        logic_module::LogicEvent,
+        logic_module::events::LogicCommand
     },
 };
 
@@ -20,7 +20,7 @@ pub enum GraphicsEventError {
     WGPUBackendError(#[from] WGPUBackendError), 
 
     #[error("MPSC Channel Error {0}")]
-    MPSCChannelError(#[from] std::sync::mpsc::SendError<LogicEvent>),
+    MPSCChannelError(#[from] std::sync::mpsc::SendError<LogicCommand>),
 
     #[error("EGUI Backeend Error {0}")]
     EGUIBackendError(#[from] EGUIBackendError),

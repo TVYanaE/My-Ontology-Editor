@@ -8,9 +8,14 @@ use winit::{
 };
 use crate::{
     modules::{
-        shared::{
-            task_id::TaskID,
-        },
+        logic_module::{
+            events::{
+                TaskID, TaskKind,
+                ConfirmationID, ConfirmationKind,
+                DecisionKind,
+                ResultKind,
+            }
+        }, 
     },
 };
 
@@ -30,26 +35,31 @@ pub enum CustomEvent {
 
 #[derive(Debug)]
 pub enum InternalEvent {
-    AppShutdownReq,
+    ShutdownReq,
     ResumedEvent(Window), 
     CreateProjectReq{
         project_name: String,
-        project_dir: PathBuf,
+        project_path: PathBuf,
     },
-    ConfirmationObtain {
-        task_id: TaskID,
-        confirm: bool,
+    ConfirmationDecision {
+        confirmation_id: ConfirmationID,
+        decision: bool,
+        decision_kind: DecisionKind,
     }
 }
 
 #[derive(Debug)]
 pub enum ExternalEvent { 
-    AppShutdownReq,
-    TaskDone(TaskID),
-    ConfirmRequeired {
+    TaskRespone {
         task_id: TaskID,
-        text: String,
-    },
+        task_kind: TaskKind,
+        task_result: ResultKind,
+    }, 
+    ConfirmationRequested {
+        confirmation_id: ConfirmationID,
+        confirmation_kind: ConfirmationKind,
+    }, 
+    Shutdown, 
 }
 
 impl From<WindowEvent> for GraphicsEvent {

@@ -1,115 +1,106 @@
-mod create_project_handle;
-
-use tracing::{
-    instrument, error,
-};
-use thiserror::{
-    Error
+use std::{
+    path::PathBuf,
 };
 use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
-        db_module::DBEvent,
-        graphics_module::{
-            CustomEvent, ExternalEvent,
-        },
-        shared::{
-            db_module_handler::DBModuleHandler, 
-        },
     },
 };
 use super::{
     super::{
-        LogicEvents, CustomEvents,
         events::{
-            LogicEvent,
-        },
-        project_manager::{
-            ProjectManager, 
-            ProjectManagerError,
-        },
+            LogicEvent, ErrorKind,
+            EventSender, TaskKind,
+            ResultKind, TaskID,
+        }, 
     },
     LogicCoreState,
+    LogicCoreError
 };
-use self::{
-    create_project_handle::{
-        create_project_handle,
-        CreateProjectContext,
-    },
-};
+
 
 pub struct LogicCoreLogic;
 
-#[derive(Debug, Error)]
-pub enum LogicEventError {
-    #[error("Winit Event Loop is closed: {0}")]
-    EventLoopClosed(#[from] winit::event_loop::EventLoopClosed<CustomEvent>),
-
-    #[error("MPSC Channel was closed {0}")]
-    MPSCChannelLogicEventError(#[from] std::sync::mpsc::SendError<LogicEvent>),
-
-    #[error("MPSC Channel was closed {0}")]
-    MPSCChannelDBEventError(#[from] std::sync::mpsc::SendError<DBEvent>),
-
-    #[error("Std IO Error: {0}")]
-    STDIOError(#[from] std::io::Error),
-
-    #[error("Project Manager Error: {0}")]
-    ProjectManagerError(#[from] ProjectManagerError),
-
-    #[error("Rwlock poison error")]
-    RwLockPoisonError
+#[derive(Debug)]
+pub enum WorkAfterConfirmation {
+    CreateProject
 }
 
-impl LogicCoreLogic {
-    #[instrument(skip_all,err)]
-    pub fn logic_event_handle(
-        event: LogicEvent,
-        app_dirs: &ApplicationDirectories,
-        custom_events: &CustomEvents,
-        logic_events: &LogicEvents,
-        project_manager: &mut ProjectManager,
-        db_module_handler: &mut DBModuleHandler
-    ) -> Result<Option<LogicCoreState>, LogicEventError> {
-        match event {
-            LogicEvent::CreateProject{
-                task_id,
-                project_name, 
-                project_dir
-            } => {
-                /* create_project_handle(
-                    CreateProjectContext { 
-                        app_dirs: app_dirs, 
-                        project_name: project_name, 
-                        project_dir: project_dir, 
-                        project_manager: project_manager,
-                        custom_events: custom_events
-                    } 
-                )?; */ 
-                std::thread::sleep(std::time::Duration::from_secs(1));
-                
-                custom_events.send_event(ExternalEvent::TaskDone(task_id).into())?;
-                Ok(None)
-            },
-            LogicEvent::Confirmation { task_id, confirm } => {
-                
-                Ok(None)
-            }, 
-            LogicEvent::Shutdown => {
-                db_module_handler.db_events.send(DBEvent::Shutdown)?;
-                
-                if let Some(handle) = db_module_handler.thread_handle.take() {
-                    // Error will come due to panic in thread 
-                    if let Err(error) = handle.join() {
-                        error!(error = ?error, "DB Thread Panic");                
-                    }
-                }
+pub struct CreateProjectContext<'c, S: EventSender> {
+    pub app_dirs: &'c ApplicationDirectories,
+    pub project_name: String,
+    pub project_path: PathBuf,
+    pub task_id: TaskID, 
+    pub event_sender: &'c S,
+}
 
-                // Logic for Graceful Shutdown  
-                Ok(Some(LogicCoreState::Shutdown))
+
+impl LogicCoreLogic {
+    pub fn create_project_handle<S: EventSender>(
+    context: CreateProjectContext<S>,
+) -> Result<Option<LogicCoreState>, LogicCoreError<S>> { 
+    match context.project_path.metadata() {
+        Ok(meta) => {
+            if !meta.is_dir() {
+                let error_text = format!("Invalid Path: Is not directory");
+                
+                context.event_sender.send_event(LogicEvent::TaskRespone { 
+                    task_id: context.task_id, 
+                    task_kind: TaskKind::CreateProject { 
+                        project_name: context.project_name, 
+                        project_path: context.project_path 
+                    }, 
+                    result: ResultKind::Error(ErrorKind::PathError(error_text)) 
+                    }
+                ).map_err(|error|
+                    LogicCoreError::EventSenderError(error)
+                )?;
+
+                return Ok(None);
             }
+        },
+        Err(error) => {
+            let error_text = format!("Invalid Path: {error}");
+           
+            context.event_sender.send_event(LogicEvent::TaskRespone { 
+                task_id: context.task_id, 
+                task_kind: TaskKind::CreateProject { 
+                    project_name: context.project_name, 
+                    project_path: context.project_path 
+                }, 
+                result: ResultKind::Error(ErrorKind::PathError(error_text)) 
+                }
+            ).map_err(|error|
+                LogicCoreError::EventSenderError(error)
+            )?;
+
+            return Ok(None);
         }
-    } 
+    }
+
+    /* context.project_manager.create_project(
+        CreateProjectDescriptor { 
+            project_name: context.project_name, 
+            project_dir: context.project_dir, 
+            projects_dir_cache_path: context.app_dirs.cache_directory.projects_dir.clone(),
+        },
+        context.custom_events
+    )?; */
+
+    context.event_sender.send_event(
+        LogicEvent::TaskRespone { task_id: context.task_id, 
+            task_kind: TaskKind::CreateProject { 
+                project_name: context.project_name, 
+                project_path: context.project_path 
+            }, 
+            result: ResultKind::Ok, 
+        } 
+    ).map_err(|error|
+        LogicCoreError::EventSenderError(error)
+    )?;
+
+    Ok(None)
+}
 }
 
 
