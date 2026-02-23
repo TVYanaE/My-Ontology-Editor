@@ -16,6 +16,9 @@ use crate::{
         app_dirs::{
             ApplicationDirectories,
         },
+        db_module::{
+            DBCommands,
+        },
     },
 };
 use self::{
@@ -47,12 +50,14 @@ impl ProjectManager {
         &self,
         project_name: &str,
         project_path: &impl AsRef<Path>,
+        db_commands: &DBCommands,
     ) -> Result<(), ProjectManagerError> {
         ProjectManagerLogic::create_new_project(
             project_name, 
             project_path, 
             &self.app_dirs.as_ref().cache_directory.projects_dir_path,
             &self.project_template,
+            db_commands,
         )?;
 
         Ok(())

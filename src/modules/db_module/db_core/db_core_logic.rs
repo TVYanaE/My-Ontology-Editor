@@ -4,6 +4,9 @@ use std::{
 use rusqlite::{
     Connection as DBConnection,
 };
+use tracing::{
+    error,
+};
 use crate::{
     aliases::{
         OneShotSender
@@ -27,7 +30,10 @@ impl DBCoreLogic {
             Err(error) => {
                 match response_target.send(Err(DBCoreError::RuSQlitError(error))) {
                     Ok(_) => return None,
-                    Err(_) => return None,
+                    Err(error) => {
+                        error!(error=?error, "Send Error DB module");
+                        return None;
+                    },
                 }
             },
         };
@@ -47,6 +53,12 @@ impl DBCoreLogic {
             }
         }; 
 
-        None
+        match response_target.send(Ok(())) {
+            Ok(_) => return None,
+            Err(error) => {
+                error!(error=?error, "Send Error DB module");
+                return None;
+            },
+        }
     }     
 }

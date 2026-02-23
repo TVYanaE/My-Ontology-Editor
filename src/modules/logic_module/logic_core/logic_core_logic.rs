@@ -8,6 +8,7 @@ use crate::{
     modules::{
         db_module::{
             DBModuleHandler, DBCommand,
+            DBCommands,
         },
     },
 };
@@ -120,11 +121,12 @@ impl LogicCoreLogic {
 
     pub fn create_project<S: EventSender>(
         task_id: &TaskID,
+        owerrite_confirmation: Option<bool>,
         project_name: &str,
         project_path: &impl AsRef<Path>,
         project_manager: &ProjectManager,
         event_sender: &S,
-        owerrite_confirmation: Option<bool>,
+        db_commands: &DBCommands,
     ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> { 
         // Check the confirmation if it is 
         if let Some(owerrite) = owerrite_confirmation {
@@ -146,7 +148,11 @@ impl LogicCoreLogic {
         }
 
         // Logic for creating project 
-        project_manager.create_new_project(project_name, project_path)?;
+        project_manager.create_new_project(
+            project_name, 
+            project_path,
+            db_commands,
+        )?;
 
         event_sender.send_event(
             LogicEvent::TaskRespone { 

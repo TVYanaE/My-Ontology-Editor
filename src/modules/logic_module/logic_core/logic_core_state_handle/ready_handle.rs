@@ -59,11 +59,12 @@ impl LogicCoreStateHandle {
                             None => {
                                 let new_state = LogicCoreLogic::create_project(
                                     &task_id, 
+                                    None,
                                     &project_name, 
                                     &project_path, 
                                     context.project_manager,
                                     context.event_sender,
-                                    None,
+                                    &context.db_module_handler.db_commands,
                                 )?; 
 
                                 Ok(new_state)
