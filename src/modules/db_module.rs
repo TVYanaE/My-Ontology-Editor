@@ -1,4 +1,5 @@
 mod db_core;
+mod db_module_handler;
 mod event_loop;
 mod events;
 
@@ -17,23 +18,25 @@ use self::{
     event_loop::init_event_loop,
 };
 pub use self::{
-    events::{DBEvent, DBEvents},
-    db_core::ProjectDBError,
+    events::{
+        DBCommand, DBCommands
+    },
+    db_core::{
+        db_core_error::DBCoreError,
+    },
+    db_module_handler::DBModuleHandler,
 };
 
 struct EventLoopResource {
     pub db_core: DBCore,
-    pub db_events: DBEvents, 
     pub loop_signal: LoopSignal,
 }
 
 pub struct DBModule; 
 
 impl DBModule {
-    pub fn init_db_module() -> () {
-        let (db_events, channel) = channel::<DBEvent>(); 
-
-        let db_events_cloned = db_events.clone(); 
+    pub fn init_db_module() -> DBModuleHandler {
+        let (db_commands, channel) = channel::<DBCommand>(); 
 
         let thread_handle = thread::spawn(||{
             let mut event_loop = init_event_loop(channel);
@@ -43,21 +46,20 @@ impl DBModule {
 
             let mut event_loop_resource = EventLoopResource {
                 db_core: db_core,
-                db_events: db_events_cloned,
                 loop_signal: loop_signal, 
             };
 
             let _ = event_loop.run(None, &mut event_loop_resource, |event_loop_resource|{
-                if event_loop_resource.db_core.is_shutdown() {
+                if event_loop_resource.db_core.is_shutdown() { 
+                    println!("DB module shutdown");
                     event_loop_resource.loop_signal.stop(); 
                 } 
             });
         });
 
-        /* DBModuleHandler {
-            db_events: db_events,
-            thread_handle: Some(thread_handle), 
-        } */
-        ()
+        DBModuleHandler {
+            db_commands: db_commands,
+            thread_handle: Some(thread_handle),
+        } 
     } 
 }

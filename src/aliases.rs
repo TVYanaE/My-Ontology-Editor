@@ -11,11 +11,11 @@ use egui_wgpu::{
 use egui_winit::{
     State, EventResponse,
 };
+use oneshot::{
+    Sender, Receiver,
+};
 
-
-// Project aliases
-
-// egui aliases
+// EGUI aliases
 pub type EGUIContext = Context;
 pub type EGUIUI = Ui;
 pub type EGUIRenderer = Renderer;
@@ -24,6 +24,9 @@ pub type EGUIRendererOptions = RendererOptions;
 pub type EGUIEventRespone = EventResponse;
 pub type EGUIScreenDescriptor = ScreenDescriptor;
 
-// egui containers 
+// EGUI containers aliases 
 pub type EGUICentralPanel = CentralPanel;
 
+// Oneshot aliases
+pub type OneShotSender<T> = Sender<T>;
+pub type OneShotReceiver<T> = Receiver<T>;

@@ -1,48 +1,52 @@
-
-use thiserror::{
-    Error,
+use std::{
+    path::Path
 };
-use tracing::{
-    instrument,
+use rusqlite::{
+    Connection as DBConnection,
+};
+use crate::{
+    aliases::{
+        OneShotSender
+    },
 };
 use super::{
-    project_db::{
-        ProjectDBError,
-        ProjectDB,
-    },
-    DBEvent,
-    DBCoreState,
-}; 
-
+    db_core_state::DBCoreState,
+    db_core_error::DBCoreError,
+};
 
 pub struct DBCoreLogic;
 
-#[derive(Debug, Error)]
-pub enum DBEventError {
-    #[error("ProjectDBError: {0}")]
-    ProjectDBError(#[from] ProjectDBError)
-    
-}
-
 impl DBCoreLogic {
-    #[instrument(skip_all,err)]
-    pub fn db_event_handle(
-        event: DBEvent,
-        project_db: &mut ProjectDB,
-    ) -> Result<Option<DBCoreState>, DBEventError> {
-        match event {
-            DBEvent::Shutdown => {
-                println!("DB Thread shutdown");
-                Ok(Some(DBCoreState::Shutdown))
+    pub fn create_db_file(
+        db_file_path: &impl AsRef<Path>,
+        migration: Option<String>,
+        response_target: OneShotSender<Result<(), DBCoreError>>
+    ) -> Option<DBCoreState> {
+        let db_connection = match DBConnection::open(db_file_path) {
+            Ok(connection) => connection,
+            Err(error) => {
+                match response_target.send(Err(DBCoreError::RuSQlitError(error))) {
+                    Ok(_) => return None,
+                    Err(_) => return None,
+                }
             },
-            DBEvent::OpenConnection{
-                project_root_path, 
-            } => {
-                project_db.open_connection(
-                    &project_root_path,
-                )?;
-                Ok(None)
-            },
-        } 
-    } 
+        };
+
+        if let Some(migration) = migration {
+            match db_connection.execute(
+                &migration, 
+                ()
+            ) {
+                Ok(_) => return None,
+                Err(error) => {
+                    match response_target.send(Err(DBCoreError::RuSQlitError(error))) {
+                        Ok(_) => return None,
+                        Err(_) => return None,
+                    }
+                },
+            }
+        }; 
+
+        None
+    }     
 }

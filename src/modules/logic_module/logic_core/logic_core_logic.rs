@@ -1,9 +1,14 @@
 use std::{
-    path::PathBuf,
+    path::{PathBuf, Path},
+};
+use tracing::{
+    error,
 };
 use crate::{
     modules::{
-        app_dirs::ApplicationDirectories,
+        db_module::{
+            DBModuleHandler, DBCommand,
+        },
     },
 };
 use super::{
@@ -14,9 +19,10 @@ use super::{
             TaskResult, TaskID,
             ConfirmationKind, ConfirmationID,
         }, 
-    },
-    LogicCoreState,
-    LogicCoreError
+        project_manager::ProjectManager,
+    }, 
+    logic_core_error::LogicCoreError,
+    LogicCoreState, 
 };
 
 
@@ -31,29 +37,23 @@ pub enum WorkAfterConfirmation {
     }
 }
 
-pub struct CreateProjectContext<'c, S: EventSender> {
-    pub app_dirs: &'c ApplicationDirectories,
-    pub project_name: String,
-    pub project_path: PathBuf,
-    pub task_id: TaskID, 
-    pub event_sender: &'c S,
-}
-
-
 impl LogicCoreLogic {
-    pub fn create_project_handle<S: EventSender>(
-        context: CreateProjectContext<S>,
-    ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> { 
-        match context.project_path.metadata() {
+    pub fn check_creating_project_path<S: EventSender>(
+        task_id: &TaskID,
+        project_name: &str,
+        project_path: &impl AsRef<Path>,
+        event_sender: &S,
+    ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> {
+        match project_path.as_ref().metadata() {
             Ok(meta) => {
                 if !meta.is_dir() {
                     let error_text = format!("Invalid Path: Is not directory");
                     
-                    context.event_sender.send_event(LogicEvent::TaskRespone { 
-                        task_id: context.task_id, 
+                    event_sender.send_event(LogicEvent::TaskRespone { 
+                        task_id: task_id.clone(), 
                         task_kind: TaskKind::CreateProject { 
-                            project_name: context.project_name, 
-                            project_path: context.project_path 
+                            project_name: project_name.to_string(), 
+                            project_path: project_path.as_ref().to_path_buf(), 
                         }, 
                         task_result: TaskResult::Error(TaskError::PathError(error_text)) 
                         }
@@ -67,11 +67,11 @@ impl LogicCoreLogic {
             Err(error) => {
                 let error_text = format!("Invalid Path: {error}");
                
-                context.event_sender.send_event(LogicEvent::TaskRespone { 
-                    task_id: context.task_id, 
+                event_sender.send_event(LogicEvent::TaskRespone { 
+                    task_id: task_id.clone(), 
                     task_kind: TaskKind::CreateProject { 
-                        project_name: context.project_name, 
-                        project_path: context.project_path 
+                        project_name: project_name.to_string(), 
+                        project_path: project_path.as_ref().to_path_buf(),
                     }, 
                     task_result: TaskResult::Error(TaskError::PathError(error_text)) 
                     }
@@ -80,20 +80,21 @@ impl LogicCoreLogic {
                 )?;
 
                 return Ok(None);
-            }
+            } 
         };
 
-        let mut project_name = context.project_path.clone();
-        project_name.push(&context.project_name);
+        let mut project_file = project_path.as_ref().to_path_buf();
+        project_file.push(project_name);
+        project_file.set_extension("vontov");
 
-        if project_name.exists() {
+        if project_file.exists() {
             let confirmation_id = ConfirmationID::new();
-            context.event_sender.send_event(
+            event_sender.send_event(
                 LogicEvent::ConfirmationRequested { 
                     confirmation_id: confirmation_id.clone(), 
                     confirmation_kind: ConfirmationKind::Owerrite { 
-                        project_name: context.project_name.clone(), 
-                        project_path: context.project_path.clone(), 
+                        project_name: project_name.to_string(), 
+                        project_path: project_path.as_ref().to_path_buf(), 
                     } 
                 }
             ).map_err(|error|
@@ -105,28 +106,54 @@ impl LogicCoreLogic {
                     LogicCoreState::WaitConfirmation { 
                         confirmation_id, 
                         work_after_confirmation: WorkAfterConfirmation::CreateProject {
-                            task_id: context.task_id.clone(),
-                            project_name: context.project_name.clone(),
-                            project_path: context.project_path.clone(),
+                            task_id: task_id.clone(),
+                            project_name: project_name.to_string(),
+                            project_path: project_path.as_ref().to_path_buf(),
                         }, 
                     }
                 )
             );
         }
 
-        /* context.project_manager.create_project(
-            CreateProjectDescriptor { 
-                project_name: context.project_name, 
-                project_dir: context.project_dir, 
-                projects_dir_cache_path: context.app_dirs.cache_directory.projects_dir.clone(),
-            },
-            context.custom_events
-        )?; */
-        context.event_sender.send_event(
-            LogicEvent::TaskRespone { task_id: context.task_id, 
+        Ok(None)
+    } 
+
+    pub fn create_project<S: EventSender>(
+        task_id: &TaskID,
+        project_name: &str,
+        project_path: &impl AsRef<Path>,
+        project_manager: &ProjectManager,
+        event_sender: &S,
+        owerrite_confirmation: Option<bool>,
+    ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> { 
+        // Check the confirmation if it is 
+        if let Some(owerrite) = owerrite_confirmation {
+            if !owerrite {
+                event_sender.send_event(
+                LogicEvent::TaskRespone { 
+                    task_id: task_id.clone(), 
+                    task_kind: TaskKind::CreateProject { 
+                        project_name: project_name.to_string(), 
+                        project_path: project_path.as_ref().to_path_buf(), 
+                    }, 
+                    task_result: TaskResult::CanceledByUser, 
+                } 
+                ).map_err(|error|
+                    LogicCoreError::EventSenderError(error)
+                )?;        
+                return Ok(Some(LogicCoreState::Ready));
+            }
+        }
+
+        // Logic for creating project 
+        project_manager.create_new_project(project_name, project_path)?;
+
+        event_sender.send_event(
+            LogicEvent::TaskRespone { 
+                task_id: task_id.clone(), 
                 task_kind: TaskKind::CreateProject { 
-                    project_name: context.project_name, 
-                    project_path: context.project_path 
+                    project_name: project_name.to_string(), 
+                    project_path: project_path.as_ref().to_path_buf(), 
                 }, 
                 task_result: TaskResult::Ok, 
             } 
@@ -135,36 +162,33 @@ impl LogicCoreLogic {
         )?;
 
         Ok(None)    
-    }
+    } 
 
-    pub fn for_test<S: EventSender>(
-        task_id: TaskID,
-        project_name: String,
-        project_path: PathBuf,
-        decision: bool,
-        event_sender: &S
-    ) -> Result<Option<LogicCoreState>, LogicCoreError<S>>{
-        if decision {
-            println!("Decision Yes");
+    pub fn shutdown(
+        db_module_handler: &mut DBModuleHandler 
+    ) -> Option<LogicCoreState> {
+        match db_module_handler.db_commands.send(DBCommand::Shutdown) {
+            Ok(_) => {
+                if let Some(handle) = db_module_handler.thread_handle.take() {
+                    match handle.join() {
+                        Ok(_) => {
+                            Some(LogicCoreState::Shutdown)
+                        }, 
+                        Err(error) => {
+                            error!(error = ?error, "Data Base Thread Panic");                
+                            Some(LogicCoreState::Shutdown)
+                        },
+                    }
+                }
+                else {
+                    Some(LogicCoreState::Shutdown)
+                }
+            },
+            Err(error) => { 
+                error!(error = ?error, "Data Base Thread Panic");                
+                Some(LogicCoreState::Shutdown)
+            },
         }
-        else {
-            println!("Decision No");
-        }
-
-        event_sender.send_event(
-            LogicEvent::TaskRespone { 
-                task_id: task_id, 
-                task_kind: TaskKind::CreateProject { 
-                    project_name: project_name, 
-                    project_path: project_path 
-                }, 
-                task_result: TaskResult::Ok, 
-            } 
-        ).map_err(|error|
-            LogicCoreError::EventSenderError(error)
-        )?;
-
-        Ok(Some(LogicCoreState::Ready))
     }
 }
 

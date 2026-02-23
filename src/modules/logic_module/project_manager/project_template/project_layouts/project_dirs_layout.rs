@@ -2,20 +2,20 @@ use std::{
     path::PathBuf,
 };
 
-
+#[derive(Debug)]
 pub struct ProjectDirsLayout {
     pub semantic_nodes_catalog: SemanticNodesCatalog,
 }
 
-impl ProjectDirsLayout {
-    pub fn create_defaul_dirs_layout(
-    ) -> Self {
+impl Default for ProjectDirsLayout {
+    fn default() -> Self {
         Self { 
             semantic_nodes_catalog: SemanticNodesCatalog::default(), 
-        }
+        } 
     } 
 }
 
+#[derive(Debug)]
 pub struct SemanticNodesCatalog {
     pub path: PathBuf,
 }

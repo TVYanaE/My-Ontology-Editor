@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[derive(Debug, Error)]
-pub enum GraphicsEventError {
+pub enum GraphicsCoreError {
     #[error("WGPU Backend Error {0}")]
     WGPUBackendError(#[from] WGPUBackendError), 
 

@@ -17,7 +17,7 @@ pub struct ConfigurationDirectory {
 pub struct CacheDirectory {
     pub dir_path: PathBuf,
     pub log_dir_path: PathBuf,
-    pub projects_dir: PathBuf,
+    pub projects_dir_path: PathBuf,
 }
 
 pub struct ApplicationDirectories {
@@ -52,17 +52,17 @@ pub fn init_app_dirs() -> Result<ApplicationDirectories, InitAppDirsError> {
         std::fs::create_dir_all(&log_dir_path)?;
     } 
 
-    let mut projects_dir = cache_directory_path.clone();
-    projects_dir.push("projects");
+    let mut projects_dir_path = cache_directory_path.clone();
+    projects_dir_path.push("projects");
 
-    if !projects_dir.exists() {
-        std::fs::create_dir_all(&projects_dir)?;
+    if !projects_dir_path.exists() {
+        std::fs::create_dir_all(&projects_dir_path)?;
     }
 
     let cache_directory = CacheDirectory {
         dir_path: cache_directory_path,
         log_dir_path: log_dir_path,
-        projects_dir: projects_dir,
+        projects_dir_path: projects_dir_path,
     };
 
     let configuration_directory = ConfigurationDirectory {
@@ -96,8 +96,8 @@ pub fn init_app_dirs(
     let mut log_directory_path = app_directory.cache_dir().to_path_buf();
     log_directory_path.push("logs");
 
-    let mut projects_dir = app_directory.cache_dir().to_path_buf();
-    projects_dir.push("projects");
+    let mut projects_dir_path = app_directory.cache_dir().to_path_buf();
+    projects_dir_path.push("projects");
 
     if !config_directory_path.exists() {
         std::fs::create_dir_all(&config_directory_path)?; 
@@ -111,14 +111,14 @@ pub fn init_app_dirs(
         std::fs::create_dir_all(&log_directory_path)?;
     }
 
-    if !projects_dir.exists() {
-        std::fs::create_dir_all(&projects_dir)?;
+    if !projects_dir_path.exists() {
+        std::fs::create_dir_all(&projects_dir_path)?;
     }
 
     let cache_directory = CacheDirectory {
         dir_path: cache_directory_path,
         log_dir_path: log_directory_path,
-        projects_dir: projects_dir,
+        projects_dir_path: projects_dir_path,
     };
 
     let configuration_directory = ConfigurationDirectory {

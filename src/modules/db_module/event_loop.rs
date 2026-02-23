@@ -1,18 +1,21 @@
-
 use calloop::{ 
     channel::{
         Channel, Event, 
     },
     EventLoop,
 };
-use super::{
-    EventLoopResource,
-    DBEvent,
+use crate::{
+    modules::{
+        db_module::{
+            events::DBCommand,
+            EventLoopResource,
+        },
+    },
 };
 
 
 pub fn init_event_loop<'e>(
-    channel: Channel<DBEvent>,
+    channel: Channel<DBCommand>,
 ) -> EventLoop<'e, EventLoopResource> {
     let event_loop: EventLoop<EventLoopResource> = EventLoop::try_new()
         .expect("Event Loop Error init calloop. Logic Module");
@@ -24,10 +27,9 @@ pub fn init_event_loop<'e>(
         event_loop_resource
     |{
         match event {
-            Event::Msg(db_event) => {
-                event_loop_resource.db_core.on_event(
-                    db_event,
-                    &event_loop_resource.db_events
+            Event::Msg(db_command) => {
+                event_loop_resource.db_core.on_command(
+                    db_command
                 );
             },
             Event::Closed => {

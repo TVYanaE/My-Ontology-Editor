@@ -1,41 +1,31 @@
+pub mod db_core_error;
 mod db_core_logic;
-mod handle_db_event_error;
-mod project_db;
+mod db_core_state;
+mod db_core_state_handle;
 
-use super::{
-    DBEvent, DBEvents,
+use crate::{
+    modules::{
+        db_module::{
+            events::{
+                DBCommand,
+            },
+        },
+    },
 };
 use self::{
-    db_core_logic::DBCoreLogic,
-    handle_db_event_error::handle_db_event_error,
-    project_db::ProjectDB,
-};
-pub use self::{
-    project_db::ProjectDBError,
+    db_core_state::DBCoreState,
+    db_core_state_handle::DBCoreStateHandle,
 };
 
-enum DBCoreState {
-    Wait, 
-    Shutdown,
-    Processing,
-}
-
-impl Default for DBCoreState {
-    fn default() -> Self {
-        Self::Wait
-    }
-}
 
 pub struct DBCore {
     state: DBCoreState,
-    project_db: ProjectDB,
 }
 
 impl DBCore {
     pub fn new() -> Self {
         Self { 
             state: DBCoreState::default(),
-            project_db: ProjectDB::new(),
         }
     }
 
@@ -46,29 +36,21 @@ impl DBCore {
         }
     }
 
-    pub fn on_event(
+    pub fn on_command(
         &mut self,
-        event: DBEvent,
-        db_events: &DBEvents,
+        command: DBCommand,
     ) {
         let current_state = std::mem::replace(
             &mut self.state, 
             DBCoreState::Processing
         );
 
-        self.state = match (current_state, event) {
-            (DBCoreState::Wait, event) => {
-                match DBCoreLogic::db_event_handle(
-                    event,
-                    &mut self.project_db
-                ) {
-                    Ok(Some(new_state)) => new_state, 
-                    Ok(None) => DBCoreState::Wait,
-                    Err(error) => {
-                        handle_db_event_error(db_events, error); 
-                        DBCoreState::Wait
-                    },
-                }      
+        self.state = match (current_state, command) {
+            (DBCoreState::Ready, command) => {
+                match DBCoreStateHandle::ready_handle(command) {
+                    Some(new_state) => new_state,
+                    None => DBCoreState::Ready,
+                } 
             },
             (current_state,_) => current_state
         };

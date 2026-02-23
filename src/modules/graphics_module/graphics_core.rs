@@ -1,13 +1,13 @@
+mod graphic_core_error;
+mod graphic_core_state;
 mod graphic_core_state_handle;
-mod graphic_event_error;
+mod graphics_core_error_handle;
 mod graphics_core_logic;
-mod graphics_event_error_handle;
 
 use crate::{
     modules::{ 
         logic_module::{
             logic_module_handler::LogicModuleHandler,
-            events::TaskID,
         },
     },
 };
@@ -26,24 +26,10 @@ use self::{
         RunningStateContext,
         WaitingTaskStateContext, 
     }, 
-    graphics_event_error_handle::graphic_event_error_handle,
+    graphics_core_error_handle::graphic_core_error_handle,
+    graphic_core_state::GraphicsCoreState,
 };
 
-#[derive(Debug, Clone)]
-pub enum GraphicsCoreState {
-    Processing,
-    Runnig,
-    WaitingTask {
-        task_id: TaskID, 
-    },
-    Shutdown,
-}
-
-impl Default for GraphicsCoreState {
-    fn default() -> Self {
-        Self::Runnig
-    }
-}
 
 pub struct GraphicsCore {
     state: GraphicsCoreState,
@@ -91,7 +77,7 @@ impl GraphicsCore {
                         GraphicsCoreState::Runnig        
                     },
                     Err(error) => {
-                        if let Some(new_state) = graphic_event_error_handle(
+                        if let Some(new_state) = graphic_core_error_handle(
                             error.into(), &mut self.logic_module_handler
                         ) {
                             new_state 
@@ -122,7 +108,7 @@ impl GraphicsCore {
                         GraphicsCoreState::WaitingTask{task_id: task_id} 
                     },
                     Err(error) => {
-                        if let Some(new_state) = graphic_event_error_handle(
+                        if let Some(new_state) = graphic_core_error_handle(
                             error.into(), 
                             &mut self.logic_module_handler,
                         ) {
@@ -145,5 +131,3 @@ impl GraphicsCore {
         }
     }
 }
-
-

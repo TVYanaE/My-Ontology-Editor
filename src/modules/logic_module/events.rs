@@ -12,7 +12,13 @@ use uuid::{
 pub type LogicCommands = Sender<LogicCommand>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TaskID(pub Uuid);
+pub struct TaskID(Uuid);
+
+impl TaskID {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConfirmationID(Uuid);
@@ -62,6 +68,7 @@ pub enum ConfirmationKind {
 #[derive(Debug, Clone)]
 pub enum TaskResult {
     Ok,
+    CanceledByUser,
     Error(TaskError),  
 }
 

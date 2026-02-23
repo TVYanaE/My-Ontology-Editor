@@ -2,7 +2,8 @@ mod event_loop;
 pub mod events;
 mod logic_core;
 pub mod logic_module_handler;
-//mod project;
+mod project;
+mod project_manager;
 
 use std::{
     thread,
@@ -11,14 +12,14 @@ use std::{
 use calloop::{
     LoopSignal,
     channel::{
-        channel, Channel, 
+        channel, 
     },
     EventLoop,
 };
 use crate::{ 
     modules::{
         app_dirs::ApplicationDirectories,
-        
+        db_module::DBModuleHandler,   
     }, 
 };
 use self::{
@@ -28,6 +29,7 @@ use self::{
         LogicCommand, EventSender
     },
     logic_module_handler::LogicModuleHandler,
+    project_manager::ProjectManager,
 };
 
 
@@ -36,9 +38,10 @@ where
     S: EventSender + Send + 'static
 {
     logic_core: LogicCore,
+    db_module_handler: DBModuleHandler,
     event_sender: S,
-    app_dirs: Arc<ApplicationDirectories>, 
     loop_signal: LoopSignal,
+    project_manager: ProjectManager, 
 }
 
 pub struct LogicModule;
@@ -47,6 +50,7 @@ impl LogicModule{
     pub fn init_logic_module<S>(
         event_sender: S,
         app_dirs: Arc<ApplicationDirectories>,
+        db_module_handler: DBModuleHandler,
     ) -> LogicModuleHandler 
     where 
         S: EventSender + Send + 'static 
@@ -58,12 +62,14 @@ impl LogicModule{
             let loop_signal = event_loop.get_signal();
 
             let logic_core = LogicCore::new();
+            let project_manager = ProjectManager::new(app_dirs);
 
             let mut event_loop_resource = EventLoopResource {
-                logic_core: logic_core,
+                logic_core: logic_core, 
+                db_module_handler: db_module_handler,
                 event_sender: event_sender,
-                app_dirs: app_dirs,
                 loop_signal: loop_signal,
+                project_manager: project_manager,
             }; 
 
             let _ = event_loop.run(None, &mut event_loop_resource, |event_loop_resource|{

@@ -1,42 +1,33 @@
+mod logic_core_error;
 mod logic_core_error_handle;
 mod logic_core_logic;
 mod logic_core_state;
 mod logic_core_state_handle;
 
-use thiserror::{
-    Error,
-};
 use crate::{
     modules::{
-        app_dirs::ApplicationDirectories,
-        logic_module::{
-            events::{
-                LogicCommand, EventSender,
-            },
-        },
-        db_module::DBEvent, 
+        db_module::DBModuleHandler,
+    },
+};
+use super::{
+    events::{
+        LogicCommand, EventSender,
+    },
+    project_manager::{
+        ProjectManager,
     },
 };
 use self::{
     logic_core_error_handle::logic_core_error_handle,
     logic_core_state::LogicCoreState,
-    logic_core_state_handle::LogicCoreStateHandle,
+    logic_core_state_handle::{
+        LogicCoreStateHandle,
+        ReadyStateContext, WaitingConfirmationStateContext,
+    },
 };
 
 pub struct LogicCore {
     logic_core_state: LogicCoreState,  
-}
-
-#[derive(Debug, Error)]
-pub enum LogicCoreError<S: EventSender>{ 
-    #[error("MPSC Channel was closed {0}")]
-    MPSCChannelDBEventError(#[from] std::sync::mpsc::SendError<DBEvent>),
-
-    #[error("Event Sender Error: {0}")]
-    EventSenderError(#[source] S::Error),
-
-    #[error("Std IO Error: {0}")]
-    STDIOError(#[from] std::io::Error), 
 }
 
 impl LogicCore {
@@ -49,7 +40,8 @@ impl LogicCore {
     pub fn on_command<S: EventSender>(
         &mut self, 
         command: LogicCommand,
-        app_dirs: &ApplicationDirectories, 
+        db_module_handler: &mut DBModuleHandler,
+        project_manager: &ProjectManager,
         event_sender: &S,
     ) {
         let current_state = std::mem::replace(
@@ -61,13 +53,20 @@ impl LogicCore {
             (LogicCoreState::Ready, command) => {
                 match LogicCoreStateHandle::ready_handle(
                     command, 
-                    app_dirs, 
-                    event_sender
+                    ReadyStateContext { 
+                        event_sender: event_sender, 
+                        project_manager: project_manager, 
+                        db_module_handler: db_module_handler,
+                    }
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Ready,
                     Err(error) => {
-                        if let Some(new_state) = logic_core_error_handle(error, event_sender) {
+                        if let Some(new_state) = logic_core_error_handle(
+                            error, 
+                            event_sender,
+                            db_module_handler,
+                        ) {
                             new_state
                         } 
                         else {
@@ -82,15 +81,22 @@ impl LogicCore {
             }, command) => {
                 match LogicCoreStateHandle::waiting_confirmation_handle(
                     command, 
-                    app_dirs,
-                    event_sender,
-                    work_after_confirmation,
-                    confirmation_id,
+                    WaitingConfirmationStateContext { 
+                        event_sender: event_sender, 
+                        work: work_after_confirmation, 
+                        waiting_confirmation_id: confirmation_id, 
+                        project_manager: project_manager,
+                        db_module_handler: db_module_handler,
+                    } 
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Ready,
                     Err(error) => {
-                        if let Some(new_state) = logic_core_error_handle(error, event_sender) {
+                        if let Some(new_state) = logic_core_error_handle(
+                            error, 
+                            event_sender,
+                            db_module_handler,
+                        ) {
                             new_state
                         } 
                         else {

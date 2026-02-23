@@ -1,4 +1,5 @@
 mod draw_phase; 
+mod task_response_handle;
 
 use std::{
     path::PathBuf,
@@ -6,9 +7,6 @@ use std::{
 use winit::{
     window::Window,
     dpi::PhysicalSize,
-};
-use uuid::{
-    Uuid
 };
 use tracing::{
     error,
@@ -19,7 +17,7 @@ use crate::{
             events::{
                 LogicCommand, 
                 TaskID, TaskKind,
-                TaskResult, TaskError,
+                TaskResult,
                 DecisionKind, 
                 ConfirmationID, ConfirmationKind,
             }, 
@@ -27,7 +25,7 @@ use crate::{
         },
         graphics_module::{
             graphics_core::{
-                graphic_event_error::GraphicsEventError,
+                graphic_core_error::GraphicsCoreError,
                 GraphicsCoreState,
             },
             graphics_backend::{
@@ -42,6 +40,7 @@ use crate::{
 };
 use self::{
     draw_phase::draw_phase, 
+    task_response_handle::TaskResponseHandle,
 };
 
 pub struct GraphicsCoreLogic;
@@ -51,7 +50,7 @@ impl GraphicsCoreLogic {
     pub fn resumed_event_handle(
         graphics_backend: &mut GraphicsBackend,
         window: Window,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
         graphics_backend.wgpu_backend.init(window)?;
         let wgpu_data = graphics_backend.wgpu_backend.get_wgpu_data()?;
         graphics_backend.egui_backend.init(wgpu_data);
@@ -61,20 +60,31 @@ impl GraphicsCoreLogic {
 
     pub fn app_shutdown_handle(
         logic_module_handler: &mut LogicModuleHandler,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Option<GraphicsCoreState> {
         // logic for shutdown
-        if let Err(_) = logic_module_handler.logic_commands.send(LogicCommand::Shutdown) {
-            return Ok(Some(GraphicsCoreState::Shutdown));
-        }
-
-        if let Some(handle) = logic_module_handler.thread_handle.take() {
-            // Error will come due to panic in thread 
-            if let Err(error) = handle.join() {
+        match logic_module_handler.logic_commands.send(LogicCommand::Shutdown) {
+            Ok(_) => {
+                if let Some(handle) = logic_module_handler.thread_handle.take() {
+                    // Error will come due to panic in thread 
+                    match handle.join() {
+                        Ok(_) => {
+                            Some(GraphicsCoreState::Shutdown)
+                        },
+                        Err(error) => {
+                            error!(error = ?error, "Logic Thread Panic");                
+                            Some(GraphicsCoreState::Shutdown)
+                        }
+                    }
+                }
+                else { 
+                    Some(GraphicsCoreState::Shutdown)
+                }
+            },
+            Err(error) => { 
                 error!(error = ?error, "Logic Thread Panic");                
-            }
-        }
-       
-        Ok(Some(GraphicsCoreState::Shutdown)) 
+                Some(GraphicsCoreState::Shutdown)
+            },
+        } 
     }
 
     pub fn create_project_req_handle(
@@ -82,8 +92,8 @@ impl GraphicsCoreLogic {
         ui: &mut UI,
         project_name: String,
         project_path: PathBuf,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
-        let task_id = TaskID(Uuid::new_v4()); 
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
+        let task_id = TaskID::new(); 
         logic_module_handler.logic_commands.send(
             LogicCommand::Task { 
                 task_id: task_id.clone(), 
@@ -113,7 +123,7 @@ impl GraphicsCoreLogic {
         done_task_kind: TaskKind,
         done_task_result: TaskResult,
         ui: &mut UI,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> 
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> 
     {
         if waiting_task_id == done_task_id {
             match done_task_kind {
@@ -121,38 +131,14 @@ impl GraphicsCoreLogic {
                     project_name, 
                     project_path 
                 } => {
-                    match done_task_result {
-                        TaskResult::Ok => {
-                            ui.on_event(UIInputEvent::ShowMainUI)?;
+                    let new_state = TaskResponseHandle::creating_project_task(
+                        done_task_result, 
+                        &project_path, 
+                        &project_name, 
+                        ui
+                    )?;
 
-                            Ok(Some(GraphicsCoreState::Runnig))
-                        },
-                        TaskResult::Error(error_kind) => {
-                            match error_kind {
-                                TaskError::PathError(err_text) => {
-                                    let project_path_str = project_path.to_str().unwrap().to_string();
-
-                                    ui.on_event(
-                                        UIInputEvent::ShowModalWindow(
-                                            ChosedModalWindow::CreateNewProject { 
-                                                project_name: Some(project_name), 
-                                                project_path: Some(project_path_str) 
-                                            }
-                                        )
-                                    )?; 
-                                    ui.on_event(
-                                        UIInputEvent::ShowModalWindow(
-                                            ChosedModalWindow::Notification { 
-                                                text: err_text 
-                                            }
-                                        )
-                                    )?;
-                                     
-                                    Ok(Some(GraphicsCoreState::Runnig))
-                                },
-                            }
-                        },
-                    }
+                    Ok(new_state)
                 },
             } 
         }
@@ -165,7 +151,7 @@ impl GraphicsCoreLogic {
         ui: &mut UI,
         confirmation_id: ConfirmationID,
         confirmation_kind: ConfirmationKind,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
         match confirmation_kind.clone() {
             ConfirmationKind::Owerrite { project_name, .. } => {
                 let confirmation_text = format!("Project {} already extists. Replace?", project_name);
@@ -189,7 +175,7 @@ impl GraphicsCoreLogic {
         decision: bool,
         decision_kind: DecisionKind,
         logic_module_handler: &mut LogicModuleHandler,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
         logic_module_handler.logic_commands.send(
             LogicCommand::ConfirmationDecision { 
                 confirmation_id: confirmation_id, 
@@ -204,7 +190,7 @@ impl GraphicsCoreLogic {
     pub fn resize_handle(
         physical_size: PhysicalSize<u32>, 
         graphics_backend: &mut GraphicsBackend,  
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
          
         graphics_backend.wgpu_backend.resize(physical_size)?; 
         Ok(None)
@@ -214,7 +200,7 @@ impl GraphicsCoreLogic {
         graphics_backend: &mut GraphicsBackend,
         ui: &mut UI,
         custom_events: &CustomEvents,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
         let wgpu_data = graphics_backend.wgpu_backend.get_wgpu_data()?;
         let full_output = graphics_backend.egui_backend.prepare_ui(
             wgpu_data, 

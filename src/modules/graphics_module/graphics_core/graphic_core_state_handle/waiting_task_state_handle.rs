@@ -1,4 +1,6 @@
-
+use tracing::{
+    instrument,
+};
 use winit::{
     event::WindowEvent,
 };
@@ -9,7 +11,7 @@ use crate::{
                 graphics_core_logic::{
                     GraphicsCoreLogic
                 },             
-                graphic_event_error::GraphicsEventError,
+                graphic_core_error::GraphicsCoreError,
                 GraphicsCoreState,
             },
             events::{
@@ -41,10 +43,11 @@ pub struct WaitingTaskStateContext<'c> {
 }
 
 impl GraphicCoreStateHandle {
+    #[instrument(skip_all,err)]
     pub fn waiting_task_state_handle(
         context: WaitingTaskStateContext,
         event: GraphicsEvent,
-    ) -> Result<Option<GraphicsCoreState>, GraphicsEventError> {
+    ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
         match event {
             GraphicsEvent::WindowEvent(event) => {
                 match event {
@@ -68,7 +71,7 @@ impl GraphicCoreStateHandle {
                     WindowEvent::CloseRequested => {
                         let new_state = GraphicsCoreLogic::app_shutdown_handle(
                             context.logic_module_handler,
-                        )?;
+                        );
 
                         Ok(new_state)
                     },
@@ -97,7 +100,7 @@ impl GraphicCoreStateHandle {
                             InternalEvent::ShutdownReq => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
                                     context.logic_module_handler,
-                                )?;
+                                );
 
                                 Ok(new_state) 
                             }
@@ -123,7 +126,7 @@ impl GraphicCoreStateHandle {
                             ExternalEvent::Shutdown => {
                                 let new_state = GraphicsCoreLogic::app_shutdown_handle(
                                     context.logic_module_handler,
-                                )?;
+                                );
 
                                 Ok(new_state) 
                             },

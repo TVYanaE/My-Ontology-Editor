@@ -28,7 +28,8 @@ where
             Event::Msg(logic_command) => {
                 event_loop_resource.logic_core.on_command(
                     logic_command,
-                    &event_loop_resource.app_dirs,
+                    &mut event_loop_resource.db_module_handler,
+                    &event_loop_resource.project_manager,
                     &event_loop_resource.event_sender,
                 ); 
             },

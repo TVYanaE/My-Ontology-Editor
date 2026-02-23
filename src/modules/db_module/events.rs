@@ -6,16 +6,27 @@ use std::{
 use calloop::{
     channel::Sender,
 };
-use super::{
-    db_core::ProjectDBError,
-};
+use crate::{
+    aliases::{
+        OneShotSender,
+    },
+    modules::{
+        db_module::{
+            db_core::{
+                db_core_error::DBCoreError,
+            },
+        },
+    },
+}; 
 
-pub type DBEvents = Sender<DBEvent>;
+pub type DBCommands = Sender<DBCommand>;
 
-pub enum DBEvent {
+pub enum DBCommand {
     Shutdown,
-    OpenConnection{
-        project_root_path: PathBuf,
-        //response_target: Sender<Result<(), ProjectDBError>>
+    CreateDBFile {
+        /// Full name with Data Base File Name and extension db3
+        db_file_path: PathBuf,
+        migration: Option<String>,
+        response_target: OneShotSender<Result<(), DBCoreError>>
     },
 }

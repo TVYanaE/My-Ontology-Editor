@@ -1,6 +1,9 @@
+use tracing::{
+    instrument,
+};
 use crate::{
     modules::{
-        app_dirs::ApplicationDirectories,
+        db_module::DBModuleHandler,
     },
 };
 use super::{
@@ -8,60 +11,65 @@ use super::{
         super::{
             events::{
                 LogicCommand, EventSender,
-                TaskKind, ConfirmationID,
+                ConfirmationID,
                 DecisionKind,
             },
+            project_manager::ProjectManager,
         },
         logic_core_logic::{
             LogicCoreLogic,
-            CreateProjectContext,
             WorkAfterConfirmation,
         },
         logic_core_state::LogicCoreState,
-        LogicCoreError
+        logic_core_error::LogicCoreError,
     },
     LogicCoreStateHandle
 };
 
+pub struct WaitingConfirmationStateContext<'c, S: EventSender> {
+    pub event_sender: &'c S,
+    pub work: WorkAfterConfirmation,
+    pub waiting_confirmation_id: ConfirmationID,
+    pub project_manager: &'c ProjectManager,
+    pub db_module_handler: &'c mut DBModuleHandler,
+}
+
 impl LogicCoreStateHandle {
+    #[instrument(skip_all,err)]
     pub fn waiting_confirmation_handle<S: EventSender>(
         command: LogicCommand,
-        app_dirs: &ApplicationDirectories,
-        event_sender: &S,
-        work: WorkAfterConfirmation,
-        waiting_confirmation_id: ConfirmationID,
+        context: WaitingConfirmationStateContext<S> 
     ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> {
-        match command {
-            LogicCommand::Task{
-                task_id,
-                task_kind, 
-            } => {
-                Ok(None) 
-            },
+        match command { 
             LogicCommand::Shutdown => {
-                Ok(Some(LogicCoreState::Shutdown))
+                let new_state = LogicCoreLogic::shutdown(
+                    context.db_module_handler
+                );
+
+                Ok(new_state)
             },
             LogicCommand::ConfirmationDecision { 
                 confirmation_id, 
                 decision, 
                 decision_kind 
             } => {
-                if waiting_confirmation_id == confirmation_id {
+                if context.waiting_confirmation_id == confirmation_id {
                     match decision_kind {
                         DecisionKind::Owerrite => {
-                            match work {
+                            match context.work {
                                 WorkAfterConfirmation::CreateProject { 
                                     task_id, 
                                     project_name, 
                                     project_path 
                                 } => {
-                                    let new_state = LogicCoreLogic::for_test(
-                                        task_id, 
-                                        project_name, 
-                                        project_path, 
-                                        decision, 
-                                        event_sender
-                                    )?;
+                                    let new_state = LogicCoreLogic::create_project(
+                                        &task_id, 
+                                        &project_name, 
+                                        &project_path, 
+                                        context.project_manager,
+                                        context.event_sender,
+                                        Some(decision),
+                                    )?; 
 
                                     Ok(new_state)
                                 }
@@ -73,6 +81,7 @@ impl LogicCoreStateHandle {
                     Ok(None)
                 }
             },
+            _ => Ok(None)
         } 
     }
 }

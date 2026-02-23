@@ -16,7 +16,7 @@ use crate::{
                 wgpu_backend::WGPUData,
                 egui_backend::EGUIData,
             },
-            graphics_core::graphic_event_error::GraphicsEventError,
+            graphics_core::graphic_core_error::GraphicsCoreError,
         },
     },
 };
@@ -26,7 +26,7 @@ pub fn draw_phase(
     full_output: FullOutput,
     wgpu_data: &WGPUData,
     egui_data: &mut EGUIData,
-) -> Result<(), GraphicsEventError> { 
+) -> Result<(), GraphicsCoreError> { 
     let surface_texture = wgpu_data
         .surface
         .get_current_texture()?;
