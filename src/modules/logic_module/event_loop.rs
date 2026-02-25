@@ -25,12 +25,10 @@ where
         event_loop_resource
     |{
         match event {
-            Event::Msg(logic_command) => {
-                event_loop_resource.logic_core.on_command(
-                    logic_command,
-                    &mut event_loop_resource.db_module_handler,
-                    &event_loop_resource.project_manager,
-                    &event_loop_resource.event_sender,
+            Event::Msg(command) => {
+                event_loop_resource.job_manager.on_command(
+                    command, 
+                    &mut event_loop_resource.confirmation_cache
                 ); 
             },
             Event::Closed => {

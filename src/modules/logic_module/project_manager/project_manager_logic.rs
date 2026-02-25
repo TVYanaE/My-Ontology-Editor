@@ -11,12 +11,13 @@ use oneshot::{
     channel,
 };
 use crate::{ 
-    modules::{
-        db_module::{
-            DBCommands, DBCommand,
-            DBCoreError,
-        },
+    migrations::{
+        SEMANTIC_NODES_TABLE_MIGRATION,
+        SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION
     },
+    modules::db_module::{
+            DBCommand, DBCommands, DBCoreError, Migrations
+        },
 };
 use super::{
     super::{
@@ -113,16 +114,22 @@ impl ProjectManagerLogic {
                 .project_db_file
                 .path
         );
-        
+       
+        // Creating migrations
+        let mut migrations = Migrations::with_capacity(4);
+        migrations.push(SEMANTIC_NODES_TABLE_MIGRATION.to_string());
+        migrations.push(SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION.to_string());
+
         // Send command for creating DB file
         db_commands.send(
             DBCommand::CreateDBFile { 
                 db_file_path: db_file_path, 
-                migration: None, 
+                migrations: Some(migrations), 
                 response_target: sender 
             }
         )?;
 
+        // TODO: Make Logic for cleaning invalid file in cache dir
         receiver.recv()??;
 
         // Creating packed Project file 

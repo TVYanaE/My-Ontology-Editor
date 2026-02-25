@@ -1,4 +1,5 @@
 mod aliases;
+mod migrations;
 mod modules;
 
 use std::{

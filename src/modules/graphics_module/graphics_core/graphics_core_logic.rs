@@ -124,7 +124,7 @@ impl GraphicsCoreLogic {
         done_task_result: TaskResult,
         ui: &mut UI,
     ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> 
-    {
+    { 
         if waiting_task_id == done_task_id {
             match done_task_kind {
                 TaskKind::CreateProject { 

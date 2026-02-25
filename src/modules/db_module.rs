@@ -19,7 +19,8 @@ use self::{
 };
 pub use self::{
     events::{
-        DBCommand, DBCommands
+        DBCommand, DBCommands,
+        Migrations,
     },
     db_core::{
         db_core_error::DBCoreError,

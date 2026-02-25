@@ -19,6 +19,7 @@ use crate::{
     },
 }; 
 
+pub type Migrations = Vec<String>;
 pub type DBCommands = Sender<DBCommand>;
 
 pub enum DBCommand {
@@ -26,7 +27,7 @@ pub enum DBCommand {
     CreateDBFile {
         /// Full name with Data Base File Name and extension db3
         db_file_path: PathBuf,
-        migration: Option<String>,
+        migrations: Option<Migrations>,
         response_target: OneShotSender<Result<(), DBCoreError>>
     },
 }

@@ -10,12 +10,16 @@ use super::{
     super::{
         super::{
             events::{
-                LogicCommand, EventSender,
-                TaskKind,
+                EventSender,
             },
             project_manager::{
                 ProjectManager,
             },
+            event_manager::EventManager,
+            job_manager::{
+                JobManager, Job, JobKind,
+            },
+            confirmation_cache::ConfirmationCache,
         },
         logic_core_logic::{
             LogicCoreLogic,
@@ -27,58 +31,91 @@ use super::{
 };
 
 pub struct ReadyStateContext<'c, S: EventSender> {
-    pub event_sender: &'c S,
+    pub event_manager: &'c EventManager<S>,
     pub project_manager: &'c ProjectManager,
     pub db_module_handler: &'c mut DBModuleHandler,
+    pub job_manager: &'c mut JobManager, 
+    pub confirmation_cache: &'c mut ConfirmationCache,
 }
 
 impl LogicCoreStateHandle {
     #[instrument(skip_all,err)]
     pub fn ready_handle<S: EventSender>(
-        command: LogicCommand,
+        job: Job,
         context: ReadyStateContext<S>
     ) -> Result<Option<LogicCoreState>, LogicCoreError<S>> {
-        match command {
-            LogicCommand::Task{
-                task_id,
-                task_kind, 
+        match job.kind {
+            JobKind::CheckCreatingProjectPath { 
+                task_id, 
+                project_name, 
+                project_path 
             } => {
-                match task_kind {
-                    TaskKind::CreateProject { project_name, project_path } => {
-                        std::thread::sleep(std::time::Duration::from_millis(500)); 
-                        
-                        match LogicCoreLogic::check_creating_project_path(
-                            &task_id, 
-                            &project_name, 
-                            &project_path, 
-                            context.event_sender,
-                        )? {
-                            Some(new_state) => {
-                                Ok(Some(new_state))
-                            },
-                            None => {
-                                let new_state = LogicCoreLogic::create_project(
-                                    &task_id, 
-                                    None,
-                                    &project_name, 
-                                    &project_path, 
-                                    context.project_manager,
-                                    context.event_sender,
-                                    &context.db_module_handler.db_commands,
-                                )?; 
+                let jobs = LogicCoreLogic::check_creating_project_path(
+                    task_id, 
+                    &project_name, 
+                    &project_path, 
+                    context.event_manager,
+                    context.confirmation_cache,
+                )?; 
 
-                                Ok(new_state)
-                            },
-                        } 
-                    }, 
+                if !jobs.is_empty() {
+                    for job in jobs {
+                        context.job_manager.push_job(job);
+                    }
                 } 
+
+                Ok(Some(LogicCoreState::Ready))
             },
-            LogicCommand::Shutdown => {
-                let new_state = LogicCoreLogic::shutdown(
+            JobKind::CreateProject { 
+                task_id, 
+                project_name, 
+                project_path 
+            } => {
+                let jobs = LogicCoreLogic::create_project(
+                    task_id, 
+                    &project_name, 
+                    &project_path, 
+                    context.project_manager, 
+                    context.event_manager, 
+                    &context.db_module_handler.db_commands,
+                )?;
+
+                if !jobs.is_empty() {
+                    for job in jobs {
+                        context.job_manager.push_job(job);
+                    }
+                } 
+
+                Ok(Some(LogicCoreState::Ready))
+            },
+            JobKind::ConfirmationDecline { 
+                confirmation_context 
+            } => {
+                let jobs = LogicCoreLogic::confirmation_decline(
+                    context.event_manager, 
+                    confirmation_context,
+                )?;
+
+                if !jobs.is_empty() {
+                    for job in jobs {
+                        context.job_manager.push_job(job);
+                    }
+                } 
+
+                Ok(Some(LogicCoreState::Ready))
+            },
+            JobKind::Shutdown => {
+                let jobs = LogicCoreLogic::shutdown(
                     context.db_module_handler
                 );
 
-                Ok(new_state)
+                if !jobs.is_empty() {
+                    for job in jobs {
+                        context.job_manager.push_job(job);
+                    }
+                }
+
+                Ok(Some(LogicCoreState::Shutdown))
             },
             _ => {Ok(None)}             
         } 

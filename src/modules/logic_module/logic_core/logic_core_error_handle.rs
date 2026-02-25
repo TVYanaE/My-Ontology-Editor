@@ -11,7 +11,10 @@ use crate::{
 };
 use super::{
     super::{
-        events::{EventSender, LogicEvent}, 
+        events::{EventSender, LogicEvent},  
+        event_manager::{
+            EventManager, EventManagerError
+        },
     },
     LogicCoreState,
     logic_core_error::LogicCoreError,
@@ -19,24 +22,29 @@ use super::{
 
 pub fn logic_core_error_handle<S>(
     error: LogicCoreError<S>,
-    sender: &S,
+    event_manager: &EventManager<S>,
     db_module_handler: &mut DBModuleHandler,
 ) -> Option<LogicCoreState>  
 where 
     S: EventSender
 {
-    match error { 
-        LogicCoreError::EventSenderError(_) => {
-            db_module_shutdown(db_module_handler); 
-            Some(LogicCoreState::Shutdown)
-        },  
+    match error {   
         LogicCoreError::STDIOError(_) => {
-            logic_module_shutdown(sender); 
+            graphic_module_shutdown(event_manager); 
             db_module_shutdown(db_module_handler);
             Some(LogicCoreState::Shutdown)
         },  
         LogicCoreError::ProjectManagerError(_) => {
-            logic_module_shutdown(sender); 
+            graphic_module_shutdown(event_manager); 
+            db_module_shutdown(db_module_handler);
+            Some(LogicCoreState::Shutdown)
+        },
+        LogicCoreError::EventManagerError(_) => {
+            db_module_shutdown(db_module_handler); 
+            Some(LogicCoreState::Shutdown)
+        },
+        LogicCoreError::JobManagerError(_) => {
+            graphic_module_shutdown(event_manager); 
             db_module_shutdown(db_module_handler);
             Some(LogicCoreState::Shutdown)
         },
@@ -63,13 +71,17 @@ fn db_module_shutdown(
     }
 }
 
-fn logic_module_shutdown<S: EventSender>(
-    sender: &S,
+fn graphic_module_shutdown<S: EventSender>(
+    event_manager: &EventManager<S>,
 ) {
-    match sender.send_event(LogicEvent::Shutdown) {
+    match event_manager.send_event(LogicEvent::Shutdown) {
         Ok(_) => {},
         Err(error) => {
-            error!(error=?error, "Graphic Thread panic");
+            match error {
+                EventManagerError::EventSenderError(error) => {
+                    error!(error=?error, "Graphic Thread panic");
+                },
+            }
         },
     }
 }

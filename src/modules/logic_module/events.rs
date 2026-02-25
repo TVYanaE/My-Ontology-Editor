@@ -20,7 +20,9 @@ impl TaskID {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq)]
+#[derive(Hash)]
 pub struct ConfirmationID(Uuid);
 
 impl ConfirmationID {
@@ -59,6 +61,7 @@ pub enum DecisionKind {
 #[derive(Debug, Clone)]
 pub enum ConfirmationKind {
     Owerrite{
+        task_id: TaskID,
         project_name: String,
         project_path: PathBuf,
     },

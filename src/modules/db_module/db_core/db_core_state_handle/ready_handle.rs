@@ -20,10 +20,10 @@ impl DBCoreStateHandle {
             },
             DBCommand::CreateDBFile { 
                 db_file_path, 
-                migration,
+                migrations,
                 response_target 
             } => {
-                DBCoreLogic::create_db_file(&db_file_path, migration, response_target) 
+                DBCoreLogic::create_db_file(&db_file_path, migrations, response_target) 
             },
         }
     } 

@@ -11,10 +11,22 @@ use crate::{
 };
 use super::{
     events::{
-        LogicCommand, EventSender,
+        EventSender,
     },
     project_manager::{
         ProjectManager,
+    },
+    job_manager::{
+        Job,
+    },
+    event_manager::{
+        EventManager,
+    },
+    job_manager::{
+        JobManager,
+    },
+    confirmation_cache::{
+        ConfirmationCache,
     },
 };
 use self::{
@@ -22,12 +34,20 @@ use self::{
     logic_core_state::LogicCoreState,
     logic_core_state_handle::{
         LogicCoreStateHandle,
-        ReadyStateContext, WaitingConfirmationStateContext,
+        ReadyStateContext,
     },
 };
 
 pub struct LogicCore {
     logic_core_state: LogicCoreState,  
+}
+
+pub struct JobContext<'c, S: EventSender> {
+    pub db_module_handler: &'c mut DBModuleHandler,
+    pub project_manager: &'c ProjectManager,
+    pub event_manager: &'c EventManager<S>,
+    pub job_manager: &'c mut JobManager,
+    pub confirmation_cache: &'c mut ConfirmationCache,
 }
 
 impl LogicCore {
@@ -37,35 +57,35 @@ impl LogicCore {
         }
     }
     
-    pub fn on_command<S: EventSender>(
+    pub fn on_job<S: EventSender>(
         &mut self, 
-        command: LogicCommand,
-        db_module_handler: &mut DBModuleHandler,
-        project_manager: &ProjectManager,
-        event_sender: &S,
+        job: Job,
+        context: JobContext<S> 
     ) {
         let current_state = std::mem::replace(
             &mut self.logic_core_state, 
             LogicCoreState::Processing
         ); 
 
-        self.logic_core_state = match (current_state, command) {
-            (LogicCoreState::Ready, command) => {
+        self.logic_core_state = match (current_state, job) {
+            (LogicCoreState::Ready, job) => {
                 match LogicCoreStateHandle::ready_handle(
-                    command, 
+                    job, 
                     ReadyStateContext { 
-                        event_sender: event_sender, 
-                        project_manager: project_manager, 
-                        db_module_handler: db_module_handler,
-                    }
+                        event_manager: context.event_manager, 
+                        project_manager: context.project_manager, 
+                        db_module_handler: context.db_module_handler, 
+                        job_manager: context.job_manager, 
+                        confirmation_cache: context.confirmation_cache, 
+                    } 
                 ) {
                     Ok(Some(new_state)) => new_state,
                     Ok(None) => LogicCoreState::Ready,
                     Err(error) => {
                         if let Some(new_state) = logic_core_error_handle(
                             error, 
-                            event_sender,
-                            db_module_handler,
+                            context.event_manager,
+                            context.db_module_handler,
                         ) {
                             new_state
                         } 
@@ -74,37 +94,7 @@ impl LogicCore {
                         } 
                     },
                 }              
-            },
-            (LogicCoreState::WaitConfirmation { 
-                confirmation_id, 
-                work_after_confirmation 
-            }, command) => {
-                match LogicCoreStateHandle::waiting_confirmation_handle(
-                    command, 
-                    WaitingConfirmationStateContext { 
-                        event_sender: event_sender, 
-                        work: work_after_confirmation, 
-                        waiting_confirmation_id: confirmation_id, 
-                        project_manager: project_manager,
-                        db_module_handler: db_module_handler,
-                    } 
-                ) {
-                    Ok(Some(new_state)) => new_state,
-                    Ok(None) => LogicCoreState::Ready,
-                    Err(error) => {
-                        if let Some(new_state) = logic_core_error_handle(
-                            error, 
-                            event_sender,
-                            db_module_handler,
-                        ) {
-                            new_state
-                        } 
-                        else {
-                            LogicCoreState::Ready
-                        } 
-                    },
-                }
-            },
+            }, 
             (current_state,_) => current_state,
         }
     }
