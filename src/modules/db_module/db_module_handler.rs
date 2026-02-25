@@ -4,7 +4,7 @@ use std::{
 use crate::{
     modules::{
         db_module::{
-            events::{
+            commands::{
                 DBCommands
             },
         },

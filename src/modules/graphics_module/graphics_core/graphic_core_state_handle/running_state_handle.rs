@@ -21,6 +21,7 @@ use crate::{
             graphics_backend::{
                 GraphicsBackend
             },
+            task_cache::TaskCache,
             ui::UI,
         },
         logic_module::{
@@ -37,7 +38,8 @@ pub struct RunningStateContext<'c> {
     pub graphics_backend: &'c mut GraphicsBackend,
     pub ui: &'c mut UI,
     pub logic_module_handler: &'c mut LogicModuleHandler,
-    pub custom_events: &'c CustomEvents
+    pub custom_events: &'c CustomEvents,
+    pub task_cache: &'c mut TaskCache,
 }
 
 impl GraphicCoreStateHandle {
@@ -70,6 +72,7 @@ impl GraphicCoreStateHandle {
                                 let new_state = GraphicsCoreLogic::create_project_req_handle(
                                     context.logic_module_handler, 
                                     context.ui, 
+                                    context.task_cache,
                                     project_name, 
                                     project_path
                                 )?;

@@ -33,13 +33,11 @@ impl<S: EventSender> EventManager<S> {
             },
             LogicEvent::TaskRespone { 
                 task_id, 
-                task_kind, 
                 task_result 
             } => {
                 self.event_sender.send_event(
                     LogicEvent::TaskRespone { 
                         task_id: task_id, 
-                        task_kind: task_kind, 
                         task_result: task_result, 
                     }
                 ).map_err(|error|{

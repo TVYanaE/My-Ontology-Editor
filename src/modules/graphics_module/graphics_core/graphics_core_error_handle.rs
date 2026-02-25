@@ -43,6 +43,10 @@ pub fn graphic_core_error_handle(
             shutdown(logic_module_handler); 
             Some(GraphicsCoreState::Shutdown)
         },
+        GraphicsCoreError::TaskContextNotFound => {
+            shutdown(logic_module_handler); 
+            Some(GraphicsCoreState::Shutdown)
+        },
     } 
 }
 

@@ -21,7 +21,9 @@ use crate::{
 };
 use super::{
     super::{
-        project::ProjectID
+        project::{
+            ProjectID, PROJECT_EXTENSION,
+        },
     },
     project_manager_error::ProjectManagerError,
     project_template::{
@@ -115,7 +117,7 @@ impl ProjectManagerLogic {
                 .path
         );
        
-        // Creating migrations
+        // Migrations
         let mut migrations = Migrations::with_capacity(4);
         migrations.push(SEMANTIC_NODES_TABLE_MIGRATION.to_string());
         migrations.push(SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION.to_string());
@@ -135,7 +137,7 @@ impl ProjectManagerLogic {
         // Creating packed Project file 
         let mut packed_project_file_path = project_path.as_ref().to_path_buf(); 
         packed_project_file_path.push(project_name);
-        packed_project_file_path.set_extension("vontov");
+        packed_project_file_path.set_extension(PROJECT_EXTENSION);
 
         if packed_project_file_path.exists() {
             std::fs::remove_file(&packed_project_file_path)?;

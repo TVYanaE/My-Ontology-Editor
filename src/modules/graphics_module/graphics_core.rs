@@ -18,6 +18,7 @@ use super::{
     graphics_backend::{ 
         GraphicsBackend,
     },
+    task_cache::TaskCache,
     ui::UI,
 };
 use self::{
@@ -53,6 +54,7 @@ impl GraphicsCore {
         event: GraphicsEvent,
         graphics_backend: &mut GraphicsBackend,
         ui: &mut UI,
+        task_cache: &mut TaskCache,
     ) {
         let current_state = std::mem::replace(
             &mut self.state, 
@@ -66,7 +68,8 @@ impl GraphicsCore {
                         graphics_backend, 
                         ui, 
                         logic_module_handler: &mut self.logic_module_handler,
-                        custom_events: &self.custom_events
+                        custom_events: &self.custom_events,
+                        task_cache,
                     }, 
                     event
                 ) {
@@ -98,6 +101,7 @@ impl GraphicsCore {
                         custom_events: &self.custom_events,
                         logic_module_handler: &mut self.logic_module_handler,
                         waiting_task_id: task_id.clone(),
+                        task_cache: task_cache,
                     },
                     event
                 ) {

@@ -41,12 +41,10 @@ impl EventSender for LogicAdapter {
         match logic_event {
             LogicEvent::TaskRespone { 
                 task_id, 
-                task_kind, 
                 task_result
             } => {
                 self.custom_events.send_event(ExternalEvent::TaskRespone { 
                     task_id: task_id, 
-                    task_kind: task_kind,
                     task_result: task_result
                 }.into())?;
             }, 

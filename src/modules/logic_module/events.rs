@@ -11,7 +11,9 @@ use uuid::{
 
 pub type LogicCommands = Sender<LogicCommand>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq)]
+#[derive(Hash)]
 pub struct TaskID(Uuid);
 
 impl TaskID {
@@ -94,7 +96,6 @@ impl From<ConfirmationKind> for DecisionKind {
 pub enum LogicEvent {
     TaskRespone {
         task_id: TaskID,
-        task_kind: TaskKind,
         task_result: TaskResult,
     }, 
     ConfirmationRequested {

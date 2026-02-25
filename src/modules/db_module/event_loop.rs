@@ -7,7 +7,7 @@ use calloop::{
 use crate::{
     modules::{
         db_module::{
-            events::DBCommand,
+            commands::DBCommand,
             EventLoopResource,
         },
     },
@@ -24,16 +24,17 @@ pub fn init_event_loop<'e>(
     let _ = event_loop_handle.insert_source(channel, |
         event,
         _meta,
-        event_loop_resource
+        resource
     |{
         match event {
             Event::Msg(db_command) => {
-                event_loop_resource.db_core.on_command(
-                    db_command
+                resource.db_core.on_command(
+                    db_command,
+                    &mut resource.db_connect_cache,
                 );
             },
             Event::Closed => {
-                event_loop_resource.loop_signal.stop();
+                resource.loop_signal.stop();
             },
         } 
     });

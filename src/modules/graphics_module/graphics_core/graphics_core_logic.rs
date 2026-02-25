@@ -31,6 +31,9 @@ use crate::{
             graphics_backend::{
                 GraphicsBackend,
             },
+            task_cache::{
+                TaskCache, TaskContext,
+            },
             ui::{UI, UIInputEvent, ChosedModalWindow},
             events::{
                 CustomEvents
@@ -90,6 +93,7 @@ impl GraphicsCoreLogic {
     pub fn create_project_req_handle(
         logic_module_handler: &mut LogicModuleHandler,
         ui: &mut UI,
+        task_cache: &mut TaskCache,
         project_name: String,
         project_path: PathBuf,
     ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> {
@@ -98,8 +102,8 @@ impl GraphicsCoreLogic {
             LogicCommand::Task { 
                 task_id: task_id.clone(), 
                 task_kind: TaskKind::CreateProject { 
-                    project_name: project_name, 
-                    project_path: project_path 
+                    project_name: project_name.clone(), 
+                    project_path: project_path.clone(), 
                 } 
             }
         )?;
@@ -111,6 +115,15 @@ impl GraphicsCoreLogic {
                 }
             )
         )?; 
+        
+        task_cache.push(
+            task_id.clone(), 
+            TaskContext::CreateProjectContext { 
+                project_name, 
+                project_path 
+            }
+        );
+        
 
         Ok(Some(GraphicsCoreState::WaitingTask {
             task_id: task_id, 
@@ -120,27 +133,33 @@ impl GraphicsCoreLogic {
     pub fn task_response_handle(
         waiting_task_id: TaskID,
         done_task_id: TaskID,
-        done_task_kind: TaskKind,
         done_task_result: TaskResult,
         ui: &mut UI,
+        task_cache: &mut TaskCache,
     ) -> Result<Option<GraphicsCoreState>, GraphicsCoreError> 
     { 
         if waiting_task_id == done_task_id {
-            match done_task_kind {
-                TaskKind::CreateProject { 
-                    project_name, 
-                    project_path 
-                } => {
-                    let new_state = TaskResponseHandle::creating_project_task(
-                        done_task_result, 
-                        &project_path, 
-                        &project_name, 
-                        ui
-                    )?;
+            // TODO: Logic for task cache problem connected with Task Context {}
+            if let Some(context) = task_cache.remove(&done_task_id) {
+                match context {
+                    TaskContext::CreateProjectContext { 
+                        project_name, 
+                        project_path 
+                    } => {
+                        let new_state = TaskResponseHandle::creating_project_task(
+                            done_task_result, 
+                            &project_path, 
+                            &project_name, 
+                            ui
+                        )?;
 
-                    Ok(new_state)
-                },
-            } 
+                        Ok(new_state)
+                    },
+                }
+            }
+            else {
+                Err(GraphicsCoreError::TaskContextNotFound)
+            }
         }
         else {       
             Ok(None) 

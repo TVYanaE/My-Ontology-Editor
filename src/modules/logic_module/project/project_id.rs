@@ -3,8 +3,10 @@ use serde::{
     Serialize, Deserialize
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq)]
 #[derive(Serialize, Deserialize)]
+#[derive(Hash)]
 pub struct ProjectID(Uuid);
 
 impl ProjectID {

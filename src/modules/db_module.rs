@@ -1,7 +1,9 @@
+mod commands;
+mod db_connect_cache;
+mod db_connect_handler;
 mod db_core;
 mod db_module_handler;
 mod event_loop;
-mod events;
 
 use std::{
     thread,
@@ -14,22 +16,31 @@ use calloop::{
 };
 
 use self::{
+    db_connect_cache::{
+        DBConnectCache,
+    },
     db_core::DBCore,
     event_loop::init_event_loop,
 };
 pub use self::{
-    events::{
+    commands::{
         DBCommand, DBCommands,
         Migrations,
     },
     db_core::{
         db_core_error::DBCoreError,
     },
-    db_module_handler::DBModuleHandler,
+    db_module_handler::{
+        DBModuleHandler,
+    },
+    db_connect_handler::{
+        DBConnectHandlerID
+    },
 };
 
 struct EventLoopResource {
     pub db_core: DBCore,
+    pub db_connect_cache: DBConnectCache,
     pub loop_signal: LoopSignal,
 }
 
@@ -44,9 +55,11 @@ impl DBModule {
             let loop_signal = event_loop.get_signal();
 
             let db_core = DBCore::new();
+            let db_connect_cache = DBConnectCache::new();
 
             let mut event_loop_resource = EventLoopResource {
                 db_core: db_core,
+                db_connect_cache: db_connect_cache,
                 loop_signal: loop_signal, 
             };
 

@@ -9,7 +9,7 @@ use uuid::{
 use super::{
     super::{
         events::{
-            TaskID, ConfirmationID,
+            TaskID,
         },
         confirmation_cache::{
             ConfirmationContext,
@@ -47,5 +47,9 @@ pub enum JobKind {
     },
     ConfirmationDecline {
         confirmation_context: ConfirmationContext,
-    }
+    },
+    OpenProject {
+        task_id: TaskID,
+        project_path: PathBuf,
+    },
 }

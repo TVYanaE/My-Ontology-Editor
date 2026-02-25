@@ -22,6 +22,7 @@ use crate::{
             graphics_backend::{
                 GraphicsBackend
             },
+            task_cache::TaskCache,
             ui::UI,
         },
         logic_module::{
@@ -40,6 +41,7 @@ pub struct WaitingTaskStateContext<'c> {
     pub custom_events: &'c CustomEvents,
     pub logic_module_handler: &'c mut LogicModuleHandler,
     pub waiting_task_id: TaskID,
+    pub task_cache: &'c mut TaskCache,
 }
 
 impl GraphicCoreStateHandle {
@@ -132,15 +134,14 @@ impl GraphicCoreStateHandle {
                             },
                             ExternalEvent::TaskRespone { 
                                 task_id,
-                                task_kind,
                                 task_result,
                             } => {
                                 let new_state = GraphicsCoreLogic::task_response_handle(
                                     context.waiting_task_id, 
                                     task_id, 
-                                    task_kind, 
                                     task_result, 
-                                    context.ui
+                                    context.ui,
+                                    context.task_cache,
                                 )?;
 
                                 Ok(new_state)

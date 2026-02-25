@@ -6,9 +6,10 @@ mod db_core_state_handle;
 use crate::{
     modules::{
         db_module::{
-            events::{
+            commands::{
                 DBCommand,
             },
+            db_connect_cache::DBConnectCache,
         },
     },
 };
@@ -39,6 +40,7 @@ impl DBCore {
     pub fn on_command(
         &mut self,
         command: DBCommand,
+        db_connect_cache: &mut DBConnectCache,
     ) {
         let current_state = std::mem::replace(
             &mut self.state, 
@@ -47,7 +49,10 @@ impl DBCore {
 
         self.state = match (current_state, command) {
             (DBCoreState::Ready, command) => {
-                match DBCoreStateHandle::ready_handle(command) {
+                match DBCoreStateHandle::ready_handle(
+                    command,
+                    db_connect_cache,
+                ) {
                     Some(new_state) => new_state,
                     None => DBCoreState::Ready,
                 } 

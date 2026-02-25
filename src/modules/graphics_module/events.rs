@@ -10,7 +10,7 @@ use crate::{
     modules::{
         logic_module::{
             events::{
-                TaskID, TaskKind,
+                TaskID,
                 ConfirmationID, ConfirmationKind,
                 DecisionKind,
                 TaskResult,
@@ -52,7 +52,6 @@ pub enum InternalEvent {
 pub enum ExternalEvent { 
     TaskRespone {
         task_id: TaskID,
-        task_kind: TaskKind,
         task_result: TaskResult,
     }, 
     ConfirmationRequested {

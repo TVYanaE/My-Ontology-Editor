@@ -15,6 +15,7 @@ use crate::{
             db_core::{
                 db_core_error::DBCoreError,
             },
+            db_connect_handler::DBConnectHandlerID
         },
     },
 }; 
@@ -28,6 +29,10 @@ pub enum DBCommand {
         /// Full name with Data Base File Name and extension db3
         db_file_path: PathBuf,
         migrations: Option<Migrations>,
-        response_target: OneShotSender<Result<(), DBCoreError>>
+        response_target: OneShotSender<Result<(), DBCoreError>>,
     },
+    OpenDBConnect {
+        db_file_path: PathBuf,
+        response_target: OneShotSender<Result<DBConnectHandlerID, DBCoreError>>,
+    }
 }

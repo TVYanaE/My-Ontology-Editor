@@ -6,7 +6,9 @@ mod job_manager;
 mod logic_core;
 pub mod logic_module_handler;
 mod project;
+mod project_cache;
 mod project_manager;
+pub mod project_view;
 
 use std::{
     thread,

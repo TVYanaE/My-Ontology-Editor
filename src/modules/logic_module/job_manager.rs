@@ -73,7 +73,7 @@ impl JobManager{
                 decision_kind 
             } => {
                 if !decision {
-                    if let Some(context) = confirmation_cache.get_context(confirmation_id) {
+                    if let Some(context) = confirmation_cache.remove(confirmation_id) {
                         self.jobs.push_back(
                             Job { 
                                 id: JobID::new(), 
@@ -89,7 +89,7 @@ impl JobManager{
 
                 match decision_kind {
                     DecisionKind::Owerrite => {
-                        if let Some(context) = confirmation_cache.get_context(confirmation_id) {
+                        if let Some(context) = confirmation_cache.remove(confirmation_id) {
                             match context {
                                 ConfirmationContext::CreateProjectContext { 
                                     task_id, 

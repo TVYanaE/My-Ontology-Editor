@@ -1,4 +1,3 @@
-mod project_cache;
 mod project_manager_error; 
 mod project_manager_logic;
 mod project_template;
@@ -61,6 +60,13 @@ impl ProjectManager {
         )?;
 
         Ok(())
+    }
+
+    pub fn open_project(
+        &self,
+        project_path: &impl AsRef<Path>
+    ) {
+
     }
 }
 

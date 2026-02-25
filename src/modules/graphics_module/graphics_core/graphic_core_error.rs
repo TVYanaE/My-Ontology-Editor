@@ -30,5 +30,8 @@ pub enum GraphicsCoreError {
 
     #[error("UI Error: {0}")]
     UIError(#[from] UIError),
+
+    #[error("Task Context wasn't found in cache")]
+    TaskContextNotFound,
 }
 

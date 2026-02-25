@@ -37,7 +37,7 @@ impl ConfirmationCache {
         );
     }
     
-    pub fn get_context(
+    pub fn remove(
         &mut self,
         confirmation_id: ConfirmationID,
     ) -> Option<ConfirmationContext> {
