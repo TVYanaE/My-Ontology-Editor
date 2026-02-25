@@ -54,7 +54,7 @@ impl GraphicCoreStateHandle {
             GraphicsEvent::WindowEvent(event) => {
                 match event {
                     WindowEvent::Resized(physical_size) => {
-                        let new_state = GraphicsCoreLogic::resize_handle(
+                        let new_state = GraphicsCoreLogic::resize(
                             physical_size, 
                             context.graphics_backend
                         )?;
@@ -62,7 +62,7 @@ impl GraphicCoreStateHandle {
                         Ok(new_state) 
                     }
                     WindowEvent::RedrawRequested => {
-                        let new_state = GraphicsCoreLogic::redraw_event_handle(
+                        let new_state = GraphicsCoreLogic::redraw(
                             context.graphics_backend,
                             context.ui,
                             context.custom_events
@@ -71,7 +71,7 @@ impl GraphicCoreStateHandle {
                         Ok(new_state)
                     },
                     WindowEvent::CloseRequested => {
-                        let new_state = GraphicsCoreLogic::app_shutdown_handle(
+                        let new_state = GraphicsCoreLogic::shutdown(
                             context.logic_module_handler,
                         );
 
@@ -100,7 +100,7 @@ impl GraphicCoreStateHandle {
                     CustomEvent::InternalEvent(event) => {
                         match event {
                             InternalEvent::ShutdownReq => {
-                                let new_state = GraphicsCoreLogic::app_shutdown_handle(
+                                let new_state = GraphicsCoreLogic::shutdown(
                                     context.logic_module_handler,
                                 );
 
@@ -111,7 +111,7 @@ impl GraphicCoreStateHandle {
                                 decision,
                                 decision_kind,
                             } => {
-                                let new_state = GraphicsCoreLogic::confirmation_obtain_handle(
+                                let new_state = GraphicsCoreLogic::confirmation_obtain(
                                     confirmation_id, 
                                     decision,
                                     decision_kind,
@@ -126,7 +126,7 @@ impl GraphicCoreStateHandle {
                     CustomEvent::ExternalEvent(event) => {
                         match event {
                             ExternalEvent::Shutdown => {
-                                let new_state = GraphicsCoreLogic::app_shutdown_handle(
+                                let new_state = GraphicsCoreLogic::shutdown(
                                     context.logic_module_handler,
                                 );
 
@@ -136,7 +136,7 @@ impl GraphicCoreStateHandle {
                                 task_id,
                                 task_result,
                             } => {
-                                let new_state = GraphicsCoreLogic::task_response_handle(
+                                let new_state = GraphicsCoreLogic::task_response(
                                     context.waiting_task_id, 
                                     task_id, 
                                     task_result, 
@@ -150,7 +150,7 @@ impl GraphicCoreStateHandle {
                                 confirmation_id, 
                                 confirmation_kind 
                             } => {
-                                let new_state = GraphicsCoreLogic::confirmation_required_handle(
+                                let new_state = GraphicsCoreLogic::confirmation_required(
                                     context.ui, 
                                     confirmation_id, 
                                     confirmation_kind

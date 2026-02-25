@@ -1,6 +1,9 @@
 use std::{
     path::{Path},
 };
+use super::{
+    TaskResponse,
+};
 use crate::{
     modules::{
         graphics_module::{
@@ -22,10 +25,8 @@ use crate::{
     },
 };
 
-pub struct TaskResponseHandle;
 
-
-impl TaskResponseHandle {
+impl TaskResponse {
     pub fn creating_project_task(
         done_task_result: TaskResult,
         project_path: &impl AsRef<Path>, 

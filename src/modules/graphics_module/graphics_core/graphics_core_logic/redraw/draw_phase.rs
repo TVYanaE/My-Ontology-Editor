@@ -6,6 +6,9 @@ use wgpu::{
     Operations, 
     RenderPassDescriptor, RenderPassColorAttachment,
 };
+use super::{
+    Draw,
+}; 
 use crate::{
     aliases::{
         EGUIScreenDescriptor
@@ -21,8 +24,8 @@ use crate::{
     },
 };
 
-
-pub fn draw_phase(
+impl Draw {
+    pub fn draw_phase(
     full_output: FullOutput,
     wgpu_data: &WGPUData,
     egui_data: &mut EGUIData,
@@ -124,4 +127,5 @@ pub fn draw_phase(
     surface_texture.present();
 
     Ok(())
+} 
 }
