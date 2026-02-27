@@ -6,7 +6,7 @@ use std::{
     },
 };
 use super::{
-    events::{
+    prelude::{
         ConfirmationID, ConfirmationKind,
     },
 };

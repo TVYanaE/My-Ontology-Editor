@@ -16,6 +16,10 @@ use super::{
     super::{
         super::{
             commands::Migrations,
+            db_connect_cache::DBConnectCache,
+            db_connect_handler::{
+                DBConnectHandlerID, DBConnectHandler,
+            },
         },
         db_core_state::DBCoreState,
         db_core_error::DBCoreError,
@@ -28,7 +32,8 @@ impl DBCoreLogic {
     pub fn create_db_file(
         db_file_path: &impl AsRef<Path>,
         migration: Option<Migrations>,
-        response_target: OneShotSender<Result<(), DBCoreError>>
+        db_connect_cache: &mut DBConnectCache,
+        response_target: OneShotSender<Result<DBConnectHandlerID, DBCoreError>>
     ) -> Option<DBCoreState> {
         let db_connection = match Connection::open(db_file_path) {
             Ok(connection) => connection,
@@ -54,6 +59,7 @@ impl DBCoreLogic {
             } 
         }
 
+        // Do migrations 
         if let Some(migrations) = migration {
             for migration in migrations {
                 match db_connection.execute(&migration, ()) {
@@ -68,7 +74,14 @@ impl DBCoreLogic {
             }
         }; 
 
-        match response_target.send(Ok(())) {
+        let db_connect_handler_id = DBConnectHandlerID::new();
+        let db_connect_handler = DBConnectHandler {
+            connection: db_connection,
+        };
+
+        db_connect_cache.push(db_connect_handler_id.clone(), db_connect_handler);
+
+        match response_target.send(Ok(db_connect_handler_id)) {
             Ok(_) => return None,
             Err(error) => {
                 error!(error=?error, "Send Error DB module");

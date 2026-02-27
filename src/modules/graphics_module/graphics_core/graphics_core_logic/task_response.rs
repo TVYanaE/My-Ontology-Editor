@@ -6,9 +6,8 @@ use super::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
-                TaskID,
-                TaskResult,
+            prelude::{
+                TaskID, TaskResult
             }, 
         },
         graphics_module::{

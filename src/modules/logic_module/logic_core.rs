@@ -10,8 +10,9 @@ use crate::{
     },
 };
 use super::{
-    events::{
-        EventSender,
+    logic_module_io::{
+        event_sender::EventSender,
+        event_manager::EventManager,
     },
     project_manager::{
         ProjectManager,
@@ -19,11 +20,11 @@ use super::{
     job_manager::{
         Job,
     },
-    event_manager::{
-        EventManager,
-    },
     job_manager::{
         JobManager,
+    },
+    project_cache::{
+        ProjectCache,
     },
     confirmation_cache::{
         ConfirmationCache,
@@ -48,6 +49,7 @@ pub struct JobContext<'c, S: EventSender> {
     pub event_manager: &'c EventManager<S>,
     pub job_manager: &'c mut JobManager,
     pub confirmation_cache: &'c mut ConfirmationCache,
+    pub project_cache: &'c mut ProjectCache,
 }
 
 impl LogicCore {
@@ -77,6 +79,7 @@ impl LogicCore {
                         db_module_handler: context.db_module_handler, 
                         job_manager: context.job_manager, 
                         confirmation_cache: context.confirmation_cache, 
+                        project_cache: context.project_cache,
                     } 
                 ) {
                     Ok(Some(new_state)) => new_state,

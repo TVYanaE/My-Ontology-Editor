@@ -7,7 +7,9 @@ mod graphics_core_logic;
 use crate::{
     modules::{ 
         logic_module::{
-            logic_module_handler::LogicModuleHandler,
+            prelude::{
+                LogicModuleHandler
+            },
         },
     },
 };

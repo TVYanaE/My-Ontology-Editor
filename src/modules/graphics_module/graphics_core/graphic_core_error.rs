@@ -10,7 +10,7 @@ use crate::{
             },         
             ui::UIError,
         },
-        logic_module::events::LogicCommand
+        logic_module::prelude::logic_command::LogicCommand
     },
 };
 

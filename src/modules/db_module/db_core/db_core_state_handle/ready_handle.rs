@@ -28,6 +28,7 @@ impl DBCoreStateHandle {
                 DBCoreLogic::create_db_file(
                     &db_file_path, 
                     migrations, 
+                    db_connect_cache,
                     response_target
                 ) 
             },

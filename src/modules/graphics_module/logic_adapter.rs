@@ -4,9 +4,9 @@ use thiserror::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
-                EventSender,
-                LogicEvent
+            prelude::{
+                event_sender::EventSender,
+                logic_event::LogicEvent,
             }
         },
         graphics_module::{

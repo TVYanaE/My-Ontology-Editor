@@ -4,7 +4,7 @@ use super::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
+            prelude::{
                 ConfirmationID, ConfirmationKind,
             }, 
         },

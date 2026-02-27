@@ -26,8 +26,10 @@ use crate::{
             ui::UI,
         },
         logic_module::{
-            logic_module_handler::LogicModuleHandler,
-            events::TaskID,
+            prelude::{
+                LogicModuleHandler,
+                TaskID,
+            },
         },
     },
 };

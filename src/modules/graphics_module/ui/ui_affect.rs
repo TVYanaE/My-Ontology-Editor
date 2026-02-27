@@ -4,7 +4,7 @@ use std::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
+            prelude::{
                 ConfirmationID, DecisionKind
             }
         },

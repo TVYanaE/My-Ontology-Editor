@@ -2,7 +2,7 @@ use std::{
     thread::JoinHandle,
 };
 use super::{
-    events::LogicCommands
+    logic_module_io::logic_command::LogicCommands,
 };
 
 pub struct LogicModuleHandler {

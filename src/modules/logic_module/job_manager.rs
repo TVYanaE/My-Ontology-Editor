@@ -7,9 +7,9 @@ use std::{
     }, 
 };
 use super::{
-    events::{
-        LogicCommand, TaskKind,
-        DecisionKind,
+    logic_module_io::{
+        logic_command::LogicCommand,
+        TaskKind, DecisionKind,
     },
     confirmation_cache::{
         ConfirmationCache, ConfirmationContext,

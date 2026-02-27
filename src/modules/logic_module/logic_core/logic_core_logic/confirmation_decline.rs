@@ -1,13 +1,11 @@
 use super::{
     super::{
         super::{
-            events::{
-                LogicEvent, 
-                EventSender, TaskKind,
-                TaskResult, 
-            }, 
-            event_manager::{
-                EventManager,
+            logic_module_io::{
+                logic_event::LogicEvent,
+                event_sender::EventSender,
+                event_manager::EventManager,
+                TaskResult,
             },
             job_manager::{
                 Job, 

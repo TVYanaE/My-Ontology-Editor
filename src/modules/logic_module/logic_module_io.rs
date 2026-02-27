@@ -1,15 +1,14 @@
-use std::{
-    path::PathBuf,
-    fmt::Debug,
-}; 
-use calloop::{
-    channel::Sender
-};
-use uuid::{
-    Uuid,
-};
+pub mod event_manager;
+pub mod event_sender;
+pub mod logic_command;
+pub mod logic_event;
 
-pub type LogicCommands = Sender<LogicCommand>;
+use std::{
+    path::{
+        PathBuf,
+    },
+};
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 #[derive(PartialEq, Eq)]
@@ -39,20 +38,6 @@ pub enum TaskKind {
         project_name: String,
         project_path: PathBuf,
     },
-}
-
-#[derive(Debug, Clone)]
-pub enum LogicCommand {
-    Task {
-        task_id: TaskID,
-        task_kind: TaskKind,
-    },
-    ConfirmationDecision {
-        confirmation_id: ConfirmationID,
-        decision: bool,
-        decision_kind: DecisionKind, 
-    },
-    Shutdown, 
 }
 
 #[derive(Debug, Clone)]
@@ -90,23 +75,4 @@ impl From<ConfirmationKind> for DecisionKind {
             },
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum LogicEvent {
-    TaskRespone {
-        task_id: TaskID,
-        task_result: TaskResult,
-    }, 
-    ConfirmationRequested {
-        confirmation_id: ConfirmationID,
-        confirmation_kind: ConfirmationKind,
-    }, 
-    Shutdown,
-}
-
-pub trait EventSender {
-    type Error: Debug + Send + Sync + 'static + std::error::Error;
-
-    fn send_event(&self, logic_event: LogicEvent) -> Result<(), Self::Error>;
 }

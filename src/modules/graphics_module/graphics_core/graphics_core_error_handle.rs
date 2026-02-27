@@ -1,8 +1,10 @@
 use crate::{
     modules::{
         logic_module::{
-            events::{LogicCommand},
-            logic_module_handler::LogicModuleHandler,
+            prelude::{
+                logic_command::LogicCommand,
+                LogicModuleHandler
+            },
         },
         graphics_module::{
             graphics_core::{

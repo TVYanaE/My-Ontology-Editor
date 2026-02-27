@@ -14,14 +14,14 @@ use super::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
-                LogicCommand, 
+            prelude::{
+                logic_command::LogicCommand,
+                LogicModuleHandler,
                 TaskID, TaskKind,
                 TaskResult,
                 DecisionKind, 
                 ConfirmationID, ConfirmationKind,
             }, 
-            logic_module_handler::LogicModuleHandler,
         },
         graphics_module::{
             graphics_core::{

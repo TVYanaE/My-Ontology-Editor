@@ -1,40 +1,44 @@
 use std::{
-    mem::take,
     sync::{Arc, Mutex},
+    clone::Clone,
 };
 
 use arc_swap::ArcSwap;
 
-pub type Snapshot<T> = Arc<Vec<T>>;
+pub type Snapshot<T> = Arc<T>;
 
-pub struct ArcBuffer<T> {
-    write_buffer: Mutex<Vec<T>>,
-    read_buffer: ArcSwap<Vec<T>>,
+pub struct ArcBuffer<T> 
+where 
+    T: Clone
+{
+    write_buffer: Mutex<T>,
+    read_buffer: ArcSwap<T>,
 }
 
-impl<T> ArcBuffer<T> {
-    pub fn new() -> Self {
+impl<T> ArcBuffer<T> 
+where 
+    T: Clone
+{
+    pub fn new(value: T) -> Self {
         Self {
-            write_buffer: Mutex::new(Vec::new()),
-            read_buffer: ArcSwap::from_pointee(Vec::new()),
+            write_buffer: Mutex::new(value.clone()),
+            read_buffer: ArcSwap::from_pointee(value),
         }
     }
 
     pub fn push(&self, value: T) {
-        self.write_buffer.lock().unwrap().push(value);
+        *self.write_buffer.lock().unwrap() = value;
     }
 
     pub fn swap(&self) {
-        let mut write_buffer = self.write_buffer.lock().unwrap();
+        let state = self.write_buffer.lock().unwrap();
 
-        let new_vec = take(&mut *write_buffer);
-
-        let snapshot = Arc::new(new_vec);
+        let snapshot = Arc::new(state.clone());
 
         self.read_buffer.store(snapshot);
     }
 
-    pub fn get_read_buffer(&self) -> Arc<Vec<T>> {
+    pub fn get_read_buffer(&self) -> Snapshot<T> {
         self.read_buffer.load_full()
     }
 }

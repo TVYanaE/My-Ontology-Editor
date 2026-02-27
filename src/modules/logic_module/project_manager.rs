@@ -20,6 +20,11 @@ use crate::{
         },
     },
 };
+use super::{
+    project::{
+        Project,
+    },
+};
 use self::{
     project_manager_logic::ProjectManagerLogic,
     project_template::ProjectTemplate,
@@ -50,8 +55,8 @@ impl ProjectManager {
         project_name: &str,
         project_path: &impl AsRef<Path>,
         db_commands: &DBCommands,
-    ) -> Result<(), ProjectManagerError> {
-        ProjectManagerLogic::create_new_project(
+    ) -> Result<Project, ProjectManagerError> {
+        let project = ProjectManagerLogic::create_new_project(
             project_name, 
             project_path, 
             &self.app_dirs.as_ref().cache_directory.projects_dir_path,
@@ -59,14 +64,14 @@ impl ProjectManager {
             db_commands,
         )?;
 
-        Ok(())
+        Ok(project)
     }
 
     pub fn open_project(
         &self,
         project_path: &impl AsRef<Path>
     ) {
-
+        
     }
 }
 

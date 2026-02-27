@@ -1,10 +1,10 @@
 mod confirmation_cache;
 mod event_loop;
-mod event_manager;
-pub mod events;
 mod job_manager;
 mod logic_core;
-pub mod logic_module_handler;
+mod logic_module_handler;
+mod logic_module_io;
+pub mod prelude;
 mod project;
 mod project_cache;
 mod project_manager;
@@ -29,21 +29,28 @@ use crate::{
 };
 use self::{
     confirmation_cache::ConfirmationCache,
-    event_manager::EventManager,
+    logic_module_io::{
+        event_manager::{
+            EventManager,
+        },
+        logic_command::{
+            LogicCommand,
+        },
+        event_sender::{
+            EventSender,
+        },
+    },
     job_manager::{
         JobManager,
     },
     event_loop::init_event_loop,
     logic_core::{
         LogicCore, JobContext
-    },
-    events::{
-        LogicCommand, EventSender
-    },
+    }, 
     logic_module_handler::LogicModuleHandler,
+    project_cache::ProjectCache,
     project_manager::ProjectManager,
 };
-
 
 struct EventLoopResource<S> 
 where 
@@ -55,7 +62,8 @@ where
     project_manager: ProjectManager, 
     confirmation_cache: ConfirmationCache,
     event_manager: EventManager<S>,
-    job_manager: JobManager
+    job_manager: JobManager,
+    project_cache: ProjectCache,
 }
 
 pub struct LogicModule;
@@ -80,6 +88,7 @@ impl LogicModule{
             let confirmation_cache = ConfirmationCache::new();
             let event_manager = EventManager::new(event_sender);
             let job_manager = JobManager::new();
+            let project_cache = ProjectCache::new();
 
             let mut event_loop_resource = EventLoopResource {
                 logic_core: logic_core, 
@@ -88,7 +97,8 @@ impl LogicModule{
                 project_manager: project_manager,
                 confirmation_cache: confirmation_cache,
                 event_manager: event_manager,
-                job_manager: job_manager
+                job_manager: job_manager,
+                project_cache: project_cache,
             }; 
 
             let _ = event_loop.run(None, &mut event_loop_resource, |resource|{
@@ -101,6 +111,7 @@ impl LogicModule{
                             event_manager: &resource.event_manager, 
                             job_manager: &mut resource.job_manager, 
                             confirmation_cache: &mut resource.confirmation_cache, 
+                            project_cache: &mut resource.project_cache,
                         }
                     );
                 };

@@ -16,7 +16,7 @@ use crate::{
             },
         },
         logic_module::{
-            events::{ConfirmationID, ConfirmationKind}
+            prelude::{ConfirmationID, ConfirmationKind}
         },
     },
 }; 

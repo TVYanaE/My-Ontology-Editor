@@ -1,7 +1,7 @@
 use crate::{
     modules::{
         logic_module::{
-            events::{
+            prelude::{
                 TaskID,
             },
         },

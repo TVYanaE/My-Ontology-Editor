@@ -1,9 +1,8 @@
 mod event_manager_error;
 
 use super::{
-    events::{
-        EventSender, LogicEvent,
-    }, 
+    event_sender::EventSender, 
+    logic_event::LogicEvent, 
 };
 pub use self::{
     event_manager_error::EventManagerError,

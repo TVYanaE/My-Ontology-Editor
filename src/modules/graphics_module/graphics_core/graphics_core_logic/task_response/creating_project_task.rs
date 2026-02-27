@@ -18,7 +18,7 @@ use crate::{
             },
         },
         logic_module::{
-            events::{
+            prelude::{
                 TaskResult, TaskError,
             },
         },

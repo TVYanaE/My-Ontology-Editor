@@ -8,7 +8,7 @@ use uuid::{
 };
 use super::{
     super::{
-        events::{
+        logic_module_io::{
             TaskID,
         },
         confirmation_cache::{
@@ -50,6 +50,6 @@ pub enum JobKind {
     },
     OpenProject {
         task_id: TaskID,
-        project_path: PathBuf,
+        project_file_path: PathBuf,
     },
 }

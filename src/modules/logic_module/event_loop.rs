@@ -6,7 +6,10 @@ use calloop::{
 };
 use super::{
     EventLoopResource,
-    events::{EventSender, LogicCommand},
+    logic_module_io::{
+        event_sender::EventSender,
+        logic_command::LogicCommand,
+    },
 };
 
 

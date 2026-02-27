@@ -3,10 +3,12 @@ use thiserror::{
 };
 use super::{
     super::{
-        events::EventSender,
+        logic_module_io::{
+            event_sender::EventSender,
+            event_manager::EventManagerError,
+        },
         project_manager::ProjectManagerError,
         job_manager::JobManagerError,
-        event_manager::EventManagerError,
     },
 };
 

@@ -9,15 +9,18 @@ use crate::{
 use super::{
     super::{
         super::{
-            events::{
-                EventSender,
+            logic_module_io::{
+                event_sender::EventSender,
+                event_manager::EventManager,
             },
             project_manager::{
                 ProjectManager,
             },
-            event_manager::EventManager,
             job_manager::{
                 JobManager, Job, JobKind,
+            },
+            project_cache::{
+                ProjectCache,
             },
             confirmation_cache::ConfirmationCache,
         },
@@ -36,6 +39,7 @@ pub struct ReadyStateContext<'c, S: EventSender> {
     pub db_module_handler: &'c mut DBModuleHandler,
     pub job_manager: &'c mut JobManager, 
     pub confirmation_cache: &'c mut ConfirmationCache,
+    pub project_cache: &'c mut ProjectCache, 
 }
 
 impl LogicCoreStateHandle {
@@ -76,6 +80,7 @@ impl LogicCoreStateHandle {
                     &project_name, 
                     &project_path, 
                     context.project_manager, 
+                    context.project_cache,
                     context.event_manager, 
                     &context.db_module_handler.db_commands,
                 )?;

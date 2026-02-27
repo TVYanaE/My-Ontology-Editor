@@ -3,7 +3,7 @@ use thiserror::{
 };
 use super::{
     super::{
-        events::EventSender
+        event_sender::EventSender
     },
 };
 

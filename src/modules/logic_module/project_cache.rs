@@ -29,17 +29,32 @@ impl ProjectCache {
         self.projects.insert(project_id, project);
     }
 
-    pub fn get_project_ref(
-        &self, 
-        project_id: &ProjectID
-    ) -> Option<&Project> {
-        self.projects.get(&project_id)
-    }
-
-    pub fn get_project_mut_ref(
+    pub fn remove(
         &mut self,
         project_id: &ProjectID
-    ) -> Option<&mut Project> {
-        self.projects.get_mut(project_id)
+    ) -> Option<Project> {
+        self.projects.remove(project_id)
+    }
+
+    pub fn with_project<F, R, E>(
+        &self, 
+        project_id: &ProjectID,
+        func: F
+    ) -> Option<Result<R, E>>
+    where 
+        F: FnOnce(&Project) -> Result<R, E>
+    {
+        self.projects.get(project_id).map(func)
+    }
+
+    pub fn with_project_mut<F, R, E>(
+        &mut self,
+        project_id: &ProjectID,
+        func: F,
+    ) -> Option<Result<R, E>>
+    where 
+        F: FnOnce(&mut Project) -> Result<R, E>
+    {
+        self.projects.get_mut(project_id).map(func)
     }
 }

@@ -4,12 +4,11 @@ use super::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
-                LogicCommand, 
-                DecisionKind, 
-                ConfirmationID,
+            prelude::{
+                logic_command::LogicCommand,
+                DecisionKind, ConfirmationID,
+                LogicModuleHandler,
             }, 
-            logic_module_handler::LogicModuleHandler,
         },
         graphics_module::{
             graphics_core::{

@@ -19,7 +19,7 @@ use crate::{
     modules::{
         app_dirs::ApplicationDirectories,
         logic_module::{
-            logic_module_handler::LogicModuleHandler,
+            prelude::LogicModuleHandler,
         },
     },
 };

@@ -36,7 +36,8 @@ egui-file-dialog = "0.12.0"
 calloop = { version = "0.14.4", features = []}
 
 # For SQLite
-rusqlite = { version = "0.38.0", features = ["bundled"] }
+rusqlite = { version = "0.38.0", features = ["bundled", "uuid"] }
+serde_rusqlite = "0.41.1"
 
 # For UUID 
 uuid = { version = "1.21.0", features = ["v4", "serde"] }
@@ -45,8 +46,9 @@ uuid = { version = "1.21.0", features = ["v4", "serde"] }
 serde = { version = "1.0.228", features = ["derive"]}
 toml = { version = "1.0.2", features = []}
 
-# For One-shot channel 
+# Multithread channel 
 oneshot = "0.1.13"
+crossbeam = "0.8.4"
 
 # For CTRL+C Handling
 ctrlc = "3.5.2"

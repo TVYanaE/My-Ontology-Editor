@@ -7,11 +7,10 @@ use super::{
 use crate::{
     modules::{
         logic_module::{
-            events::{
-                LogicCommand, 
-                TaskID, TaskKind, 
+            prelude::{
+                logic_command::LogicCommand,
+                TaskID, TaskKind, LogicModuleHandler, 
             }, 
-            logic_module_handler::LogicModuleHandler,
         },
         graphics_module::{
             graphics_core::{
