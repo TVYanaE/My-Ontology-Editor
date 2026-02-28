@@ -5,6 +5,3 @@ mod open_project;
 mod shutdown;
 
 pub struct LogicCoreLogic;
-
-
-

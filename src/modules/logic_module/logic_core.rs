@@ -4,12 +4,9 @@ mod logic_core_logic;
 mod logic_core_state;
 mod logic_core_state_handle;
 
-use crate::{
-    modules::{
-        db_module::DBModuleHandler,
-    },
-};
+
 use super::{
+    db_core::DBCore,
     logic_module_io::{
         event_sender::EventSender,
         event_manager::EventManager,
@@ -44,7 +41,7 @@ pub struct LogicCore {
 }
 
 pub struct JobContext<'c, S: EventSender> {
-    pub db_module_handler: &'c mut DBModuleHandler,
+    pub db_core: &'c mut DBCore,
     pub project_manager: &'c ProjectManager,
     pub event_manager: &'c EventManager<S>,
     pub job_manager: &'c mut JobManager,
@@ -76,7 +73,7 @@ impl LogicCore {
                     ReadyStateContext { 
                         event_manager: context.event_manager, 
                         project_manager: context.project_manager, 
-                        db_module_handler: context.db_module_handler, 
+                        db_core: context.db_core, 
                         job_manager: context.job_manager, 
                         confirmation_cache: context.confirmation_cache, 
                         project_cache: context.project_cache,
@@ -88,7 +85,6 @@ impl LogicCore {
                         if let Some(new_state) = logic_core_error_handle(
                             error, 
                             context.event_manager,
-                            context.db_module_handler,
                         ) {
                             new_state
                         } 

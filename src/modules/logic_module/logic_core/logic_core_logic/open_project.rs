@@ -3,16 +3,10 @@ use std::{
         Path,
     }, 
 };
-use crate::{
-    modules::{
-        db_module::{
-            DBCommands,
-        },
-    },
-};
 use super::{
     super::{
         super::{
+            db_core::DBCore,
             logic_module_io::{
                 event_sender::EventSender,
                 logic_event::LogicEvent,
@@ -38,7 +32,7 @@ impl LogicCoreLogic {
         project_manager: &ProjectManager,
         project_cache: &mut ProjectCache, 
         event_manager: &EventManager<S>,
-        db_commands: &DBCommands,
+        db_core: &mut DBCore,
     ) -> Result<Vec<Job>, LogicCoreError<S>> {
         let jobs = Vec::with_capacity(2);
        

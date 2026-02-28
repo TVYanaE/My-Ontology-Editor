@@ -1,14 +1,10 @@
 use tracing::{
     instrument,
 };
-use crate::{
-    modules::{
-        db_module::DBModuleHandler,
-    },
-};
 use super::{
     super::{
         super::{
+            db_core::DBCore,
             logic_module_io::{
                 event_sender::EventSender,
                 event_manager::EventManager,
@@ -36,7 +32,7 @@ use super::{
 pub struct ReadyStateContext<'c, S: EventSender> {
     pub event_manager: &'c EventManager<S>,
     pub project_manager: &'c ProjectManager,
-    pub db_module_handler: &'c mut DBModuleHandler,
+    pub db_core: &'c mut DBCore,
     pub job_manager: &'c mut JobManager, 
     pub confirmation_cache: &'c mut ConfirmationCache,
     pub project_cache: &'c mut ProjectCache, 
@@ -82,7 +78,7 @@ impl LogicCoreStateHandle {
                     context.project_manager, 
                     context.project_cache,
                     context.event_manager, 
-                    &context.db_module_handler.db_commands,
+                    context.db_core,
                 )?;
 
                 if !jobs.is_empty() {
@@ -110,9 +106,7 @@ impl LogicCoreStateHandle {
                 Ok(Some(LogicCoreState::Ready))
             },
             JobKind::Shutdown => {
-                let jobs = LogicCoreLogic::shutdown(
-                    context.db_module_handler
-                );
+                let jobs = LogicCoreLogic::shutdown();
 
                 if !jobs.is_empty() {
                     for job in jobs {

@@ -7,23 +7,13 @@ use tree_fs::{
 use tar::{
     Builder,
 };
-use oneshot::{
-    channel,
-};
-use crate::{ 
-    migrations::{
-        SEMANTIC_NODES_TABLE_MIGRATION,
-        SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION
-    },
-    modules::db_module::{
-        DBCommand, DBCommands, 
-        DBCoreError, Migrations,
-        DBConnectHandlerID,
-    },
-};
 use super::{
     super::{
         super::{
+            db_core::{
+                db_core_error::DBCoreError,
+                DBCore, DBConnectHandlerID  
+            },
             project::{
                 Project,
                 ProjectID, PROJECT_EXTENSION,
@@ -48,7 +38,7 @@ impl ProjectManagerLogic {
         project_path: &impl AsRef<Path>,
         projects_dir_cache_path: &impl AsRef<Path>,
         project_template: &ProjectTemplate,
-        db_commands: &DBCommands,
+        db_core: &mut DBCore,
     ) -> Result<Project, ProjectManagerError> {
         // Generate unique ID for Project
         let project_id = ProjectID::new();
@@ -103,13 +93,7 @@ impl ProjectManagerLogic {
             .create()?;
 
         // Creating Data Base File 
-        // Creating OneShot Channel for response from DB module
-        let (
-            sender, 
-            receiver
-        ) = 
-        channel::<Result<DBConnectHandlerID ,DBCoreError>>();
-
+        
         // Create path for Data base File
         let mut db_file_path = project_dir_cache_path.clone();
         db_file_path.push(
@@ -120,22 +104,10 @@ impl ProjectManagerLogic {
                 .path
         );
        
-        // Migrations
-        let mut migrations = Migrations::with_capacity(4);
-        migrations.push(SEMANTIC_NODES_TABLE_MIGRATION.to_string());
-        migrations.push(SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION.to_string());
-
-        // Send command for creating DB file
-        db_commands.send(
-            DBCommand::CreateDBFile { 
-                db_file_path: db_file_path, 
-                migrations: Some(migrations), 
-                response_target: sender 
-            }
-        )?;
+        let db_connect_handler_id = db_core.create_db_file(&db_file_path)?; 
 
         // TODO: Make Logic for cleaning invalid file in cache dir
-        let db_connect_handler_id = receiver.recv()??;
+        
 
         // Creating packed Project file 
         let mut packed_project_file_path = project_path.as_ref().to_path_buf(); 

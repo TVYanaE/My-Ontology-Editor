@@ -17,9 +17,6 @@ use modules::{
         init_app_dirs, 
         ApplicationDirectories,
     }, 
-    db_module::{
-        DBModule,
-    },
     logic_module::{
         LogicModule, 
     },
@@ -66,18 +63,12 @@ fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
 
     let app_dirs = Arc::new(app_dirs);
 
-    // DB module 
-    let db_module_handler = DBModule::init_db_module();
-
-    //let db_module_handler = DBModule::init_db_module();
-
     let logic_adapter = LogicAdapter::new(custom_events.clone());
 
     // Logic Module 
     let logic_module_descriptor = LogicModule::init_logic_module(
         logic_adapter,
         app_dirs.clone(),
-        db_module_handler
     );
 
     // Graphics Module 

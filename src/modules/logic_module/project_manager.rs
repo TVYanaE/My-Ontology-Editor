@@ -14,13 +14,13 @@ use crate::{
     modules::{
         app_dirs::{
             ApplicationDirectories,
-        },
-        db_module::{
-            DBCommands,
-        },
+        }, 
     },
 };
 use super::{
+    db_core::{
+        DBCore,
+    },
     project::{
         Project,
     },
@@ -54,14 +54,14 @@ impl ProjectManager {
         &self,
         project_name: &str,
         project_path: &impl AsRef<Path>,
-        db_commands: &DBCommands,
+        db_core: &mut DBCore,
     ) -> Result<Project, ProjectManagerError> {
         let project = ProjectManagerLogic::create_new_project(
             project_name, 
             project_path, 
             &self.app_dirs.as_ref().cache_directory.projects_dir_path,
             &self.project_template,
-            db_commands,
+            db_core,
         )?;
 
         Ok(project)

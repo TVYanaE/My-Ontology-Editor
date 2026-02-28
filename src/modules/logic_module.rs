@@ -1,4 +1,5 @@
 mod confirmation_cache;
+mod db_core;
 mod event_loop;
 mod job_manager;
 mod logic_core;
@@ -24,10 +25,10 @@ use calloop::{
 use crate::{ 
     modules::{
         app_dirs::ApplicationDirectories,
-        db_module::DBModuleHandler,   
     }, 
 };
 use self::{
+    db_core::DBCore,
     confirmation_cache::ConfirmationCache,
     logic_module_io::{
         event_manager::{
@@ -57,7 +58,7 @@ where
     S: EventSender + Send + 'static
 {
     logic_core: LogicCore,
-    db_module_handler: DBModuleHandler,
+    db_core: DBCore, 
     loop_signal: LoopSignal,
     project_manager: ProjectManager, 
     confirmation_cache: ConfirmationCache,
@@ -72,7 +73,6 @@ impl LogicModule{
     pub fn init_logic_module<S>(
         event_sender: S,
         app_dirs: Arc<ApplicationDirectories>,
-        db_module_handler: DBModuleHandler,
     ) -> LogicModuleHandler 
     where 
         S: EventSender + Send + 'static 
@@ -89,10 +89,11 @@ impl LogicModule{
             let event_manager = EventManager::new(event_sender);
             let job_manager = JobManager::new();
             let project_cache = ProjectCache::new();
+            let db_core = DBCore::new();
 
             let mut event_loop_resource = EventLoopResource {
                 logic_core: logic_core, 
-                db_module_handler: db_module_handler,
+                db_core: db_core,
                 loop_signal: loop_signal,
                 project_manager: project_manager,
                 confirmation_cache: confirmation_cache,
@@ -106,7 +107,7 @@ impl LogicModule{
                     resource.logic_core.on_job(
                         job, 
                         JobContext { 
-                            db_module_handler: &mut resource.db_module_handler, 
+                            db_core: &mut resource.db_core, 
                             project_manager: &resource.project_manager, 
                             event_manager: &resource.event_manager, 
                             job_manager: &mut resource.job_manager, 

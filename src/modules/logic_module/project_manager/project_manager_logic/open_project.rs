@@ -7,13 +7,7 @@ use std::{
     },
 };
 
-use crate::{
-    modules::{
-        db_module::{
-            DBCommands, DBCommand
-        },
-    },
-};
+
 use super::{
     super::{
         super::{
@@ -29,7 +23,6 @@ use super::{
 impl ProjectManagerLogic {
     pub fn open_project(
         project_path: &impl AsRef<Path>,
-        db_commands: &DBCommands,
     ) -> Result<Project, ProjectManagerError> {
 
          

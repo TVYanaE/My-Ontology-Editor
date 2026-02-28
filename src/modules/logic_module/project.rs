@@ -5,8 +5,10 @@ mod project_logic;
 
 use crate::{
     modules::{
-        db_module::{
-            DBConnectHandlerID,
+        logic_module::{
+            db_core::{
+                DBConnectHandlerID,
+            },
         }, 
     },
 };
