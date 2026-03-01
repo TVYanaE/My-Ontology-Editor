@@ -6,8 +6,10 @@ use std::{
     },
 };
 use super::{
-    prelude::{
-        ConfirmationID, ConfirmationKind,
+    super::{
+        prelude::{
+            ConfirmationID, ConfirmationKind,
+        },
     },
 };
 pub use self::{

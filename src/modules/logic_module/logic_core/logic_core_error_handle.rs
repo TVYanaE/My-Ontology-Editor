@@ -3,11 +3,13 @@ use tracing::{
 };
 use super::{
     super::{
-        logic_module_io::{
-            event_sender::EventSender,
-            logic_event::LogicEvent,
-            event_manager::{EventManager, EventManagerError},
-        }, 
+        infrastructure::{
+            logic_module_io::{
+                event_sender::EventSender,
+                logic_event::LogicEvent,
+                event_manager::{EventManager, EventManagerError},
+            },
+        },
     },
     LogicCoreState,
     logic_core_error::LogicCoreError,

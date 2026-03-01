@@ -7,24 +7,23 @@ mod logic_core_state_handle;
 
 use super::{
     db_core::DBCore,
-    logic_module_io::{
-        event_sender::EventSender,
-        event_manager::EventManager,
+    infrastructure::{
+        logic_module_io::{
+            event_sender::EventSender,
+            event_manager::EventManager,
+        },
+        job_manager::{
+            Job, JobManager,
+        },
+        confirmation_cache::{
+            ConfirmationCache,
+        },
     },
     project_manager::{
         ProjectManager,
     },
-    job_manager::{
-        Job,
-    },
-    job_manager::{
-        JobManager,
-    },
     project_cache::{
         ProjectCache,
-    },
-    confirmation_cache::{
-        ConfirmationCache,
     },
 };
 use self::{

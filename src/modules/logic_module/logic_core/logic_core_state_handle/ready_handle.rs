@@ -4,21 +4,23 @@ use tracing::{
 use super::{
     super::{
         super::{
-            db_core::DBCore,
-            logic_module_io::{
-                event_sender::EventSender,
-                event_manager::EventManager,
+            infrastructure::{
+                logic_module_io::{
+                    event_sender::EventSender,
+                    event_manager::EventManager,
+                },
+                job_manager::{
+                    JobManager, Job, JobKind,
+                },
+                confirmation_cache::ConfirmationCache,
             },
+            db_core::DBCore,
             project_manager::{
                 ProjectManager,
-            },
-            job_manager::{
-                JobManager, Job, JobKind,
             },
             project_cache::{
                 ProjectCache,
             },
-            confirmation_cache::ConfirmationCache,
         },
         logic_core_logic::{
             LogicCoreLogic,

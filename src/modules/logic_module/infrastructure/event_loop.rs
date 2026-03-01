@@ -5,10 +5,14 @@ use calloop::{
     EventLoop,  
 };
 use super::{
-    EventLoopResource,
-    logic_module_io::{
-        event_sender::EventSender,
-        logic_command::LogicCommand,
+    super::{
+        infrastructure::{
+            logic_module_io::{
+                event_sender::EventSender,
+                logic_command::LogicCommand,
+            },
+        },
+        EventLoopResource,
     },
 };
 

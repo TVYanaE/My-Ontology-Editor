@@ -1,10 +1,6 @@
-mod confirmation_cache;
 mod db_core;
-mod event_loop;
-mod job_manager;
+mod infrastructure;
 mod logic_core;
-mod logic_module_handler;
-mod logic_module_io;
 pub mod prelude;
 mod project;
 mod project_cache;
@@ -28,27 +24,29 @@ use crate::{
     }, 
 };
 use self::{
+    infrastructure::{
+        confirmation_cache::ConfirmationCache,
+        logic_module_io::{
+            event_manager::{
+                EventManager,
+            },
+            logic_command::{
+                LogicCommand,
+            },
+            event_sender::{
+                EventSender,
+            },
+        },
+        logic_module_handler::LogicModuleHandler,
+        job_manager::{
+            JobManager,
+        },
+        event_loop::init_event_loop,
+    },
     db_core::DBCore,
-    confirmation_cache::ConfirmationCache,
-    logic_module_io::{
-        event_manager::{
-            EventManager,
-        },
-        logic_command::{
-            LogicCommand,
-        },
-        event_sender::{
-            EventSender,
-        },
-    },
-    job_manager::{
-        JobManager,
-    },
-    event_loop::init_event_loop,
     logic_core::{
         LogicCore, JobContext
     }, 
-    logic_module_handler::LogicModuleHandler,
     project_cache::ProjectCache,
     project_manager::ProjectManager,
 };
