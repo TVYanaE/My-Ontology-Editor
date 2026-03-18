@@ -1,34 +1,13 @@
-mod aliases;
-mod migrations;
 mod modules;
 
-use std::{
-    sync::{
-        Arc,
-    },
-};
-use anyhow::Context;
 use tracing::{instrument, error};
-use winit::{
-    event_loop::{EventLoop, ControlFlow}
-};
-use modules::{
-    app_dirs::{
-        init_app_dirs, 
-        ApplicationDirectories,
-    }, 
-    logic_module::{
-        LogicModule, 
-    },
-    graphics_module::{
-        GraphicsModule,
-        ExternalEvent,
-        CustomEvent,
-        logic_adapter::LogicAdapter,
-    },
-    logger::init_logger,
-    
-};
+use thiserror::Error;
+use eframe::{NativeOptions, run_native};
+
+use modules::app::App;
+use modules::app::app_dirs::{init_app_dirs, AppDirs};
+use modules::logger::init_logger;
+
 
 fn main() {
     let app_dirs = init_app_dirs()
@@ -45,36 +24,33 @@ fn main() {
 }
 
 #[instrument(skip_all, err)]
-fn run(app_dirs: ApplicationDirectories) -> anyhow::Result<()> {
-    let event_loop = EventLoop::<CustomEvent>::with_user_event()
-        .build()
-        .context("failed to create event loop")?;
+fn run(app_dirs: AppDirs) -> Result<(), RunError> {  
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
 
-    event_loop.set_control_flow(ControlFlow::Wait);
+    let native_options = NativeOptions::default();
 
-    // Theard Channels
-    let custom_events = event_loop.create_proxy(); 
-
-    let custom_events_cloned = custom_events.clone();
-
-    ctrlc::set_handler(move||{
-        custom_events_cloned.send_event(ExternalEvent::Shutdown.into()).expect("winit event loop was closed. CTRL C Hook");
-    }).context("ctrlc set handler error")?;
-
-    let app_dirs = Arc::new(app_dirs);
-
-    let logic_adapter = LogicAdapter::new(custom_events.clone());
-
-    // Logic Module 
-    let logic_module_descriptor = LogicModule::init_logic_module(
-        logic_adapter,
-        app_dirs.clone(),
-    );
-
-    // Graphics Module 
-    let mut graphics_module = GraphicsModule::new(app_dirs, logic_module_descriptor, custom_events); 
-
-    event_loop.run_app(&mut graphics_module).context("event loop error exit")?;
+    run_native(
+        "My-Ontology-Editor", 
+        native_options, 
+        Box::new(|creation_context|{
+            Ok(
+                Box::new(
+                    App::new(creation_context, app_dirs, runtime)
+                )
+            )
+        })
+    )?;
 
     Ok(())
+}
+
+#[derive(Debug, Error)]
+enum RunError {
+    #[error("Eframe Error: {0}")]
+    EframeError(#[from] eframe::Error),
+
+    #[error("STD IO Error")]
+    STDIOError(#[from] std::io::Error),
 }
