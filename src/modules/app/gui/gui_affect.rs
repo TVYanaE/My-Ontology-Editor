@@ -3,7 +3,6 @@ use super::gui_command::ConfirmationType;
 #[derive(Debug)]
 pub enum GUIAffect {
     ExitRequested,
-    CreateProjectRequested,
     CreateProjectInfo {
         project_name: String,
         project_path: String,
@@ -11,6 +10,9 @@ pub enum GUIAffect {
     ConfirmationObtain {
         confirmation_type: ConfirmationType,
         decision: bool,
+    },
+    OpenProjectInfo {
+        project_file_path: String, 
     }
 }
 

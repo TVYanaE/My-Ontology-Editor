@@ -36,3 +36,7 @@ ctrlc = "3.5.2"
 
 # For Tar archive
 astral-tokio-tar = "0.6.0"
+tar = "0.4.45"
+
+# For Safety work with Bytes 
+bytemuck = "1.25.0"

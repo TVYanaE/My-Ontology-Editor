@@ -3,20 +3,30 @@ mod create_project_file;
 
 use std::sync::Arc;
 
+use thiserror::Error;
+
 use eframe::egui::Context as EGUIContext;
 
 use super::super::super::app_event::creating_project_event::CreatingProjectEvent;
 use super::super::super::app_state::AppState;
+
 use super::super::app_kernel_error::AppKernelError;
+
 use super::super::super::app_task::{AppBlockingTask, AppAsyncTask};
 use super::super::super::app_task::app_task_manager::AppTaskManager;
+
 use super::super::super::confirmation_context::{
     ConfirmationContext, CONFIRMATION_CONTEXT_ID_GENERATOR,
 };
 use super::super::super::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
+
 use super::super::super::gui::GUI;
 use super::super::super::gui::gui_command::{GUICommand, ConfirmationType};
+
 use super::super::super::app_dirs::AppDirs;
+
+use super::super::super::project::Project;
+use super::super::super::project::project_cache::ProjectCache;
 
 use self::check_project_info::{
     check_project_info,
@@ -24,7 +34,23 @@ use self::check_project_info::{
 };
 use create_project_file::{
     create_project_file,
+    create_project_file_callback,
 };
+
+#[derive(Debug, Error)]
+pub enum CreateProjectEventError {
+    #[error("STD IO Error: {0}")]
+    STDIOError(#[from] std::io::Error),
+
+    #[error("SQLX Error: {0}")]
+    SQLXError(#[from] sqlx::Error),
+
+    #[error("Toml Crate Error: {0}")]
+    TomlSerError(#[from] toml::ser::Error),
+
+    #[error("Strip Prefix Error: {0}")]
+    StripPrefixError(#[from] std::path::StripPrefixError),  
+}
 
 pub fn creating_project_event_handling(
     event: CreatingProjectEvent,
@@ -33,6 +59,7 @@ pub fn creating_project_event_handling(
     gui: &mut GUI,
     confirmation_context_manager: &mut ConfirmationContextManager,
     app_dirs: Arc<AppDirs>,
+    project_cache: &mut ProjectCache,
 ) -> Result<Option<AppState>, AppKernelError> {
     match event {
         CreatingProjectEvent::CheckProjectInfo { 
@@ -50,6 +77,8 @@ pub fn creating_project_event_handling(
             };
             app_task_manager.schedule_blocking(app_task, egui_context);
 
+            gui.on_command(GUICommand::ShowLoading);
+
             Ok(None)
         }, 
 
@@ -59,10 +88,11 @@ pub fn creating_project_event_handling(
         } => {
             let app_task = AppAsyncTask {
                 task: async {
+                    
                     create_project_file(project_name, project_path, app_dirs).await
                 },
                 callback: |res| {
-                    None
+                    create_project_file_callback(res)
                 }
             };
 
@@ -115,6 +145,38 @@ pub fn creating_project_event_handling(
             );
 
             Ok(None) 
+        },
+
+        CreatingProjectEvent::ProjectFileCreated { 
+            project_id,
+            project_name,
+            project_dir_cache,
+        } => {
+            project_cache.add_project(&project_id, &project_dir_cache);
+
+            let app_task = AppAsyncTask {
+                task: async move {
+                    Project::new(&project_dir_cache.clone()).await 
+                },
+                callback: |res| {
+                    match res {
+                        Ok(project) => {
+                            println!("Test project load");
+                            println!("Project name: {}", project.get_project_name());
+                        },
+                        Err(_) => {},
+                    }
+
+                    None
+                }
+            }; 
+
+            app_task_manager.schedule_async(app_task, egui_context);
+            
+            // TODO!: Replace to final stage  
+            gui.on_command(GUICommand::StopShowLoading);
+
+            Ok(None)
         },
     }
 }

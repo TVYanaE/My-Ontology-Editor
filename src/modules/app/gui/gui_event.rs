@@ -1,6 +1,8 @@
 use std::path::PathBuf; 
 
-use super::modal_window::ModalWindowType;
+use super::gui_state::ModalWindowType;
+use super::gui_state::FileDialogResponseReceiver;
+
 use super::gui_command::ConfirmationType;
 
 #[derive(Debug)]
@@ -10,7 +12,10 @@ pub enum GUIEvent {
     CreateProjectCanceled,
     FileDialogCanceled,
     NotificationClosed,
-    PathSelected(PathBuf),
+    PathSelected {
+        path: PathBuf,
+        receiver: FileDialogResponseReceiver,
+    },
     OpenModalWindow(ModalWindowType),
     CreateProjectRequest{
         project_name: String,
@@ -19,6 +24,11 @@ pub enum GUIEvent {
     ConfirmationObtain {
         confirmation_type: ConfirmationType,
         decision: bool,
+    },
+    OpenProjectButtonPressed,
+    OpenProjectCanceled,
+    OpenProjectRequest {
+        project_file_path: String,
     }
 }
 

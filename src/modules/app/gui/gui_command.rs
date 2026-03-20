@@ -8,6 +8,8 @@ pub enum GUICommand {
         confirmation_type: ConfirmationType,
         confirmation_text: String,
     },
+    ShowLoading,
+    StopShowLoading,
 }
 
 #[derive(Debug, Clone)]

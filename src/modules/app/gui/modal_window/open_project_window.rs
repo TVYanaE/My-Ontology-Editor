@@ -1,4 +1,3 @@
-
 use eframe::egui::{
     Context as EGUIContext, 
     Ui as EGUIUI
@@ -12,16 +11,14 @@ use super::super::gui_event::{GUIEventBuffer, GUIEvent};
 use super::super::gui_state::{ModalWindowType, ChoosingItemType};
 use super::super::gui_state::FileDialogResponseReceiver;
 
-pub struct CreateProjectWindow {
-    project_name: String,
-    project_path: String,
+pub struct OpenProjectWindow {
+    project_file_path: String,
 }
 
-impl CreateProjectWindow {
+impl OpenProjectWindow {
     pub(super) fn new() -> Self {
-        Self {
-            project_name: String::with_capacity(32),
-            project_path: String::with_capacity(32),
+        Self { 
+            project_file_path: String::with_capacity(64), 
         }
     }
     pub(super) fn prepare(
@@ -29,59 +26,46 @@ impl CreateProjectWindow {
         context: &EGUIContext,
         event_buffer: &mut GUIEventBuffer,
     ) {
-        Modal::new("Create-Project-Window".into())
+        Modal::new("Open-Project-Window".into())
             .show(context, |create_project_window_ui|{
                 create_project_window_ui.vertical(|vertical_ui|{
                     main_panel(
                         vertical_ui, 
                         event_buffer, 
-                        &mut self.project_name,
-                        &mut self.project_path,
-                    ); 
+                        &mut self.project_file_path
+                    );
+
                     bottom_panel(
                         vertical_ui, 
                         event_buffer,
-                        &self.project_name,
-                        &self.project_path,
+                        &self.project_file_path,
                     );
                 }); 
             }
-        ); 
+        );
     }
-    pub fn set_project_name(&mut self, project_name: &str) {
-        self.project_name.clear();
-        self.project_name.push_str(project_name);
-    }
-    pub fn set_project_path(&mut self, project_path: &str) {
-        self.project_path.clear();
-        self.project_path.push_str(project_path);
+    pub fn set_project_file_path(&mut self, project_file_path: &str) {
+        self.project_file_path.clear();
+        self.project_file_path.push_str(project_file_path);
     }
 }
 
 fn main_panel(
     vertical_ui: &mut EGUIUI,
     event_buffer: &mut GUIEventBuffer,
-    project_name: &mut String,
-    project_path: &mut String,
+    project_file_path: &mut String,
 ) {
-    
-    vertical_ui.add(Label::new("Project Name"));
-
-    vertical_ui.horizontal(|horizontal_ui|{
-        horizontal_ui.add(TextEdit::singleline(project_name))
-    }); 
-
-    vertical_ui.add(Label::new("Project Path"));
+    vertical_ui.add(Label::new("Project File Path"));
 
     vertical_ui.horizontal(|horizontal_ui|{ 
-        horizontal_ui.add(TextEdit::singleline(project_path));
+        horizontal_ui.add(TextEdit::singleline(project_file_path));
         
         if horizontal_ui.add(Button::new("Path")).clicked() {
             event_buffer.push(
                 GUIEvent::OpenModalWindow(
                     ModalWindowType::FileDialog{
-                        item_type: ChoosingItemType::Dir,
-                        receiver: FileDialogResponseReceiver::CreateProjectWindow,
+                        item_type: ChoosingItemType::File,
+                        receiver: FileDialogResponseReceiver::OpenProjectWindow,
                     }
                 )
             );
@@ -92,12 +76,11 @@ fn main_panel(
 fn bottom_panel(
     ui: &mut EGUIUI,
     event_buffer: &mut GUIEventBuffer,
-    project_name: &String,
-    project_path: &String,
+    project_file_path: &String,
 ) {
     let (left_resp, right_resp) = Sides::new().show(ui, 
         |left_ui|{
-            left_ui.add(Button::new("Create")) 
+            left_ui.add(Button::new("Open")) 
         }, 
         |right_ui|{
             right_ui.add(Button::new("Cancel"))
@@ -106,14 +89,13 @@ fn bottom_panel(
 
     if left_resp.clicked() {
         event_buffer.push(
-            GUIEvent::CreateProjectRequest { 
-                project_name: project_name.clone(), 
-                project_path: project_path.clone(), 
+            GUIEvent::OpenProjectRequest { 
+                project_file_path: project_file_path.clone(),
             }
-        );
+        ); 
     };
 
     if right_resp.clicked() {
-        event_buffer.push(GUIEvent::CreateProjectCanceled);
+        event_buffer.push(GUIEvent::OpenProjectCanceled);
     };
 }

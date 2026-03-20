@@ -1,8 +1,13 @@
 
 use super::gui_affect::{GUIAffectBuffer, GUIAffect};
+
 use super::gui_event::GUIEvent;
+
 use super::gui_state::{GUIStateTransform, GUIState};
-use super::modal_window::{ModalWindow, ModalWindowType};
+use super::gui_state::ModalWindowType;
+use super::gui_state::FileDialogResponseReceiver;
+
+use super::modal_window::ModalWindow;
 
 pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
     gui_events: E,
@@ -17,7 +22,11 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
                 gui_affect_buffer.push(GUIAffect::ExitRequested);
             },
             GUIEvent::CreateProjectButtonPressed => {
-                gui_affect_buffer.push(GUIAffect::CreateProjectRequested);
+                transform = GUIStateTransform::Next(
+                    GUIState::ShowModalWindow(
+                        ModalWindowType::CreateProjectWindow
+                    )
+                );
             },
             GUIEvent::CreateProjectCanceled => {
                 transform = GUIStateTransform::Next(GUIState::Idle);
@@ -27,11 +36,23 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
                     GUIState::ShowModalWindow(modal_window_type)
                 );
             },
-            GUIEvent::PathSelected(path) => {
+            GUIEvent::PathSelected { 
+                path,
+                receiver,
+            } => {
                 if let Some(path_str) = path.to_str() {
-                    modal_window.with_create_project_window(|create_project_window|{
-                        create_project_window.set_project_path(path_str);
-                    });
+                    match receiver {
+                        FileDialogResponseReceiver::CreateProjectWindow => {
+                            modal_window.with_create_project_window(|create_project_window|{
+                                create_project_window.set_project_path(path_str);
+                            });
+                        },
+                        FileDialogResponseReceiver::OpenProjectWindow => {
+                            modal_window.with_open_project_window(|open_project_window|{
+                                open_project_window.set_project_file_path(path_str);
+                            });
+                        },
+                    };
                     transform = GUIStateTransform::Prev;
                 }
                 else {
@@ -72,6 +93,27 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
                     }
                 );
                 transform = GUIStateTransform::Prev;
+            },
+            GUIEvent::OpenProjectButtonPressed => {
+                transform = GUIStateTransform::Next(
+                    GUIState::ShowModalWindow(
+                        ModalWindowType::OpenProjectWindow
+                    )
+                );
+            },
+            GUIEvent::OpenProjectCanceled => {
+                transform = GUIStateTransform::Next(
+                    GUIState::Idle
+                );
+            },
+            GUIEvent::OpenProjectRequest { 
+                project_file_path 
+            } => {
+                gui_affect_buffer.push(
+                    GUIAffect::OpenProjectInfo { 
+                        project_file_path: project_file_path, 
+                    }
+                );   
             },
         }
     }

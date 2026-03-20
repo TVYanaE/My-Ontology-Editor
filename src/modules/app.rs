@@ -21,13 +21,14 @@ use tokio::runtime::Runtime;
 
 use self::app_dirs::AppDirs;
 use self::app_error_hanlding::app_error_handling;
-use self::app_event::{AppEvent, ExternalAppEvents};
+use self::app_event::AppEvent;
 use self::app_kernel::AppKernel;
 use self::app_state::AppState;
 use self::app_task::app_task_manager::AppTaskManager;
 use self::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
 use self::gui::GUI;
 use self::time_detector::TimeDetector;
+use self::project::project_cache::ProjectCache;
 
 
 pub struct App {
@@ -37,8 +38,8 @@ pub struct App {
     time_detector: TimeDetector,
     app_dirs: Arc<AppDirs>,
     app_task_manager: AppTaskManager,
-    external_app_events: ExternalAppEvents,
     confirmation_context_manager: ConfirmationContextManager, 
+    project_cache: ProjectCache,
 }
 
 impl App {
@@ -55,8 +56,8 @@ impl App {
             time_detector: TimeDetector::new(),
             app_dirs: Arc::new(app_dirs),
             app_task_manager: AppTaskManager::new(runtime),
-            external_app_events: ExternalAppEvents::new(),
             confirmation_context_manager: ConfirmationContextManager::new(),
+            project_cache: ProjectCache::new(),
         }
     }
 } 
@@ -83,7 +84,8 @@ impl EFrameApp for App {
                                     ctx.clone(),
                                     &mut self.gui,
                                     &mut self.confirmation_context_manager,
-                                    self.app_dirs.clone()
+                                    self.app_dirs.clone(),
+                                    &mut self.project_cache,
                                 ) {
                                     Ok(new_state_opt) => {
                                         if let Some(new_state) = new_state_opt {
@@ -122,13 +124,13 @@ impl EFrameApp for App {
             }, 
         }; 
 
-        self.app_task_manager.run(&mut self.external_app_events); 
+        self.app_task_manager.check_tasks(); 
+
+        let app_events: Vec<AppEvent> = self.app_task_manager.check_events().collect(); 
 
 
-        if !self.external_app_events.is_empty() {
-            let events: Vec<AppEvent> = self.external_app_events.drain().collect();
-        
-            for event in events {
+        if !app_events.is_empty() { 
+            for event in app_events {
                 match self.kernel.app_event_handling(
                     &self.state, 
                     event, 
@@ -137,6 +139,7 @@ impl EFrameApp for App {
                     &mut self.gui,
                     &mut self.confirmation_context_manager,
                     self.app_dirs.clone(),
+                    &mut self.project_cache,
                 ) {
                     Ok(Some(new_state)) => {
                         self.state = new_state;

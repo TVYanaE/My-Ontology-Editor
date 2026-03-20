@@ -22,6 +22,10 @@ impl FileMenu {
             event_buffer.push(GUIEvent::CreateProjectButtonPressed); 
         };
 
+        if ui.add(Button::new("Open project")).clicked() {
+            event_buffer.push(GUIEvent::OpenProjectButtonPressed); 
+        };
+
         if ui.add(Button::new("Exit")).clicked() {
             event_buffer.push(GUIEvent::ExitButtomPressed);
         }; 

@@ -3,14 +3,13 @@ use tokio::runtime::Runtime;
 use eframe::egui::Context as EGUIContext;
 
 use super::{AppBlockingTask, AppAsyncTask};
-use super::super::app_event::{AppEvent, ExternalAppEvents};
-
-//type CallbackTask = Box<dyn FnOnce() + Send>;
+use super::super::app_event::{AppEvent, AppEvents};
 
 pub struct AppTaskManager {
     runtime: Runtime,
     tx: UnboundedSender<Option<AppEvent>>,
     rx: UnboundedReceiver<Option<AppEvent>>,
+    app_events: AppEvents
 }
 
 impl AppTaskManager {
@@ -23,7 +22,8 @@ impl AppTaskManager {
         Self { 
             runtime: runtime,
             tx: tx,
-            rx: rx
+            rx: rx,
+            app_events: AppEvents::new(),
         }
     } 
 
@@ -77,11 +77,24 @@ impl AppTaskManager {
         });
     }
 
-    pub fn run(&mut self, external_app_events: &mut ExternalAppEvents) {
+    pub fn schedule_app_event(
+        &mut self,
+        event: AppEvent,
+        egui_context: EGUIContext,
+    ) {
+        self.app_events.push(event);
+        egui_context.request_repaint();
+    }
+
+    pub fn check_tasks(&mut self) {
         while let Ok(event) = self.rx.try_recv() {
             if let Some(event) = event {
-                external_app_events.push(event);
+                self.app_events.push(event);
             }
         } 
+    }
+
+    pub fn check_events(&mut self) -> impl Iterator<Item = AppEvent> {    
+        self.app_events.drain()
     }
 }

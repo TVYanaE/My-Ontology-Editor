@@ -1,40 +1,30 @@
 mod confirmation_window;
-pub mod create_project_window;
+mod create_project_window;
 mod file_dialog;
+mod loading_window;
 mod notification;
+mod open_project_window;
 
 use eframe::egui::Context as EGUIContext;
 
 use super::gui_event::GUIEventBuffer;
-use super::gui_command::ConfirmationType;
+use super::gui_state::ModalWindowType;
 
 use self::confirmation_window::ConfirmationWindow;
 use self::create_project_window::CreateProjectWindow;
 use self::file_dialog::FileDialog;
+use self::loading_window::LoadingWindow;
 use self::notification::Notification;
+use self::open_project_window::OpenProjectWindow;
 
-#[derive(Debug, Clone)]
-pub enum ModalWindowType {
-    CreateProjectWindow, 
-    FileDialog(ChoosingItemType),
-    Notification(String),
-    ConfirmationWindow {
-        confirmation_text: String, 
-        confirmation_type: ConfirmationType,
-    },
-}
-
-#[derive(Debug, Clone)]
-pub enum ChoosingItemType {
-    File,
-    Dir,
-}
 
 pub struct ModalWindow {
     create_project_window: CreateProjectWindow,
     confirmation_window: ConfirmationWindow,
     file_dialog: FileDialog,
+    loading_window: LoadingWindow,
     notification: Notification,
+    open_project_window: OpenProjectWindow,
 }
 
 impl ModalWindow {
@@ -43,7 +33,9 @@ impl ModalWindow {
             confirmation_window: ConfirmationWindow::new(),
             create_project_window: CreateProjectWindow::new(),
             file_dialog: FileDialog::new(),
+            loading_window: LoadingWindow::new(),
             notification: Notification::new(),
+            open_project_window: OpenProjectWindow::new(),
         }
     } 
     pub fn prepare(
@@ -56,11 +48,18 @@ impl ModalWindow {
             ModalWindowType::CreateProjectWindow => {
                 self.create_project_window.prepare(context, event_buffer); 
             },
-            ModalWindowType::FileDialog(item_type) => {
+            ModalWindowType::OpenProjectWindow => {
+                self.open_project_window.prepare(context, event_buffer);
+            },
+            ModalWindowType::FileDialog {
+                item_type,
+                receiver,
+            } => {
                 self.file_dialog.prepare(
                     context, 
                     item_type, 
-                    event_buffer
+                    event_buffer,
+                    receiver,
                 ); 
             },
             ModalWindowType::Notification(text) => {
@@ -77,6 +76,9 @@ impl ModalWindow {
                     confirmation_type
                 ); 
             },
+            ModalWindowType::LoadingWindow => {
+                self.loading_window.prepare(context);
+            },
         }
     }
     pub fn with_create_project_window<F>(&mut self, f: F) 
@@ -84,5 +86,11 @@ impl ModalWindow {
         F: FnOnce(&mut CreateProjectWindow)
     {
         f(&mut self.create_project_window);
+    }
+    pub fn with_open_project_window<F>(&mut self, f: F) 
+    where 
+        F: FnOnce(&mut OpenProjectWindow)
+    {
+        f(&mut self.open_project_window);
     }
 }

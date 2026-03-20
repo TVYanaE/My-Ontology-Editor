@@ -14,9 +14,12 @@ use self::gui_command::GUICommand;
 use self::gui_error::GUIError;
 use self::gui_event::GUIEventBuffer;
 use self::gui_event_handling::gui_event_handling;
-use self::gui_state::{GUIState, GUIStateTransform};
+use self::gui_state::{
+    GUIState, GUIStateTransform,
+    ModalWindowType,
+};
 use self::main_gui::MainGUI;
-use self::modal_window::{ModalWindow, ModalWindowType};
+use self::modal_window::ModalWindow;
 
 pub struct GUI {
     prev_state: Option<GUIState>,
@@ -129,6 +132,33 @@ impl GUI {
                 );
 
                 self.prev_state = Some(prev_state);
+            },
+            GUICommand::ShowLoading => {
+                let prev_state = std::mem::replace(
+                    &mut self.current_state, 
+                    GUIState::ShowModalWindow(
+                        ModalWindowType::LoadingWindow
+                    ), 
+                );
+
+                self.prev_state = Some(prev_state);
+            },
+            GUICommand::StopShowLoading => {
+                if let Some(prev_state) = &self.prev_state {
+                    let new_prev_state = std::mem::replace(
+                        &mut self.current_state, 
+                        prev_state.clone(), 
+                    );
+
+                    self.prev_state = Some(new_prev_state);      
+                } else {
+                    let prev_state = std::mem::replace(
+                        &mut self.current_state, 
+                        GUIState::Idle, 
+                    );
+
+                    self.prev_state = Some(prev_state);    
+                }
             },
         }
     }

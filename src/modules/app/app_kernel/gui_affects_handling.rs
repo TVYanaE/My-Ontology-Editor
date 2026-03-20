@@ -4,12 +4,16 @@ use tracing::instrument;
 
 use super::AppKernel;
 use super::super::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
+
 use super::super::gui::GUI;
 use super::super::gui::gui_affect::GUIAffect;
-use super::super::gui::gui_command::GUICommand;
+
 use super::super::app_event::AppEvent;
 use super::super::app_event::creating_project_event::CreatingProjectEvent;
+use super::super::app_event::open_project_event::OpenProjectEvent;
+
 use super::super::app_state::AppState;
+
 use super::app_kernel_error::AppKernelError;
 
 use self::confirmation_obtain_handling::confirmation_obtain_handling;
@@ -37,12 +41,7 @@ impl AppKernel {
                                 AppEvent::ShutdownReq
                             )
                         )
-                    },
-
-                    GUIAffect::CreateProjectRequested => {
-                        gui.on_command(GUICommand::ShowCreateProjectWindow); 
-                        Ok(None)
-                    },
+                    }, 
 
                     GUIAffect::CreateProjectInfo { 
                         project_name, 
@@ -67,6 +66,18 @@ impl AppKernel {
                             decision, 
                             confirmation_context_manager
                         ) 
+                    },
+
+                    GUIAffect::OpenProjectInfo { 
+                        project_file_path 
+                    } => {
+                        Ok(
+                            Some(
+                                OpenProjectEvent::CheckProjectInfo { 
+                                    project_file_path: project_file_path, 
+                                }.into() 
+                            )
+                        )
                     },
                 }
             },

@@ -12,10 +12,23 @@ use tokio_tar::Builder as TarBuilder;
 
 use thiserror::Error;
 
+use crate::modules::consts::{
+    PROJECT_FILE_EXTENSION,
+    CURRENT_PROJECT_FILE_VERSION,
+};
+
+use super::CreateProjectEventError;
+
+use super::super::app_event_handling_error::AppEventHandlingError;
+
 use super::super::super::super::app_event::AppEvent;
+use super::super::super::super::app_event::creating_project_event::CreatingProjectEvent;
+
 use super::super::super::super::app_dirs::AppDirs;
+
 use super::super::super::super::project::project_id::ProjectID;
 use super::super::super::super::project::project_meta::ProjectMeta;
+use super::super::super::super::project::project_file_header::ProjectFileHeader;
 
 use super::super::super::super::super::migrations::{
     SEMANTIC_NODES_TABLE_MIGRATION,
@@ -32,18 +45,23 @@ pub enum CreateProjectFileError {
     SQLXError(#[from] sqlx::Error),
 
     #[error("Toml Crate Error: {0}")]
-    TomlError(#[from] toml::ser::Error),
+    TomlSerError(#[from] toml::ser::Error),
 
     #[error("Strip Prefix Error: {0}")]
-    StripPrefixError(#[from] std::path::StripPrefixError),
+    StripPrefixError(#[from] std::path::StripPrefixError),  
 }
 
+pub struct CreateProjectFileContext {
+    project_id: ProjectID,
+    project_name: String,
+    project_dir_cache: PathBuf,
+}
 
 pub async fn create_project_file(
     project_name: String, 
     project_path: String,
     app_dirs: Arc<AppDirs>,
-) -> Result<(), CreateProjectFileError> {
+) -> Result<CreateProjectFileContext, CreateProjectFileError> {
     let mut project_dir_cache = app_dirs.cache_directory.projects_dir_path.clone();
 
     let project_id = ProjectID::new();
@@ -91,12 +109,10 @@ pub async fn create_project_file(
 
     let db_url = format!("sqlite://{}", db_file_path.to_str().unwrap());
 
-    println!("Path to db: {}", db_url);
-
     sqlx::Sqlite::create_database(&db_url).await?;
 
     let pool = SqlitePoolOptions::new()
-        .max_connections(5)
+        .max_connections(1)
         .connect(&db_url)
         .await?;
    
@@ -108,30 +124,95 @@ pub async fn create_project_file(
     // Creating Project File 
     let mut project_file_path = PathBuf::new(); 
     project_file_path.push(project_path);
-    project_file_path.push(project_name);
-    project_file_path.set_extension("vontov");
+    project_file_path.push(&project_name);
+    project_file_path.set_extension(PROJECT_FILE_EXTENSION);
 
     if project_file_path.exists() {
         if project_file_path.is_file() {
             tokio::fs::remove_file(&project_file_path).await?; 
         }
         // TODO: Logic for case If in selected dir exsist folder with project_name.vontov
-    }
-    let project_file_handler = TokioFile::create_new(project_file_path).await?;
+    };
+
+    let mut project_file_handler = TokioFile::create_new(&project_file_path).await?;
+
+    // Adding Header into Project File 
+    let project_file_header = ProjectFileHeader::new(
+        CURRENT_PROJECT_FILE_VERSION,
+        &project_id
+    );
+
+    project_file_handler.write_all(project_file_header.as_bytes()).await?;
 
     let mut tar_builder = TarBuilder::new(project_file_handler); 
 
-    tar_builder.append_dir_all("", project_dir_cache).await?;
+    tar_builder.append_dir_all("", &project_dir_cache).await?;
 
-    Ok(())
+    Ok(
+        CreateProjectFileContext { 
+            project_id: project_id,
+            project_name: project_name,
+            project_dir_cache: project_dir_cache,
+        }
+    )
 }
-
 
 
 // Callback
 pub fn create_project_file_callback(
- 
+    res: Result<CreateProjectFileContext, CreateProjectFileError> 
 ) -> Option<AppEvent> {
-
-    None
+    match res {
+        Ok(context) => {
+            Some(
+                AppEvent::CreatingProjectEvent(
+                    CreatingProjectEvent::ProjectFileCreated { 
+                        project_id: context.project_id, 
+                        project_name: context.project_name,
+                        project_dir_cache: context.project_dir_cache,
+                    }.into()
+                )
+            )
+        },
+        Err(error) => {
+            match error {
+                CreateProjectFileError::STDIOError(error) => {
+                    Some(
+                        AppEvent::KernelError(
+                            AppEventHandlingError::CreateProjectEventError(
+                                CreateProjectEventError::STDIOError(error)
+                            ).into()
+                        )
+                    )
+                },
+                CreateProjectFileError::SQLXError(error) => {
+                    Some(
+                        AppEvent::KernelError(
+                            AppEventHandlingError::CreateProjectEventError(
+                                CreateProjectEventError::SQLXError(error)
+                            ).into()
+                        )
+                    )
+                },
+                CreateProjectFileError::TomlSerError(error) => {
+                    Some(
+                        AppEvent::KernelError(
+                            AppEventHandlingError::CreateProjectEventError(
+                                CreateProjectEventError::TomlSerError(error)
+                            ).into()
+                        )
+                    )
+                },
+                CreateProjectFileError::StripPrefixError(error) => {
+                    Some(
+                        AppEvent::KernelError(
+                            AppEventHandlingError::CreateProjectEventError(
+                                CreateProjectEventError::StripPrefixError(error)
+                            ).into()
+                        ) 
+                    )
+                },
+            } 
+        },
+    }
 }

@@ -3,7 +3,8 @@ use eframe::egui::Context as EGUIContext;
 use egui_file_dialog::FileDialog as EGUIFileDialog;
 use egui_file_dialog::DialogState;
 
-use super::ChoosingItemType;
+use super::super::gui_state::ChoosingItemType;
+use super::super::gui_state::FileDialogResponseReceiver;
 use super::super::gui_event::{GUIEvent, GUIEventBuffer};
 
 pub struct FileDialog {
@@ -23,6 +24,7 @@ impl FileDialog {
         context: &EGUIContext,
         choosing_item_type: &ChoosingItemType,
         event_buffer: &mut GUIEventBuffer,
+        receiver: &FileDialogResponseReceiver
     ) {
         if !self.is_open {
             match choosing_item_type {
@@ -40,7 +42,12 @@ impl FileDialog {
         self.file_dialog.update(context);
 
         if let Some(selected_path) = self.file_dialog.take_picked() {
-            event_buffer.push(GUIEvent::PathSelected(selected_path));
+            event_buffer.push(
+                GUIEvent::PathSelected {
+                    path: selected_path,
+                    receiver: receiver.clone(),
+                }
+            );
             self.is_open = false;
         }
 
