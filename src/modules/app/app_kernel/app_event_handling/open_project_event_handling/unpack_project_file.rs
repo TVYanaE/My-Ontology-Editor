@@ -10,16 +10,16 @@ use tar::Archive;
 
 use crate::modules::consts::PROJECT_FILE_HEADER_SIZE;
 
+use crate::modules::app::app_event::AppEvent;
+use crate::modules::app::app_event::open_project_event::OpenProjectEvent;
+
+use crate::modules::app::project::project_id::ProjectID;
+
+use crate::modules::app::app_dirs::AppDirs;
+
 use super::OpenProjectEventError;
-
-use super::super::super::super::app_event::AppEvent;
-use super::super::super::super::app_event::open_project_event::OpenProjectEvent;
-
-use super::super::super::super::project::project_id::ProjectID;
-
-use super::super::super::super::app_dirs::AppDirs;
-
 use super::super::app_event_handling_error::AppEventHandlingError;
+
 
 #[derive(Debug, Error)]
 pub enum UnpackProjectFileError {
@@ -59,8 +59,8 @@ pub fn unpack_project_file(
 
     Ok(
         UnpackProjectFileContext {  
-            project_id: project_id,
-            project_dir_cache: project_dir_cache,
+            project_id,
+            project_dir_cache,
         }
     )
 }

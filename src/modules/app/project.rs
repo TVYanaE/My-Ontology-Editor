@@ -4,7 +4,7 @@ pub mod project_file_header;
 pub mod project_id;
 pub mod project_meta;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use tokio::fs::File as TokioFile;
 use tokio::io::AsyncReadExt;
@@ -20,15 +20,14 @@ pub struct Project {
     project_id: ProjectID,
     project_name: String,
     db_pool: Pool<Sqlite>,
+    project_dir_path: PathBuf,
 }
 
 impl Project {
     pub async fn new(
-        project_dir_cache: &Path, 
+        project_dir_cache: impl AsRef<Path>, 
     ) -> Result<Self, ProjectError> {
-        let mut meta_file_path = project_dir_cache.to_path_buf(); 
-        meta_file_path.push("meta");
-        meta_file_path.set_extension("toml");
+        let meta_file_path = project_dir_cache.as_ref().join("meta.toml"); 
 
         let mut meta_file_handler = TokioFile::open(meta_file_path).await?; 
 
@@ -40,10 +39,7 @@ impl Project {
         
         let project_id = ProjectID::from_str(&project_meta.project_id)?;
 
-        let mut db_file_path = project_dir_cache.to_path_buf();
-        db_file_path.push("db");
-        db_file_path.push("db");
-        db_file_path.set_extension("sqlite");
+        let db_file_path = project_dir_cache.as_ref().join("db/db.sqlite");
  
         let db_url = format!("sqlite://{}", db_file_path.to_str().unwrap());
 
@@ -54,9 +50,10 @@ impl Project {
 
         Ok(
             Self { 
-                project_id: project_id,
+                project_id,
                 project_name: project_meta.project_name,
-                db_pool: db_pool 
+                db_pool,
+                project_dir_path: project_dir_cache.as_ref().to_path_buf(),
             }
         )
     }
@@ -65,7 +62,7 @@ impl Project {
         &self.project_name
     }
 
-    pub fn get_project_id(&self) -> &ProjectID {
+    /* pub fn get_project_id(&self) -> &ProjectID {
         &self.project_id
-    }
+    } */
 }

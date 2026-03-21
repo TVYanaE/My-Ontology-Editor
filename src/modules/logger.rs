@@ -34,5 +34,5 @@ pub fn init_logger(log_path: impl AsRef<Path>) -> WorkerGuard {
         .with(file_layer)
         .init();
 
-    return guard;
+    guard
 }

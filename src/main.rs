@@ -1,3 +1,5 @@
+#![allow(clippy::upper_case_acronyms)]
+#![allow(clippy::enum_variant_names)]
 mod modules;
 
 use tracing::{instrument, error};

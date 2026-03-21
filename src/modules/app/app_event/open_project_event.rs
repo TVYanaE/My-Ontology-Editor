@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::super::project::project_id::ProjectID;
+use crate::modules::app::project::project_id::ProjectID;
 
 #[derive(Debug)]
 pub enum OpenProjectEvent {

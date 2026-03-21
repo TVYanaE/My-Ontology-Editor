@@ -6,10 +6,10 @@ use eframe::egui::containers::modal::Modal;
 use eframe::egui::containers::Sides;
 use eframe::egui::widgets::{Button, TextEdit, Label};
 
-use super::super::gui_event::{GUIEventBuffer, GUIEvent};
+use crate::modules::app::gui::gui_event::{GUIEventBuffer, GUIEvent};
 
-use super::super::gui_state::{ModalWindowType, ChoosingItemType};
-use super::super::gui_state::FileDialogResponseReceiver;
+use crate::modules::app::gui::gui_state::{ModalWindowType, ChoosingItemType};
+use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
 pub struct OpenProjectWindow {
     project_file_path: String,
@@ -76,7 +76,7 @@ fn main_panel(
 fn bottom_panel(
     ui: &mut EGUIUI,
     event_buffer: &mut GUIEventBuffer,
-    project_file_path: &String,
+    project_file_path: &str,
 ) {
     let (left_resp, right_resp) = Sides::new().show(ui, 
         |left_ui|{
@@ -90,7 +90,7 @@ fn bottom_panel(
     if left_resp.clicked() {
         event_buffer.push(
             GUIEvent::OpenProjectRequest { 
-                project_file_path: project_file_path.clone(),
+                project_file_path: project_file_path.to_string(),
             }
         ); 
     };

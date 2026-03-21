@@ -3,7 +3,7 @@ use eframe::egui::Context as EGUIContext;
 use eframe::egui::containers::modal::Modal;
 use eframe::egui::widgets::{Label, Button};
 
-use super::super::gui_event::{GUIEvent, GUIEventBuffer};
+use crate::modules::app::gui::gui_event::{GUIEvent, GUIEventBuffer};
 
 pub struct Notification {
 }

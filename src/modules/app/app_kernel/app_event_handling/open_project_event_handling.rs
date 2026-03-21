@@ -1,4 +1,5 @@
 mod check_project_info;
+mod load_project_to_ram;
 mod unpack_project_file;
 
 use std::sync::Arc;
@@ -7,29 +8,33 @@ use thiserror::Error;
 
 use eframe::egui::Context as EGUIContext;
 
-use super::super::app_kernel_error::AppKernelError;
+use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
 
-use super::super::super::app_event::AppEvent;
+use crate::modules::app::app_event::AppEvent;
+use crate::modules::app::app_event::open_project_event::OpenProjectEvent;
 
-use super::super::super::app_state::AppState;
-use super::super::super::app_event::open_project_event::OpenProjectEvent;
+use crate::modules::app::app_state::AppState;
 
-use super::super::super::app_task::AppAsyncTask;
-use super::super::super::app_task::AppBlockingTask;
-use super::super::super::app_task::app_task_manager::AppTaskManager;
+use crate::modules::app::app_task::AppAsyncTask;
+use crate::modules::app::app_task::AppBlockingTask;
+use crate::modules::app::app_task::app_task_manager::AppTaskManager;
 
-use super::super::super::gui::GUI;
-use super::super::super::gui::gui_command::GUICommand;
+use crate::modules::app::gui::GUI;
+use crate::modules::app::gui::gui_command::GUICommand;
 
-use super::super::super::project::project_cache::ProjectCache;
+use crate::modules::app::project::project_cache::ProjectCache;
 
-use super::super::super::app_dirs::AppDirs;
+use crate::modules::app::app_dirs::AppDirs;
 
 use self::check_project_info::check_project_info;
 use self::check_project_info::check_project_info_callback;
 
+use self::load_project_to_ram::load_project_to_ram;
+use self::load_project_to_ram::load_project_to_ram_callback;
+
 use self::unpack_project_file::unpack_project_file;
 use self::unpack_project_file::unpack_project_file_callback;
+
 
 #[derive(Debug, Error)]
 pub enum OpenProjectEventError {
@@ -41,12 +46,8 @@ pub enum OpenProjectEventError {
 }
 
 pub fn open_project_event_handling(
-    event: OpenProjectEvent,
-    app_task_manager: &mut AppTaskManager,
-    egui_context: EGUIContext,
-    gui: &mut GUI,
-    project_cache: &mut ProjectCache,
-    app_dirs: Arc<AppDirs>,
+    event: OpenProjectEvent, 
+    ctx: OpenProjectEventHandlingContext
 ) -> Result<Option<AppState>, AppKernelError> {
     match event {
         OpenProjectEvent::CheckProjectInfo { 
@@ -61,7 +62,7 @@ pub fn open_project_event_handling(
                 }
             }; 
 
-            app_task_manager.schedule_async(app_task, egui_context);
+            ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
  
             Ok(None)
         },
@@ -70,7 +71,7 @@ pub fn open_project_event_handling(
             project_file_path 
         } => {
             let notification = format!("Choosed File: {}, has wrong format", project_file_path);
-            gui.on_command(GUICommand::ShowNotification(notification));
+            ctx.gui.on_command(GUICommand::ShowNotification(notification));
 
             Ok(None)
         },
@@ -79,7 +80,7 @@ pub fn open_project_event_handling(
             project_file_path 
         } => {
             let notification = format!("Choosed File: {}, isn't file", project_file_path);
-            gui.on_command(GUICommand::ShowNotification(notification)); 
+            ctx.gui.on_command(GUICommand::ShowNotification(notification)); 
             
             Ok(None)
         },
@@ -88,7 +89,7 @@ pub fn open_project_event_handling(
             project_file_path 
         } => {
             let notification = format!("Choosed File: {}, doesn't exists", project_file_path);
-            gui.on_command(GUICommand::ShowNotification(notification));
+            ctx.gui.on_command(GUICommand::ShowNotification(notification));
 
             Ok(None)
         },
@@ -97,16 +98,16 @@ pub fn open_project_event_handling(
             project_file_path,
             project_id,
         } => {
-            match project_cache.get_by_id(&project_id) {
+            match ctx.project_cache.get_by_id(&project_id) {
                 Some(project_dir_cache) => {
-                    app_task_manager.schedule_app_event(
+                    ctx.app_task_manager.schedule_app_event(
                         AppEvent::OpenProjectEvent(
                             OpenProjectEvent::LoadProjectToRAM { 
-                                project_id: project_id, 
-                                project_dir_cache: project_dir_cache,
+                                project_id, 
+                                project_dir_cache,
                             }
                         ),
-                        egui_context,
+                        ctx.egui_context,
                     ); 
                                 
                     Ok(None)
@@ -117,7 +118,7 @@ pub fn open_project_event_handling(
                             unpack_project_file(
                                 project_file_path,
                                 project_id,
-                                app_dirs,
+                                ctx.app_dirs,
                             )
                         }, 
                         callback: |result| {
@@ -125,7 +126,7 @@ pub fn open_project_event_handling(
                         } 
                     };
 
-                    app_task_manager.schedule_blocking(app_task, egui_context); 
+                    ctx.app_task_manager.schedule_blocking(app_task, ctx.egui_context); 
 
                     Ok(None)
                 },
@@ -137,16 +138,16 @@ pub fn open_project_event_handling(
             project_id, 
             project_dir_cache, 
         } => {
-            project_cache.add_project(&project_id, &project_dir_cache);
+            ctx.project_cache.add_project(&project_id, &project_dir_cache);
             
-            app_task_manager.schedule_app_event(
+            ctx.app_task_manager.schedule_app_event(
                 AppEvent::OpenProjectEvent(
                     OpenProjectEvent::LoadProjectToRAM { 
-                        project_id: project_id, 
-                        project_dir_cache: project_dir_cache,
+                        project_id, 
+                        project_dir_cache,
                     }
                 ),
-                egui_context,
+                ctx.egui_context,
             ); 
 
             Ok(None)
@@ -156,8 +157,26 @@ pub fn open_project_event_handling(
             project_id, 
             project_dir_cache,
         } => {
+            let app_task = AppAsyncTask { 
+                task: async {
+                    load_project_to_ram(project_dir_cache).await
+                }, 
+                callback: |result| {
+                    load_project_to_ram_callback(result)
+                }, 
+            };
+
+            ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
+
             Ok(None)
         },
     }
 }
 
+pub struct OpenProjectEventHandlingContext<'c> {
+    pub app_task_manager: &'c mut AppTaskManager,
+    pub egui_context: EGUIContext,
+    pub gui: &'c mut GUI,
+    pub project_cache: &'c mut ProjectCache,
+    pub app_dirs: Arc<AppDirs>,
+}

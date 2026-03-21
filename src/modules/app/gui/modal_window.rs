@@ -7,8 +7,8 @@ mod open_project_window;
 
 use eframe::egui::Context as EGUIContext;
 
-use super::gui_event::GUIEventBuffer;
-use super::gui_state::ModalWindowType;
+use crate::modules::app::gui::gui_event::GUIEventBuffer;
+use crate::modules::app::gui::gui_state::ModalWindowType;
 
 use self::confirmation_window::ConfirmationWindow;
 use self::create_project_window::CreateProjectWindow;

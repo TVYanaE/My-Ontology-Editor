@@ -1,6 +1,6 @@
 pub mod app_task_manager;
 
-use super::app_event::AppEvent;
+use crate::modules::app::app_event::AppEvent;
 
 #[derive(Debug, Clone)]
 pub struct AppBlockingTask<F, CB, R>

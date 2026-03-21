@@ -5,7 +5,7 @@ use eframe::egui::containers::panel::{
     TopBottomPanel, TopBottomSide,
 };
 
-use super::super::gui_event::GUIEventBuffer;
+use crate::modules::app::gui::gui_event::GUIEventBuffer;
 
 use self::main_bar::MainBar;
 

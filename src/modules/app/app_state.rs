@@ -1,11 +1,7 @@
 #[derive(Debug)]
+#[derive(Default)]
 pub enum AppState { 
+    #[default]
     Ready,
     Shutdown,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self::Ready
-    }
 }

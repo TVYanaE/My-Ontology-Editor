@@ -2,7 +2,7 @@
 use eframe::egui::Ui as EGUIUI;
 use eframe::egui::widgets::Button;
 
-use super::super::super::super::gui_event::{GUIEventBuffer, GUIEvent};
+use crate::modules::app::gui::gui_event::{GUIEventBuffer, GUIEvent};
 
 pub struct FileMenu {
 

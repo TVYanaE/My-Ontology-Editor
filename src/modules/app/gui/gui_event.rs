@@ -1,7 +1,7 @@
 use std::path::PathBuf; 
 
-use super::gui_state::ModalWindowType;
-use super::gui_state::FileDialogResponseReceiver;
+use crate::modules::app::gui::gui_state::ModalWindowType;
+use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
 use super::gui_command::ConfirmationType;
 

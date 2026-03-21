@@ -1,16 +1,14 @@
-use super::gui_command::ConfirmationType;
+use crate::modules::app::gui::gui_command::ConfirmationType;
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub enum GUIState {
+    #[default]
     Idle,
     ShowModalWindow(ModalWindowType),
 }
 
-impl Default for GUIState {
-    fn default() -> Self {
-        Self::Idle
-    } 
-}
+
 
 #[derive(Debug)]
 pub enum GUIStateTransform {

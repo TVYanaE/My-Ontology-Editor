@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::super::project::project_id::ProjectID;
+use crate::modules::app::project::project_id::ProjectID;
 
 #[derive(Debug, Clone)]
 pub enum CreatingProjectEvent {
@@ -12,10 +12,12 @@ pub enum CreatingProjectEvent {
         project_name: String,
         project_path: String,
     }, 
+    #[allow(dead_code)]
     ProjectDirIsntExsist {
         project_name: String,
         project_path: String,   
     },
+    #[allow(dead_code)]
     ProjectDirPathIsntDir {
         project_name: String,
         project_path: String,

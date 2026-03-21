@@ -1,9 +1,9 @@
-use super::super::app_kernel_error::AppKernelError;
-use super::super::super::app_event::AppEvent;
-use super::super::super::app_event::creating_project_event::CreatingProjectEvent;
-use super::super::super::confirmation_context::ConfirmationContext;
-use super::super::super::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
-use super::super::super::gui::gui_command::ConfirmationType;
+use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
+use crate::modules::app::app_event::AppEvent;
+use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
+use crate::modules::app::confirmation_context::ConfirmationContext;
+use crate::modules::app::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
+use crate::modules::app::gui::gui_command::ConfirmationType;
 
 
 pub fn confirmation_obtain_handling(

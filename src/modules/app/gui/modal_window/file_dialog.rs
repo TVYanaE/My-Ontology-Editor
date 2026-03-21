@@ -3,9 +3,9 @@ use eframe::egui::Context as EGUIContext;
 use egui_file_dialog::FileDialog as EGUIFileDialog;
 use egui_file_dialog::DialogState;
 
-use super::super::gui_state::ChoosingItemType;
-use super::super::gui_state::FileDialogResponseReceiver;
-use super::super::gui_event::{GUIEvent, GUIEventBuffer};
+use crate::modules::app::gui::gui_state::ChoosingItemType;
+use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
+use crate::modules::app::gui::gui_event::{GUIEvent, GUIEventBuffer};
 
 pub struct FileDialog {
     is_open: bool,
@@ -51,12 +51,9 @@ impl FileDialog {
             self.is_open = false;
         }
 
-        match self.file_dialog.state() { 
-            DialogState::Cancelled => {
-                event_buffer.push(GUIEvent::FileDialogCanceled);
-                self.is_open = false;
-            },
-            _ => {}, 
+        if self.file_dialog.state() == &DialogState::Cancelled { 
+            event_buffer.push(GUIEvent::FileDialogCanceled);
+            self.is_open = false;
         }
     }
 }

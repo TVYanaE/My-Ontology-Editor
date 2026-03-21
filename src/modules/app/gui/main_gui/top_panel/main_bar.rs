@@ -3,7 +3,7 @@ mod file_menu;
 use eframe::egui::Ui as EGUIUI;
 use eframe::egui::containers::menu::{MenuBar, MenuButton};
 
-use super::super::super::gui_event::GUIEventBuffer;
+use crate::modules::app::gui::gui_event::GUIEventBuffer;
 
 use self::file_menu::FileMenu;
 

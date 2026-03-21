@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use thiserror::Error;
 
-use super::super::super::super::app_event::AppEvent;
-use super::super::super::super::app_event::creating_project_event::CreatingProjectEvent;
+use crate::modules::app::app_event::AppEvent;
+use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
 
 #[derive(Debug, Error)]
 pub enum CheckProjectInfoError {
@@ -35,8 +35,8 @@ pub fn check_project_info(
         return Err(
             CheckProjectInfoError::ProjectDirIsntExsist(
                 CheckProjectInfoContext { 
-                    project_name: project_name, 
-                    project_path: project_path, 
+                    project_name, 
+                    project_path, 
                 }
             )
         );
@@ -46,8 +46,8 @@ pub fn check_project_info(
         return Err(
             CheckProjectInfoError::ProjectDirPathIsntDir(
                 CheckProjectInfoContext { 
-                    project_name: project_name, 
-                    project_path: project_path, 
+                    project_name, 
+                    project_path, 
                 }
             )
         );
@@ -60,8 +60,8 @@ pub fn check_project_info(
         return Err(
             CheckProjectInfoError::ProjectFileAlreadyExist(
                 CheckProjectInfoContext { 
-                    project_name: project_name, 
-                    project_path: project_path, 
+                    project_name, 
+                    project_path, 
                 }
             )
         );
@@ -71,9 +71,9 @@ pub fn check_project_info(
 } 
 
 pub fn check_project_info_callback(
-    result: Box<Result<CheckProjectInfoContext, CheckProjectInfoError>>
+    result: Result<CheckProjectInfoContext, CheckProjectInfoError>
 ) -> Option<AppEvent> {
-    match *result {
+    match result {
         Ok(context) => {
             Some(
                 CreatingProjectEvent::CreateProject { 

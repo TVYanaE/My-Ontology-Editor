@@ -10,16 +10,19 @@ use thiserror::{
     Error
 };
 
+#[allow(dead_code)]
 pub struct ConfigurationDirectory { 
     pub dir_path: PathBuf, 
 }
 
+#[allow(dead_code)]
 pub struct CacheDirectory {
     pub dir_path: PathBuf,
     pub log_dir_path: PathBuf,
     pub projects_dir_path: PathBuf,
 }
 
+#[allow(dead_code)]
 pub struct AppDirs {
     pub configuration_directory: ConfigurationDirectory,
     pub cache_directory: CacheDirectory,
@@ -61,8 +64,8 @@ pub fn init_app_dirs() -> Result<AppDirs, InitAppDirsError> {
 
     let cache_directory = CacheDirectory {
         dir_path: cache_directory_path,
-        log_dir_path: log_dir_path,
-        projects_dir_path: projects_dir_path,
+        log_dir_path,
+        projects_dir_path,
     };
 
     let configuration_directory = ConfigurationDirectory {
@@ -70,11 +73,11 @@ pub fn init_app_dirs() -> Result<AppDirs, InitAppDirsError> {
     };
 
     let application_directories = AppDirs {
-        configuration_directory: configuration_directory,
-        cache_directory: cache_directory
+        configuration_directory,
+        cache_directory
     }; 
 
-    return Ok(application_directories);
+    Ok(application_directories)
 } 
 
  
@@ -86,9 +89,7 @@ pub fn init_app_dirs(
         "wfoojjaec.eu.org", 
         "wfoojjaec", 
         "My-Ontology-Editor")
-    .ok_or_else(||{
-        InitAppDirsError::ObtainingHomeDirPathError
-    })?;
+    .ok_or(InitAppDirsError::ObtainingHomeDirPathError)?;
 
     let config_directory_path = app_directory.config_dir().to_path_buf();
     let cache_directory_path = app_directory.cache_dir().to_path_buf();
@@ -118,7 +119,7 @@ pub fn init_app_dirs(
     let cache_directory = CacheDirectory {
         dir_path: cache_directory_path,
         log_dir_path: log_directory_path,
-        projects_dir_path: projects_dir_path,
+        projects_dir_path,
     };
 
     let configuration_directory = ConfigurationDirectory {
@@ -126,15 +127,16 @@ pub fn init_app_dirs(
     }; 
 
     let application_directories = AppDirs {
-        configuration_directory: configuration_directory,
-        cache_directory: cache_directory
+        configuration_directory,
+        cache_directory
     };
 
-    return Ok(application_directories);
+    Ok(application_directories)
 }
 
 #[derive(Debug, Error)]
 pub enum InitAppDirsError {
+    #[allow(dead_code)]
     #[error("No valid home directory path could be retrieved from the operating system.")]
     ObtainingHomeDirPathError,
 

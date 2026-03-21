@@ -1,11 +1,11 @@
 
-use super::gui_affect::{GUIAffectBuffer, GUIAffect};
+use crate::modules::app::gui::gui_affect::{GUIAffectBuffer, GUIAffect};
 
-use super::gui_event::GUIEvent;
+use crate::modules::app::gui::gui_event::GUIEvent;
 
-use super::gui_state::{GUIStateTransform, GUIState};
-use super::gui_state::ModalWindowType;
-use super::gui_state::FileDialogResponseReceiver;
+use crate::modules::app::gui::gui_state::{GUIStateTransform, GUIState};
+use crate::modules::app::gui::gui_state::ModalWindowType;
+use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
 use super::modal_window::ModalWindow;
 
@@ -77,8 +77,8 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
             } => {
                 gui_affect_buffer.push(
                     GUIAffect::CreateProjectInfo { 
-                        project_name: project_name, 
-                        project_path: project_path, 
+                        project_name, 
+                        project_path, 
                     }
                 );    
             },
@@ -88,8 +88,8 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
             } => {
                 gui_affect_buffer.push(
                     GUIAffect::ConfirmationObtain { 
-                        confirmation_type: confirmation_type, 
-                        decision: decision 
+                        confirmation_type, 
+                        decision, 
                     }
                 );
                 transform = GUIStateTransform::Prev;
@@ -111,7 +111,7 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
             } => {
                 gui_affect_buffer.push(
                     GUIAffect::OpenProjectInfo { 
-                        project_file_path: project_file_path, 
+                        project_file_path, 
                     }
                 );   
             },

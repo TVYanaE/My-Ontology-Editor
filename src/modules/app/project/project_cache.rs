@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::collections::hash_map::HashMap;
 
-use super::project_id::ProjectID;
+use crate::modules::app::project::project_id::ProjectID;
 
 pub struct ProjectCache {
     projects: HashMap<ProjectID, PathBuf>, 

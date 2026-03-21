@@ -100,15 +100,7 @@ impl GUI {
         &mut self,
         command: GUICommand 
     ) {
-        match command {
-            GUICommand::ShowCreateProjectWindow => {
-                let prev_state = std::mem::replace(
-                    &mut self.current_state, 
-                    GUIState::ShowModalWindow(ModalWindowType::CreateProjectWindow), 
-                );
-
-                self.prev_state = Some(prev_state);
-            },
+        match command { 
             GUICommand::ShowNotification(text) => {
                 let prev_state = std::mem::replace(
                     &mut self.current_state, 
@@ -125,8 +117,8 @@ impl GUI {
                     &mut self.current_state, 
                     GUIState::ShowModalWindow(
                         ModalWindowType::ConfirmationWindow { 
-                            confirmation_text: confirmation_text, 
-                            confirmation_type: confirmation_type,
+                            confirmation_text, 
+                            confirmation_type,
                         }
                     ), 
                 );

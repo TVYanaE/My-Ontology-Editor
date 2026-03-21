@@ -2,7 +2,7 @@
 use bytemuck::{Pod, Zeroable};
 use bytemuck::PodCastError;
 
-use super::project_id::ProjectID;
+use crate::modules::app::project::project_id::ProjectID;
 
 use crate::modules::consts::MAGIC_BYTES;
 
@@ -23,7 +23,7 @@ impl ProjectFileHeader {
             project_id: *project_id.as_bytes(),
             magic: MAGIC_BYTES, 
             reserv: [0; 2], 
-            version: version,
+            version,
         }
     }
 

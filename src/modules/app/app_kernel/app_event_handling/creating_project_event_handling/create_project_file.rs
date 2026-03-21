@@ -17,24 +17,24 @@ use crate::modules::consts::{
     CURRENT_PROJECT_FILE_VERSION,
 };
 
-use super::CreateProjectEventError;
+use crate::modules::app::app_event::AppEvent;
+use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
 
-use super::super::app_event_handling_error::AppEventHandlingError;
+use crate::modules::app::app_dirs::AppDirs;
 
-use super::super::super::super::app_event::AppEvent;
-use super::super::super::super::app_event::creating_project_event::CreatingProjectEvent;
+use crate::modules::app::project::project_id::ProjectID;
+use crate::modules::app::project::project_meta::ProjectMeta;
+use crate::modules::app::project::project_file_header::ProjectFileHeader;
 
-use super::super::super::super::app_dirs::AppDirs;
-
-use super::super::super::super::project::project_id::ProjectID;
-use super::super::super::super::project::project_meta::ProjectMeta;
-use super::super::super::super::project::project_file_header::ProjectFileHeader;
-
-use super::super::super::super::super::migrations::{
+use crate::modules::migrations::{
     SEMANTIC_NODES_TABLE_MIGRATION,
     SEMANTIC_NODES_RELATIONS_TABLE_MIGRATION,
     FILES_TABLE_MIGRATION,
 };
+
+use super::CreateProjectEventError;
+
+use super::super::app_event_handling_error::AppEventHandlingError;
 
 #[derive(Debug, Error)]
 pub enum CreateProjectFileError {
@@ -62,12 +62,10 @@ pub async fn create_project_file(
     project_path: String,
     app_dirs: Arc<AppDirs>,
 ) -> Result<CreateProjectFileContext, CreateProjectFileError> {
-    let mut project_dir_cache = app_dirs.cache_directory.projects_dir_path.clone();
-
     let project_id = ProjectID::new();
     let project_id_str = project_id.get_str();
 
-    project_dir_cache.push(&project_id_str); 
+    let project_dir_cache = app_dirs.cache_directory.projects_dir_path.join(&project_id_str); 
 
     if tokio::fs::try_exists(&project_dir_cache).await? {
         tokio::fs::remove_dir_all(&project_dir_cache).await?; 
@@ -85,27 +83,22 @@ pub async fn create_project_file(
 
     let project_meta_data = toml::to_string(&project_meta)?;
 
-    let mut meta_file_path = project_dir_cache.clone();
-    meta_file_path.push("meta");
-    meta_file_path.set_extension("toml");
+    let meta_file_path = project_dir_cache.join("meta.toml");
 
     let mut meta_file_handler = TokioFile::create_new(meta_file_path).await?; 
     meta_file_handler.write_all(project_meta_data.as_bytes()).await?;
 
     // Creating Semantic Node dir
-    let mut semantic_nodes_dir = project_dir_cache.clone();
-    semantic_nodes_dir.push("semantic_nodes");
+    let semantic_nodes_dir = project_dir_cache.join("semantic_nodes");
 
     dir_builder.create(semantic_nodes_dir).await?;
 
     // Creating Project DB dir and DB file
-    let mut db_dir = project_dir_cache.clone();
-    db_dir.push("db");
+    let db_dir = project_dir_cache.join("db");
    
     dir_builder.create(&db_dir).await?; 
 
-    let mut db_file_path = db_dir.clone();
-    db_file_path.push("db.sqlite");
+    let db_file_path = db_dir.join("db.sqlite");
 
     let db_url = format!("sqlite://{}", db_file_path.to_str().unwrap());
 
@@ -123,7 +116,7 @@ pub async fn create_project_file(
 
     // Creating Project File 
     let mut project_file_path = PathBuf::new(); 
-    project_file_path.push(project_path);
+    project_file_path.push(&project_path);
     project_file_path.push(&project_name);
     project_file_path.set_extension(PROJECT_FILE_EXTENSION);
 
@@ -150,9 +143,9 @@ pub async fn create_project_file(
 
     Ok(
         CreateProjectFileContext { 
-            project_id: project_id,
-            project_name: project_name,
-            project_dir_cache: project_dir_cache,
+            project_id,
+            project_name,
+            project_dir_cache,
         }
     )
 }
@@ -170,7 +163,7 @@ pub fn create_project_file_callback(
                         project_id: context.project_id, 
                         project_name: context.project_name,
                         project_dir_cache: context.project_dir_cache,
-                    }.into()
+                    }
                 )
             )
         },
@@ -180,7 +173,7 @@ pub fn create_project_file_callback(
                     Some(
                         AppEvent::KernelError(
                             AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::STDIOError(error)
+                                CreateProjectEventError::STDIO(error)
                             ).into()
                         )
                     )
@@ -189,7 +182,7 @@ pub fn create_project_file_callback(
                     Some(
                         AppEvent::KernelError(
                             AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::SQLXError(error)
+                                CreateProjectEventError::Sqlx(error)
                             ).into()
                         )
                     )
@@ -198,7 +191,7 @@ pub fn create_project_file_callback(
                     Some(
                         AppEvent::KernelError(
                             AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::TomlSerError(error)
+                                CreateProjectEventError::TomlSer(error)
                             ).into()
                         )
                     )
@@ -207,7 +200,7 @@ pub fn create_project_file_callback(
                     Some(
                         AppEvent::KernelError(
                             AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::StripPrefixError(error)
+                                CreateProjectEventError::StripPrefix(error)
                             ).into()
                         ) 
                     )

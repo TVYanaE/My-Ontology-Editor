@@ -1,7 +1,7 @@
 use thiserror::Error;
 
-use super::app_kernel::app_kernel_error::AppKernelError;
-use super::gui::gui_error::GUIError;
+use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
+use crate::modules::app::gui::gui_error::GUIError;
 
 #[derive(Debug, Error)]
 pub enum AppError {

@@ -2,8 +2,8 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
 use tokio::runtime::Runtime;
 use eframe::egui::Context as EGUIContext;
 
-use super::{AppBlockingTask, AppAsyncTask};
-use super::super::app_event::{AppEvent, AppEvents};
+use crate::modules::app::app_task::{AppBlockingTask, AppAsyncTask};
+use crate::modules::app::app_event::{AppEvent, AppEvents};
 
 pub struct AppTaskManager {
     runtime: Runtime,
@@ -20,9 +20,9 @@ impl AppTaskManager {
         ) = unbounded_channel();
 
         Self { 
-            runtime: runtime,
-            tx: tx,
-            rx: rx,
+            runtime,
+            tx,
+            rx,
             app_events: AppEvents::new(),
         }
     } 

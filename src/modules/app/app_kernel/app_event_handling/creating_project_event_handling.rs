@@ -1,5 +1,6 @@
 mod check_project_info; 
 mod create_project_file;
+mod load_project_to_ram;
 
 use std::sync::Arc;
 
@@ -7,26 +8,32 @@ use thiserror::Error;
 
 use eframe::egui::Context as EGUIContext;
 
-use super::super::super::app_event::creating_project_event::CreatingProjectEvent;
-use super::super::super::app_state::AppState;
+use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
+use crate::modules::app::app_state::AppState;
 
-use super::super::app_kernel_error::AppKernelError;
+use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
 
-use super::super::super::app_task::{AppBlockingTask, AppAsyncTask};
-use super::super::super::app_task::app_task_manager::AppTaskManager;
-
-use super::super::super::confirmation_context::{
-    ConfirmationContext, CONFIRMATION_CONTEXT_ID_GENERATOR,
+use crate::modules::app::app_task::{
+    AppBlockingTask, AppAsyncTask,
+    app_task_manager::AppTaskManager,
 };
-use super::super::super::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
 
-use super::super::super::gui::GUI;
-use super::super::super::gui::gui_command::{GUICommand, ConfirmationType};
+use crate::modules::app::confirmation_context::{
+    ConfirmationContext, CONFIRMATION_CONTEXT_ID_GENERATOR,
+    confirmation_context_manager::ConfirmationContextManager
+};
 
-use super::super::super::app_dirs::AppDirs;
+use crate::modules::app::gui::{
+    GUI,
+    gui_command::{GUICommand, ConfirmationType},
+};
 
-use super::super::super::project::Project;
-use super::super::super::project::project_cache::ProjectCache;
+use crate::modules::app::app_dirs::AppDirs;
+
+use crate::modules::app::project::{
+    Project,
+    project_cache::ProjectCache,
+};
 
 use self::check_project_info::{
     check_project_info,
@@ -40,26 +47,21 @@ use create_project_file::{
 #[derive(Debug, Error)]
 pub enum CreateProjectEventError {
     #[error("STD IO Error: {0}")]
-    STDIOError(#[from] std::io::Error),
+    STDIO(#[from] std::io::Error),
 
     #[error("SQLX Error: {0}")]
-    SQLXError(#[from] sqlx::Error),
+    Sqlx(#[from] sqlx::Error),
 
     #[error("Toml Crate Error: {0}")]
-    TomlSerError(#[from] toml::ser::Error),
+    TomlSer(#[from] toml::ser::Error),
 
     #[error("Strip Prefix Error: {0}")]
-    StripPrefixError(#[from] std::path::StripPrefixError),  
+    StripPrefix(#[from] std::path::StripPrefixError),  
 }
 
 pub fn creating_project_event_handling(
     event: CreatingProjectEvent,
-    app_task_manager: &mut AppTaskManager,
-    egui_context: EGUIContext,
-    gui: &mut GUI,
-    confirmation_context_manager: &mut ConfirmationContextManager,
-    app_dirs: Arc<AppDirs>,
-    project_cache: &mut ProjectCache,
+    ctx: CreatingProjectEventHandlingContext 
 ) -> Result<Option<AppState>, AppKernelError> {
     match event {
         CreatingProjectEvent::CheckProjectInfo { 
@@ -68,16 +70,15 @@ pub fn creating_project_event_handling(
         } => {
             let app_task = AppBlockingTask {
                 task: move || { 
-                    let result = check_project_info(project_name, project_path);
-                    Box::new(result) 
+                    check_project_info(project_name, project_path)
                 },
                 callback: move |response| {
                     check_project_info_callback(response) 
                 }, 
             };
-            app_task_manager.schedule_blocking(app_task, egui_context);
+            ctx.app_task_manager.schedule_blocking(app_task, ctx.egui_context);
 
-            gui.on_command(GUICommand::ShowLoading);
+            ctx.gui.on_command(GUICommand::ShowLoading);
 
             Ok(None)
         }, 
@@ -87,16 +88,15 @@ pub fn creating_project_event_handling(
             project_path, 
         } => {
             let app_task = AppAsyncTask {
-                task: async {
-                    
-                    create_project_file(project_name, project_path, app_dirs).await
+                task: async { 
+                    create_project_file(project_name, project_path, ctx.app_dirs).await
                 },
                 callback: |res| {
                     create_project_file_callback(res)
                 }
             };
 
-            app_task_manager.schedule_async(app_task, egui_context);
+            ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
 
             Ok(None) 
         },
@@ -107,15 +107,15 @@ pub fn creating_project_event_handling(
         } => {
             let confirmation_context_id = CONFIRMATION_CONTEXT_ID_GENERATOR.next();
 
-            confirmation_context_manager.push(
+            ctx.confirmation_context_manager.push(
                 confirmation_context_id.clone(), 
                 ConfirmationContext::OverwriteProjectFileContext { 
-                    project_name: project_name, 
-                    project_path: project_path, 
+                    project_name, 
+                    project_path, 
                 }
             );
 
-            gui.on_command(
+            ctx.gui.on_command(
                 GUICommand::ShowConfirmationWindow { 
                     confirmation_type: ConfirmationType::OverwriteProjectFile(
                         confirmation_context_id
@@ -128,7 +128,7 @@ pub fn creating_project_event_handling(
         },
 
         CreatingProjectEvent::ProjectDirIsntExsist {..} => {
-            gui.on_command(
+            ctx.gui.on_command(
                 GUICommand::ShowNotification(
                     "Choosed Directory For Project File isn't Exsist".into()
                 )
@@ -138,7 +138,7 @@ pub fn creating_project_event_handling(
         },
 
         CreatingProjectEvent::ProjectDirPathIsntDir {..} => {
-            gui.on_command(
+            ctx.gui.on_command(
                 GUICommand::ShowNotification(
                     "Choosed Directory For Project File isn't Directory".into()
                 )
@@ -152,31 +152,37 @@ pub fn creating_project_event_handling(
             project_name,
             project_dir_cache,
         } => {
-            project_cache.add_project(&project_id, &project_dir_cache);
+            ctx.project_cache.add_project(&project_id, &project_dir_cache);
 
             let app_task = AppAsyncTask {
                 task: async move {
                     Project::new(&project_dir_cache.clone()).await 
                 },
                 callback: |res| {
-                    match res {
-                        Ok(project) => {
-                            println!("Test project load");
-                            println!("Project name: {}", project.get_project_name());
-                        },
-                        Err(_) => {},
+                    if let Ok(project) = res { 
+                        println!("Test project load");
+                        println!("Project name: {}", project.get_project_name());
                     }
 
                     None
                 }
             }; 
 
-            app_task_manager.schedule_async(app_task, egui_context);
+            ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
             
             // TODO!: Replace to final stage  
-            gui.on_command(GUICommand::StopShowLoading);
+            ctx.gui.on_command(GUICommand::StopShowLoading);
 
             Ok(None)
         },
     }
 }
+
+pub struct CreatingProjectEventHandlingContext<'c> {
+    pub app_task_manager: &'c mut AppTaskManager,
+    pub egui_context: EGUIContext,
+    pub gui: &'c mut GUI,
+    pub confirmation_context_manager: &'c mut ConfirmationContextManager,
+    pub app_dirs: Arc<AppDirs>,
+    pub project_cache: &'c mut ProjectCache,
+} 

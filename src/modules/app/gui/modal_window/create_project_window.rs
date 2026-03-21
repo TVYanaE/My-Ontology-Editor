@@ -7,10 +7,10 @@ use eframe::egui::containers::modal::Modal;
 use eframe::egui::containers::Sides;
 use eframe::egui::widgets::{Button, TextEdit, Label};
 
-use super::super::gui_event::{GUIEventBuffer, GUIEvent};
+use crate::modules::app::gui::gui_event::{GUIEventBuffer, GUIEvent};
 
-use super::super::gui_state::{ModalWindowType, ChoosingItemType};
-use super::super::gui_state::FileDialogResponseReceiver;
+use crate::modules::app::gui::gui_state::{ModalWindowType, ChoosingItemType};
+use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
 pub struct CreateProjectWindow {
     project_name: String,
@@ -48,10 +48,10 @@ impl CreateProjectWindow {
             }
         ); 
     }
-    pub fn set_project_name(&mut self, project_name: &str) {
+    /* pub fn set_project_name(&mut self, project_name: &str) {
         self.project_name.clear();
         self.project_name.push_str(project_name);
-    }
+    } */
     pub fn set_project_path(&mut self, project_path: &str) {
         self.project_path.clear();
         self.project_path.push_str(project_path);
@@ -92,8 +92,8 @@ fn main_panel(
 fn bottom_panel(
     ui: &mut EGUIUI,
     event_buffer: &mut GUIEventBuffer,
-    project_name: &String,
-    project_path: &String,
+    project_name: &str,
+    project_path: &str,
 ) {
     let (left_resp, right_resp) = Sides::new().show(ui, 
         |left_ui|{
@@ -107,8 +107,8 @@ fn bottom_panel(
     if left_resp.clicked() {
         event_buffer.push(
             GUIEvent::CreateProjectRequest { 
-                project_name: project_name.clone(), 
-                project_path: project_path.clone(), 
+                project_name: project_name.to_string(), 
+                project_path: project_path.to_string(), 
             }
         );
     };

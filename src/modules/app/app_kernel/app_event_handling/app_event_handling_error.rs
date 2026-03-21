@@ -1,8 +1,9 @@
-
 use thiserror::Error;
 
-use super::creating_project_event_handling::CreateProjectEventError;
-use super::open_project_event_handling::OpenProjectEventError;
+use crate::modules::app::app_kernel::app_event_handling::{
+    creating_project_event_handling::CreateProjectEventError,
+    open_project_event_handling::OpenProjectEventError,
+};
 
 #[derive(Debug, Error)]
 pub enum AppEventHandlingError {

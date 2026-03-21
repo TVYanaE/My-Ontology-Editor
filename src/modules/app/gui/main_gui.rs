@@ -2,7 +2,7 @@ mod top_panel;
 
 use eframe::egui::Context as EGUIContext;
 
-use super::gui_event::GUIEventBuffer;
+use crate::modules::app::gui::gui_event::GUIEventBuffer;
 
 use self::top_panel::TopPanel;
 

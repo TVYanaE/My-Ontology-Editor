@@ -1,6 +1,8 @@
 use std::collections::hash_map::HashMap;
 
-use super::{ConfirmationContextID, ConfirmationContext};
+use crate::modules::app::confirmation_context::{
+    ConfirmationContextID, ConfirmationContext
+};
 
 pub struct ConfirmationContextManager {
     confirmation_contexts: HashMap<ConfirmationContextID, ConfirmationContext>,
