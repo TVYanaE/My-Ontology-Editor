@@ -1,17 +1,15 @@
 mod check_project_info; 
 mod create_project_file;
+mod creating_project_event_error;
 mod load_project_to_ram;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
-use thiserror::Error;
 
 use eframe::egui::Context as EGUIContext;
 
 use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
 use crate::modules::app::app_state::AppState;
-
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
 
 use crate::modules::app::app_task::{
     AppBlockingTask, AppAsyncTask,
@@ -31,9 +29,11 @@ use crate::modules::app::gui::{
 use crate::modules::app::app_dirs::AppDirs;
 
 use crate::modules::app::project::{
-    Project,
-    project_cache::ProjectCache,
+    project_manager::ProjectManager,
+    projects_cache::ProjectsCache,
 };
+
+pub use self::creating_project_event_error::CreatingProjectEventError;
 
 use self::check_project_info::{
     check_project_info,
@@ -43,26 +43,16 @@ use create_project_file::{
     create_project_file,
     create_project_file_callback,
 };
+use self::load_project_to_ram::{
+    load_project_to_ram,
+    load_project_to_ram_callback,
+};
 
-#[derive(Debug, Error)]
-pub enum CreateProjectEventError {
-    #[error("STD IO Error: {0}")]
-    STDIO(#[from] std::io::Error),
-
-    #[error("SQLX Error: {0}")]
-    Sqlx(#[from] sqlx::Error),
-
-    #[error("Toml Crate Error: {0}")]
-    TomlSer(#[from] toml::ser::Error),
-
-    #[error("Strip Prefix Error: {0}")]
-    StripPrefix(#[from] std::path::StripPrefixError),  
-}
 
 pub fn creating_project_event_handling(
     event: CreatingProjectEvent,
     ctx: CreatingProjectEventHandlingContext 
-) -> Result<Option<AppState>, AppKernelError> {
+) -> Result<Option<AppState>, CreatingProjectEventError> {
     match event {
         CreatingProjectEvent::CheckProjectInfo { 
             project_name, 
@@ -149,28 +139,36 @@ pub fn creating_project_event_handling(
 
         CreatingProjectEvent::ProjectFileCreated { 
             project_id,
-            project_name,
             project_dir_cache,
         } => {
-            ctx.project_cache.add_project(&project_id, &project_dir_cache);
+            let mut projects_cache = ctx
+                .projects_cache
+                .write()
+                .expect("Lock Poisened Project File Created");
+            projects_cache.add_project(&project_id, &project_dir_cache);
+
+            drop(projects_cache);
 
             let app_task = AppAsyncTask {
                 task: async move {
-                    Project::new(&project_dir_cache.clone()).await 
+                    load_project_to_ram(project_id, project_dir_cache).await
                 },
-                callback: |res| {
-                    if let Ok(project) = res { 
-                        println!("Test project load");
-                        println!("Project name: {}", project.get_project_name());
-                    }
-
-                    None
+                callback: |result| {
+                    load_project_to_ram_callback(result) 
                 }
             }; 
 
             ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
+             
+            Ok(None)
+        },
+
+        CreatingProjectEvent::ProjectLoadedToRAM { 
+            project_id, 
+            project,
+        } => {
+            ctx.project_manager.push(project_id, project); 
             
-            // TODO!: Replace to final stage  
             ctx.gui.on_command(GUICommand::StopShowLoading);
 
             Ok(None)
@@ -184,5 +182,6 @@ pub struct CreatingProjectEventHandlingContext<'c> {
     pub gui: &'c mut GUI,
     pub confirmation_context_manager: &'c mut ConfirmationContextManager,
     pub app_dirs: Arc<AppDirs>,
-    pub project_cache: &'c mut ProjectCache,
+    pub projects_cache: Arc<RwLock<ProjectsCache>>,
+    pub project_manager: &'c mut ProjectManager,
 } 

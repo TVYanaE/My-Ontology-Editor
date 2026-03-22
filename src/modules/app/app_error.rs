@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
+use crate::modules::app::app_kernel::AppKernelError;
 use crate::modules::app::gui::gui_error::GUIError;
 
 #[derive(Debug, Error)]

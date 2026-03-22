@@ -1,8 +1,9 @@
-pub mod project_cache;
 pub mod project_error;
 pub mod project_file_header;
 pub mod project_id;
+pub mod project_manager;
 pub mod project_meta;
+pub mod projects_cache;
 
 use std::path::{Path, PathBuf};
 
@@ -11,6 +12,8 @@ use tokio::io::AsyncReadExt;
 
 use sqlx::Pool;
 use sqlx::sqlite::{Sqlite, SqlitePoolOptions};
+
+use crate::modules::consts::META_FILE_NAME;
 
 use self::project_error::ProjectError;
 use self::project_id::ProjectID;
@@ -27,7 +30,7 @@ impl Project {
     pub async fn new(
         project_dir_cache: impl AsRef<Path>, 
     ) -> Result<Self, ProjectError> {
-        let meta_file_path = project_dir_cache.as_ref().join("meta.toml"); 
+        let meta_file_path = project_dir_cache.as_ref().join(META_FILE_NAME); 
 
         let mut meta_file_handler = TokioFile::open(meta_file_path).await?; 
 

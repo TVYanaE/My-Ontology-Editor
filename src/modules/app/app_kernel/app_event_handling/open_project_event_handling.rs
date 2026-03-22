@@ -1,14 +1,12 @@
 mod check_project_info;
 mod load_project_to_ram;
+mod open_project_event_error;
 mod unpack_project_file;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
-use thiserror::Error;
 
 use eframe::egui::Context as EGUIContext;
-
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
 
 use crate::modules::app::app_event::AppEvent;
 use crate::modules::app::app_event::open_project_event::OpenProjectEvent;
@@ -22,33 +20,30 @@ use crate::modules::app::app_task::app_task_manager::AppTaskManager;
 use crate::modules::app::gui::GUI;
 use crate::modules::app::gui::gui_command::GUICommand;
 
-use crate::modules::app::project::project_cache::ProjectCache;
+use crate::modules::app::project::projects_cache::ProjectsCache;
+use crate::modules::app::project::project_manager::ProjectManager;
 
 use crate::modules::app::app_dirs::AppDirs;
 
-use self::check_project_info::check_project_info;
-use self::check_project_info::check_project_info_callback;
+pub use self::open_project_event_error::OpenProjectEventError;
 
-use self::load_project_to_ram::load_project_to_ram;
-use self::load_project_to_ram::load_project_to_ram_callback;
-
-use self::unpack_project_file::unpack_project_file;
-use self::unpack_project_file::unpack_project_file_callback;
-
-
-#[derive(Debug, Error)]
-pub enum OpenProjectEventError {
-    #[error("STD IO Error: {0}")]
-    STDIOError(#[from] std::io::Error),
- 
-    #[error("Bytemuck Pod Cast Error: {0}")]
-    BytemuckPodCastError(bytemuck::PodCastError),     
-}
+use self::check_project_info::{
+    check_project_info,
+    check_project_info_callback,
+};
+use self::load_project_to_ram::{
+    load_project_to_ram,
+    load_project_to_ram_callback,
+};
+use self::unpack_project_file::{
+    unpack_project_file,
+    unpack_project_file_callback,
+};
 
 pub fn open_project_event_handling(
     event: OpenProjectEvent, 
     ctx: OpenProjectEventHandlingContext
-) -> Result<Option<AppState>, AppKernelError> {
+) -> Result<Option<AppState>, OpenProjectEventError> {
     match event {
         OpenProjectEvent::CheckProjectInfo { 
             project_file_path 
@@ -63,7 +58,9 @@ pub fn open_project_event_handling(
             }; 
 
             ctx.app_task_manager.schedule_async(app_task, ctx.egui_context);
- 
+            
+            ctx.gui.on_command(GUICommand::ShowLoading);
+
             Ok(None)
         },
 
@@ -98,8 +95,16 @@ pub fn open_project_event_handling(
             project_file_path,
             project_id,
         } => {
-            match ctx.project_cache.get_by_id(&project_id) {
+            let projects_cache = ctx
+                .projects_cache
+                .read()
+                .expect("Lock Poisened. Check Project Cache.");
+
+            match projects_cache.get_by_id(&project_id) {
                 Some(project_dir_cache) => {
+                    drop(projects_cache);
+                    // TODO!: Logic for situation if cache has been deleted in 
+                    // during of program working
                     ctx.app_task_manager.schedule_app_event(
                         AppEvent::OpenProjectEvent(
                             OpenProjectEvent::LoadProjectToRAM { 
@@ -113,6 +118,8 @@ pub fn open_project_event_handling(
                     Ok(None)
                 },
                 None => {
+                    drop(projects_cache);
+
                     let app_task = AppBlockingTask { 
                         task: || {
                             unpack_project_file(
@@ -131,15 +138,18 @@ pub fn open_project_event_handling(
                     Ok(None)
                 },
             } 
-
+            
         }, 
 
         OpenProjectEvent::PushProjectToCache { 
             project_id, 
             project_dir_cache, 
         } => {
-            ctx.project_cache.add_project(&project_id, &project_dir_cache);
+            let mut projects_cache = ctx.projects_cache.write().unwrap();
+            projects_cache.add_project(&project_id, &project_dir_cache);
             
+            drop(projects_cache);
+
             ctx.app_task_manager.schedule_app_event(
                 AppEvent::OpenProjectEvent(
                     OpenProjectEvent::LoadProjectToRAM { 
@@ -159,7 +169,7 @@ pub fn open_project_event_handling(
         } => {
             let app_task = AppAsyncTask { 
                 task: async {
-                    load_project_to_ram(project_dir_cache).await
+                    load_project_to_ram(project_id, project_dir_cache).await
                 }, 
                 callback: |result| {
                     load_project_to_ram_callback(result)
@@ -170,6 +180,16 @@ pub fn open_project_event_handling(
 
             Ok(None)
         },
+
+        OpenProjectEvent::ProjectLoadedToRAM { 
+            project_id, 
+            project,
+        } => {
+            ctx.project_manager.push(project_id, project);
+
+            ctx.gui.on_command(GUICommand::StopShowLoading);
+            Ok(None)
+        },
     }
 }
 
@@ -177,6 +197,7 @@ pub struct OpenProjectEventHandlingContext<'c> {
     pub app_task_manager: &'c mut AppTaskManager,
     pub egui_context: EGUIContext,
     pub gui: &'c mut GUI,
-    pub project_cache: &'c mut ProjectCache,
+    pub projects_cache: Arc<RwLock<ProjectsCache>>,
     pub app_dirs: Arc<AppDirs>,
+    pub project_manager: &'c mut ProjectManager,
 }

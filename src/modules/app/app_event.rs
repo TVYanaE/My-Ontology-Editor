@@ -1,22 +1,30 @@
 pub mod creating_project_event;
+pub mod initialisation_event;
 pub mod open_project_event;
 
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
+use crate::modules::app::app_kernel::AppEventError;
 
 use self::creating_project_event::CreatingProjectEvent;
+use self::initialisation_event::InitialisationEvent;
 use self::open_project_event::OpenProjectEvent;
 
-#[derive(Debug)]
 pub enum AppEvent {
     ShutdownReq, 
+    InitialisationEvent(InitialisationEvent),
     CreatingProjectEvent(CreatingProjectEvent), 
     OpenProjectEvent(OpenProjectEvent), 
-    KernelError(AppKernelError),
+    AppEventError(AppEventError),
 }
 
 impl From<CreatingProjectEvent> for AppEvent {
     fn from(value: CreatingProjectEvent) -> Self {
         Self::CreatingProjectEvent(value)
+    }
+}
+
+impl From<InitialisationEvent> for AppEvent {
+    fn from(value: InitialisationEvent) -> Self {
+        Self::InitialisationEvent(value)
     }
 }
 

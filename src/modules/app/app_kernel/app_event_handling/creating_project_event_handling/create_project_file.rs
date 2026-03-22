@@ -15,6 +15,7 @@ use thiserror::Error;
 use crate::modules::consts::{
     PROJECT_FILE_EXTENSION,
     CURRENT_PROJECT_FILE_VERSION,
+    META_FILE_NAME,
 };
 
 use crate::modules::app::app_event::AppEvent;
@@ -32,9 +33,9 @@ use crate::modules::migrations::{
     FILES_TABLE_MIGRATION,
 };
 
-use super::CreateProjectEventError;
+use super::CreatingProjectEventError;
 
-use super::super::app_event_handling_error::AppEventHandlingError;
+use super::super::app_event_error::AppEventError;
 
 #[derive(Debug, Error)]
 pub enum CreateProjectFileError {
@@ -83,7 +84,7 @@ pub async fn create_project_file(
 
     let project_meta_data = toml::to_string(&project_meta)?;
 
-    let meta_file_path = project_dir_cache.join("meta.toml");
+    let meta_file_path = project_dir_cache.join(META_FILE_NAME);
 
     let mut meta_file_handler = TokioFile::create_new(meta_file_path).await?; 
     meta_file_handler.write_all(project_meta_data.as_bytes()).await?;
@@ -161,7 +162,6 @@ pub fn create_project_file_callback(
                 AppEvent::CreatingProjectEvent(
                     CreatingProjectEvent::ProjectFileCreated { 
                         project_id: context.project_id, 
-                        project_name: context.project_name,
                         project_dir_cache: context.project_dir_cache,
                     }
                 )
@@ -171,37 +171,37 @@ pub fn create_project_file_callback(
             match error {
                 CreateProjectFileError::STDIOError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::STDIO(error)
-                            ).into()
+                        AppEvent::AppEventError(
+                            AppEventError::CreatingProjectEventError(
+                                CreatingProjectEventError::STDIO(error)
+                            )
                         )
                     )
                 },
                 CreateProjectFileError::SQLXError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::Sqlx(error)
-                            ).into()
+                        AppEvent::AppEventError(
+                            AppEventError::CreatingProjectEventError(
+                                CreatingProjectEventError::Sqlx(error)
+                            )
                         )
                     )
                 },
                 CreateProjectFileError::TomlSerError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::TomlSer(error)
-                            ).into()
+                        AppEvent::AppEventError(
+                            AppEventError::CreatingProjectEventError(
+                                CreatingProjectEventError::TomlSer(error)
+                            )
                         )
                     )
                 },
                 CreateProjectFileError::StripPrefixError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::CreateProjectEventError(
-                                CreateProjectEventError::StripPrefix(error)
-                            ).into()
+                        AppEvent::AppEventError(
+                            AppEventError::CreatingProjectEventError(
+                                CreatingProjectEventError::StripPrefix(error)
+                            )
                         ) 
                     )
                 },

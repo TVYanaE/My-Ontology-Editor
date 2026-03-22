@@ -8,7 +8,7 @@ use tokio::io::AsyncReadExt;
 use crate::modules::consts::PROJECT_FILE_HEADER_SIZE;
 use crate::modules::consts::MAGIC_BYTES;
 
-use crate::modules::app::app_kernel::app_event_handling::app_event_handling_error::AppEventHandlingError;
+use crate::modules::app::app_kernel::app_event_handling::app_event_error::AppEventError;
 
 use crate::modules::app::app_event::AppEvent;
 use crate::modules::app::app_event::open_project_event::OpenProjectEvent;
@@ -120,19 +120,19 @@ pub fn check_project_info_callback(
             match error {
                 CheckProjectInfoError::STDIOError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::OpenProjectEventError(
+                        AppEvent::AppEventError(
+                            AppEventError::OpenProjectEventError(
                                 OpenProjectEventError::STDIOError(error)
-                            ).into() 
+                            ) 
                         )
                     )
                 }, 
                 CheckProjectInfoError::BytemuckPodCastError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::OpenProjectEventError(
+                        AppEvent::AppEventError(
+                            AppEventError::OpenProjectEventError(
                                 OpenProjectEventError::BytemuckPodCastError(error)
-                            ).into()
+                            )
                         )
                     )
                 },

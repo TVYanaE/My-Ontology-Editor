@@ -1,8 +1,9 @@
-pub mod app_event_handling_error;
+mod app_event_error;
 mod creating_project_event_handling;
+mod initialisation_event_handling;
 mod open_project_event_handling;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use tracing::instrument;
 use eframe::egui::Context as EGUIContext;
@@ -10,16 +11,22 @@ use eframe::egui::Context as EGUIContext;
 use crate::modules::app::AppKernel;
 
 use crate::modules::app::app_dirs::AppDirs;
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
 use crate::modules::app::app_event::AppEvent;
 use crate::modules::app::app_state::AppState;
 use crate::modules::app::app_task::app_task_manager::AppTaskManager;
 use crate::modules::app::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
 use crate::modules::app::gui::GUI;
-use crate::modules::app::project::project_cache::ProjectCache;
+
+use crate::modules::app::project::projects_cache::ProjectsCache;
+use crate::modules::app::project::project_manager::ProjectManager;
+
+pub use app_event_error::AppEventError;
 
 use self::creating_project_event_handling::{
     creating_project_event_handling, CreatingProjectEventHandlingContext
+};
+use self::initialisation_event_handling::{
+    initialisation_event_handling, InitialisationEventHandlingContext,
 };
 use self::open_project_event_handling::{
     open_project_event_handling, OpenProjectEventHandlingContext
@@ -27,31 +34,60 @@ use self::open_project_event_handling::{
 
 
 impl AppKernel {
-    #[instrument(skip(ctx), err)]
+    #[instrument(skip(ctx, event), err)]
     pub fn app_event_handling(
         event: AppEvent,
         ctx: AppEventHandlingConxtex,
-    ) -> Result<Option<AppState>, AppKernelError> {
+    ) -> Result<Option<AppState>, AppEventError> {
         match ctx.current_state {
+            AppState::NotInit => {
+                match event {
+                    AppEvent::InitialisationEvent(event) => {
+                        initialisation_event_handling(event, ctx.into()).map_err(|error|{
+                            AppEventError::InitialisationEventError(error)
+                        })
+                    },
+                    _ => Ok(None),
+                }
+            },
+            AppState::Initialisation => {
+                match event {
+                    AppEvent::InitialisationEvent(event) => {
+                        initialisation_event_handling(event, ctx.into()).map_err(|error|{
+                            AppEventError::InitialisationEventError(error)
+                        })
+                    },
+                    _ => {
+                        Ok(None)
+                    }
+                }
+            },
             AppState::Ready => {
                 match event {
                     AppEvent::ShutdownReq => {
                         Ok(Some(AppState::Shutdown))
                     },
                     AppEvent::CreatingProjectEvent(event) => {
-                        creating_project_event_handling(event, ctx.into()) 
+                        creating_project_event_handling(event, ctx.into()).map_err(|error|{
+                            AppEventError::CreatingProjectEventError(error)
+                        }) 
                     }, 
                     AppEvent::OpenProjectEvent(event) => {
-                        open_project_event_handling(event, ctx.into()) 
+                        open_project_event_handling(event, ctx.into()).map_err(|error|{
+                            AppEventError::OpenProjectEventError(error)
+                        })
                     },
-                    AppEvent::KernelError(error) => {
+                    AppEvent::AppEventError(error) => {
                         Err(error)
-                    }
+                    },
+                    _ => {
+                        Ok(None)
+                    },
                 }
             },
             AppState::Shutdown => {
                 Ok(None)
-            }
+            },
         }
     }
 }
@@ -63,7 +99,8 @@ pub struct AppEventHandlingConxtex<'c> {
     pub gui: &'c mut GUI,
     pub confirmation_context_manager: &'c mut ConfirmationContextManager,
     pub app_dirs: Arc<AppDirs>,
-    pub project_cache: &'c mut ProjectCache,
+    pub projects_cache: Arc<RwLock<ProjectsCache>>,
+    pub project_manager: &'c mut ProjectManager,
 }
 
 impl<'a> From<AppEventHandlingConxtex<'a>> for CreatingProjectEventHandlingContext<'a> {
@@ -74,9 +111,20 @@ impl<'a> From<AppEventHandlingConxtex<'a>> for CreatingProjectEventHandlingConte
             gui: value.gui, 
             confirmation_context_manager: value.confirmation_context_manager, 
             app_dirs: value.app_dirs, 
-            project_cache: value.project_cache,
+            projects_cache: value.projects_cache,
+            project_manager: value.project_manager,
         }
     } 
+}
+
+impl<'a> From<AppEventHandlingConxtex<'a>> for InitialisationEventHandlingContext<'a> {
+    fn from(value: AppEventHandlingConxtex<'a>) -> Self {
+        Self { 
+            projects_cache: value.projects_cache,
+            egui_context: value.egui_context,
+            app_task_manager: value.app_task_manager,
+        }
+    }
 }
 
 impl<'a> From<AppEventHandlingConxtex<'a>> for OpenProjectEventHandlingContext<'a> {
@@ -85,8 +133,9 @@ impl<'a> From<AppEventHandlingConxtex<'a>> for OpenProjectEventHandlingContext<'
             app_task_manager: value.app_task_manager, 
             egui_context: value.egui_context, 
             gui: value.gui, 
-            project_cache: value.project_cache, 
+            projects_cache: value.projects_cache, 
             app_dirs: value.app_dirs, 
+            project_manager: value.project_manager,
         }
     }
 }

@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
+
+use crate::modules::app::project::Project;
 use crate::modules::app::project::project_id::ProjectID;
 
-#[derive(Debug, Clone)]
 pub enum CreatingProjectEvent {
     CheckProjectInfo {
         project_name: String,
@@ -28,7 +29,10 @@ pub enum CreatingProjectEvent {
     },
     ProjectFileCreated {
         project_id: ProjectID,
-        project_name: String,
         project_dir_cache: PathBuf,
     },
+    ProjectLoadedToRAM {
+        project_id: ProjectID,
+        project: Project,
+    }
 }

@@ -74,6 +74,14 @@ impl AppKernel {
                 }
             },
 
+            AppState::NotInit => {
+                Ok(None)
+            },
+
+            AppState::Initialisation => {
+                Ok(None)
+            },
+
             AppState::Shutdown => {
                 Ok(None)
             },

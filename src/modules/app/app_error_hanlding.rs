@@ -1,7 +1,7 @@
 
 use crate::modules::app::app_state::AppState;
 use crate::modules::app::app_error::AppError;
-use crate::modules::app::app_kernel::app_kernel_error::AppKernelError;
+use crate::modules::app::app_kernel::AppKernelError;
 use crate::modules::app::gui::gui_error::GUIError;
 
 pub fn app_error_handling(

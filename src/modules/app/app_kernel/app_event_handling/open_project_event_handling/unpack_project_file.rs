@@ -18,7 +18,7 @@ use crate::modules::app::project::project_id::ProjectID;
 use crate::modules::app::app_dirs::AppDirs;
 
 use super::OpenProjectEventError;
-use super::super::app_event_handling_error::AppEventHandlingError;
+use super::super::app_event_error::AppEventError;
 
 
 #[derive(Debug, Error)]
@@ -45,7 +45,6 @@ pub fn unpack_project_file(
         .projects_dir_path
         .join(project_id.get_str());
 
-    println!("Project Dir in cache: {:?}", project_dir_cache);
     std::fs::create_dir(&project_dir_cache)?; 
 
     // Unpack Project File  
@@ -83,10 +82,10 @@ pub fn unpack_project_file_callback(
             match error {
                 UnpackProjectFileError::STDIOError(error) => {
                     Some(
-                        AppEvent::KernelError(
-                            AppEventHandlingError::OpenProjectEventError(
+                        AppEvent::AppEventError(
+                            AppEventError::OpenProjectEventError(
                                 OpenProjectEventError::STDIOError(error)    
-                            ).into()
+                            )
                         )
                     )
                 },

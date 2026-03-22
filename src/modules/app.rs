@@ -11,7 +11,7 @@ mod id;
 mod project;
 mod time_detector;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use eframe::CreationContext;
 use eframe::App as EFrameApp;
@@ -20,15 +20,24 @@ use eframe::Frame;
 use tokio::runtime::Runtime;
 
 use self::app_dirs::AppDirs;
+
 use self::app_error_hanlding::app_error_handling;
+
 use self::app_event::AppEvent;
-use self::app_kernel::{AppKernel, AppEventHandlingConxtex, GUIAffectsHandlingContext};
+use self::app_event::initialisation_event::InitialisationEvent;
+
+use self::app_kernel::{
+    AppKernel, AppEventHandlingConxtex, GUIAffectsHandlingContext,
+    AppKernelError,
+};
 use self::app_state::AppState;
 use self::app_task::app_task_manager::AppTaskManager;
 use self::confirmation_context::confirmation_context_manager::ConfirmationContextManager;
 use self::gui::GUI;
 use self::time_detector::TimeDetector;
-use self::project::project_cache::ProjectCache;
+
+use self::project::projects_cache::ProjectsCache;
+use self::project::project_manager::ProjectManager;
 
 
 pub struct App {
@@ -38,7 +47,8 @@ pub struct App {
     app_dirs: Arc<AppDirs>,
     app_task_manager: AppTaskManager,
     confirmation_context_manager: ConfirmationContextManager, 
-    project_cache: ProjectCache,
+    projects_cache: Arc<RwLock<ProjectsCache>>,
+    project_manager: ProjectManager,
 }
 
 impl App {
@@ -47,7 +57,8 @@ impl App {
         app_dirs: AppDirs,
         runtime: Runtime,
     ) -> Self {
-        
+        let projects_cache = ProjectsCache::new(&app_dirs.cache_directory.projects_dir_path);
+
         App {
             state: AppState::default(),
             gui: GUI::new(),
@@ -55,7 +66,8 @@ impl App {
             app_dirs: Arc::new(app_dirs),
             app_task_manager: AppTaskManager::new(runtime),
             confirmation_context_manager: ConfirmationContextManager::new(),
-            project_cache: ProjectCache::new(),
+            projects_cache: Arc::new(RwLock::new(projects_cache)),
+            project_manager: ProjectManager::new(),
         }
     }
 
@@ -67,7 +79,8 @@ impl App {
             gui: &mut self.gui, 
             confirmation_context_manager: &mut self.confirmation_context_manager, 
             app_dirs: self.app_dirs.clone(), 
-            project_cache: &mut self.project_cache 
+            projects_cache: self.projects_cache.clone(),
+            project_manager: &mut self.project_manager,
         }
     }
 
@@ -81,7 +94,14 @@ impl App {
 } 
 
 impl EFrameApp for App {
-    fn update(&mut self, ctx: &EGUIContext, _frame: &mut Frame) {
+    fn update(&mut self, ctx: &EGUIContext, _frame: &mut Frame) {  
+        if self.state == AppState::NotInit {
+            self.app_task_manager.schedule_app_event(
+                InitialisationEvent::InitProjectsCache.into(), 
+                ctx.clone()
+            );
+        }
+
         self.time_detector.start_measurement();
 
         match self.gui.prepare_gui(ctx) {
@@ -97,7 +117,9 @@ impl EFrameApp for App {
                                         };
                                     },
                                     Err(error) => {
-                                        if let Some(new_state) = app_error_handling(error.into()) {
+                                        if let Some(new_state) = app_error_handling(
+                                            AppKernelError::AppEventError(error).into()
+                                        ) {
                                             self.state = new_state;
                                         }
                                     },
@@ -135,18 +157,18 @@ impl EFrameApp for App {
                     },
                     Ok(None) => {},
                     Err(error) => {
-                        if let Some(new_state) = app_error_handling(error.into()) {
+                        if let Some(new_state) = app_error_handling(
+                            AppKernelError::AppEventError(error).into()
+                        ) {
                             self.state = new_state;
                         }
                     },
                 }
             } 
         }; 
-        match &self.state { 
-            AppState::Ready => {},
-            AppState::Shutdown => {
-                ctx.send_viewport_cmd(ViewportCommand::Close);
-            }
+
+        if self.state == AppState::Shutdown { 
+            ctx.send_viewport_cmd(ViewportCommand::Close);
         }
 
         self.time_detector.stop_and_display();
