@@ -5,7 +5,6 @@ mod unpack_project_file;
 
 use std::sync::{Arc, RwLock};
 
-
 use eframe::egui::Context as EGUIContext;
 
 use crate::modules::app::app_event::AppEvent;
@@ -22,6 +21,8 @@ use crate::modules::app::gui::gui_command::GUICommand;
 
 use crate::modules::app::project::projects_cache::ProjectsCache;
 use crate::modules::app::project::project_manager::ProjectManager;
+use crate::modules::app::project::project_view_manager::ProjectViewManager;
+use crate::modules::app::project::project_view::ProjectView;
 
 use crate::modules::app::app_dirs::AppDirs;
 
@@ -184,10 +185,18 @@ pub fn open_project_event_handling(
         OpenProjectEvent::ProjectLoadedToRAM { 
             project_id, 
             project,
-        } => {
+        } => { 
+            let project_name = project.get_project_name().to_string();
+            
+            let project_view = ProjectView::new(project_id.clone(), project_name);
+
+            ctx.project_view_manager.push(project_id.clone(), project_view);
+
             ctx.project_manager.push(project_id, project);
 
             ctx.gui.on_command(GUICommand::StopShowLoading);
+            ctx.gui.on_command(GUICommand::ShowMainUI); 
+
             Ok(None)
         },
     }
@@ -200,4 +209,5 @@ pub struct OpenProjectEventHandlingContext<'c> {
     pub projects_cache: Arc<RwLock<ProjectsCache>>,
     pub app_dirs: Arc<AppDirs>,
     pub project_manager: &'c mut ProjectManager,
+    pub project_view_manager: &'c mut ProjectViewManager,
 }

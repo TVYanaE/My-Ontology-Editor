@@ -19,8 +19,12 @@ use crate::modules::app::gui::GUI;
 
 use crate::modules::app::project::projects_cache::ProjectsCache;
 use crate::modules::app::project::project_manager::ProjectManager;
+use crate::modules::app::project::project_view_manager::ProjectViewManager;
 
 pub use app_event_error::AppEventError;
+pub use creating_project_event_handling::CreatingProjectEventError;
+pub use initialisation_event_handling::InitialisationEventError;
+pub use open_project_event_handling::OpenProjectEventError;
 
 use self::creating_project_event_handling::{
     creating_project_event_handling, CreatingProjectEventHandlingContext
@@ -101,6 +105,7 @@ pub struct AppEventHandlingConxtex<'c> {
     pub app_dirs: Arc<AppDirs>,
     pub projects_cache: Arc<RwLock<ProjectsCache>>,
     pub project_manager: &'c mut ProjectManager,
+    pub project_view_manager: &'c mut ProjectViewManager,
 }
 
 impl<'a> From<AppEventHandlingConxtex<'a>> for CreatingProjectEventHandlingContext<'a> {
@@ -113,6 +118,7 @@ impl<'a> From<AppEventHandlingConxtex<'a>> for CreatingProjectEventHandlingConte
             app_dirs: value.app_dirs, 
             projects_cache: value.projects_cache,
             project_manager: value.project_manager,
+            project_view_manager: value.project_view_manager,
         }
     } 
 }
@@ -136,6 +142,7 @@ impl<'a> From<AppEventHandlingConxtex<'a>> for OpenProjectEventHandlingContext<'
             projects_cache: value.projects_cache, 
             app_dirs: value.app_dirs, 
             project_manager: value.project_manager,
+            project_view_manager: value.project_view_manager
         }
     }
 }

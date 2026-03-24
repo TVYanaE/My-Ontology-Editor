@@ -9,6 +9,7 @@ pub enum GUICommand {
     },
     ShowLoading,
     StopShowLoading,
+    ShowMainUI,
 }
 
 #[derive(Debug, Clone)]

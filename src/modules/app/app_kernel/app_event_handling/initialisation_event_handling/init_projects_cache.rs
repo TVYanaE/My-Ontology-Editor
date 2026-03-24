@@ -1,6 +1,10 @@
 
 use thiserror::Error;
 
+use crate::modules::app::app_kernel::{
+    AppEventError, InitialisationEventError
+};
+
 use crate::modules::app::project::projects_cache::ProjectsCache;
 use crate::modules::app::project::projects_cache::projects_cache_error::ProjectsCacheError;
 
@@ -33,7 +37,39 @@ pub fn init_projects_cache_callbalk(
             )
         },
         Err(error) => {
-            None
+            match error {
+                InitProjectsCacheError::ProjectsCacheError(error) => {
+                    match error {
+                        ProjectsCacheError::STDError(error) => {
+                            Some(
+                                AppEvent::AppEventError(
+                                    AppEventError::InitialisationEventError(
+                                        InitialisationEventError::STDError(error)
+                                    )
+                                )
+                            ) 
+                        },
+                        ProjectsCacheError::UuidError(error) => {
+                            Some(
+                                AppEvent::AppEventError(
+                                    AppEventError::InitialisationEventError(
+                                        InitialisationEventError::UuidError(error)
+                                    )
+                                )
+                            )
+                        },
+                        ProjectsCacheError::TOMLDesError(error) => {
+                            Some(
+                                AppEvent::AppEventError(
+                                    AppEventError::InitialisationEventError(
+                                        InitialisationEventError::TOMLDesError(error)
+                                    )
+                                )
+                            )
+                        },
+                    }
+                },
+            }
         },
     }
 }

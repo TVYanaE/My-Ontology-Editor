@@ -31,6 +31,8 @@ use crate::modules::app::app_dirs::AppDirs;
 use crate::modules::app::project::{
     project_manager::ProjectManager,
     projects_cache::ProjectsCache,
+    project_view_manager::ProjectViewManager,
+    project_view::ProjectView,
 };
 
 pub use self::creating_project_event_error::CreatingProjectEventError;
@@ -167,9 +169,16 @@ pub fn creating_project_event_handling(
             project_id, 
             project,
         } => {
+            let project_name = project.get_project_name().to_string();
+            
+            let project_view = ProjectView::new(project_id.clone(), project_name);
+
+            ctx.project_view_manager.push(project_id.clone(), project_view);
+
             ctx.project_manager.push(project_id, project); 
             
             ctx.gui.on_command(GUICommand::StopShowLoading);
+            ctx.gui.on_command(GUICommand::ShowMainUI);
 
             Ok(None)
         },
@@ -184,4 +193,5 @@ pub struct CreatingProjectEventHandlingContext<'c> {
     pub app_dirs: Arc<AppDirs>,
     pub projects_cache: Arc<RwLock<ProjectsCache>>,
     pub project_manager: &'c mut ProjectManager,
+    pub project_view_manager: &'c mut ProjectViewManager,
 } 

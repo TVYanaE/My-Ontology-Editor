@@ -9,6 +9,10 @@ mod modal_window;
 
 use eframe::egui::Context as EGUIContext;
 
+use crate::modules::app::project::project_view_manager::ProjectViewManager;
+use crate::modules::app::project::project_id::ProjectID;
+use crate::modules::app::project::project_view::ProjectView;
+
 use self::gui_affect::GUIAffectBuffer;
 use self::gui_command::GUICommand;
 use self::gui_error::GUIError;
@@ -43,10 +47,13 @@ impl GUI {
     pub fn prepare_gui(
         &mut self,
         context: &EGUIContext,
+        project_view_manager: &mut ProjectViewManager,
     ) -> Result<GUIAffectBuffer, GUIError>{
         let mut gui_affect_buffer = GUIAffectBuffer::with_capacity(4);
         
-        self.main_gui.prepare(context, &mut self.event_buffer);
+        let project_views: Vec<(&ProjectID, &mut ProjectView)> = project_view_manager.get_iter_mut().collect(); 
+
+        self.main_gui.prepare(context, &mut self.event_buffer, &project_views);
 
         match &self.current_state {
             GUIState::Idle => {},
@@ -151,6 +158,14 @@ impl GUI {
 
                     self.prev_state = Some(prev_state);    
                 }
+            },
+            GUICommand::ShowMainUI => {
+                let prev_state = std::mem::replace(
+                    &mut self.current_state, 
+                    GUIState::Idle, 
+                );
+
+                self.prev_state = Some(prev_state); 
             },
         }
     }

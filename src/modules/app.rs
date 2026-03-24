@@ -4,6 +4,7 @@ mod app_error_hanlding;
 mod app_event;
 mod app_kernel; 
 mod app_state;
+mod app_style;
 mod app_task;
 mod confirmation_context;
 mod gui;
@@ -38,7 +39,7 @@ use self::time_detector::TimeDetector;
 
 use self::project::projects_cache::ProjectsCache;
 use self::project::project_manager::ProjectManager;
-
+use self::project::project_view_manager::ProjectViewManager;
 
 pub struct App {
     state: AppState, 
@@ -49,14 +50,17 @@ pub struct App {
     confirmation_context_manager: ConfirmationContextManager, 
     projects_cache: Arc<RwLock<ProjectsCache>>,
     project_manager: ProjectManager,
+    project_view_manager: ProjectViewManager,
 }
 
 impl App {
     pub fn new(
-        _creation_context: &CreationContext,
+        creation_context: &CreationContext,
         app_dirs: AppDirs,
         runtime: Runtime,
     ) -> Self {
+        self::app_style::set_app_style(creation_context);   
+
         let projects_cache = ProjectsCache::new(&app_dirs.cache_directory.projects_dir_path);
 
         App {
@@ -68,6 +72,7 @@ impl App {
             confirmation_context_manager: ConfirmationContextManager::new(),
             projects_cache: Arc::new(RwLock::new(projects_cache)),
             project_manager: ProjectManager::new(),
+            project_view_manager: ProjectViewManager::new(),
         }
     }
 
@@ -81,6 +86,7 @@ impl App {
             app_dirs: self.app_dirs.clone(), 
             projects_cache: self.projects_cache.clone(),
             project_manager: &mut self.project_manager,
+            project_view_manager: &mut self.project_view_manager,
         }
     }
 
@@ -104,7 +110,7 @@ impl EFrameApp for App {
 
         self.time_detector.start_measurement();
 
-        match self.gui.prepare_gui(ctx) {
+        match self.gui.prepare_gui(ctx, &mut self.project_view_manager) {
             Ok(gui_affect_buffer) => {
                 for gui_affect in gui_affect_buffer {
                     match AppKernel::gui_affects_handling(gui_affect, self.gui_affects_ctx()) {

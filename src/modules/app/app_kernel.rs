@@ -6,6 +6,9 @@ pub use self::app_event_handling::AppEventHandlingConxtex;
 pub use self::gui_affects_handling::GUIAffectsHandlingContext;
 
 pub use self::app_kernel_error::AppKernelError;
-pub use self::app_event_handling::AppEventError;
+pub use self::app_event_handling::{
+    AppEventError, CreatingProjectEventError,
+    InitialisationEventError, OpenProjectEventError,
+};
 
 pub struct AppKernel;

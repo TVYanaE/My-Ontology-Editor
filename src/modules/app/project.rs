@@ -3,7 +3,10 @@ pub mod project_file_header;
 pub mod project_id;
 pub mod project_manager;
 pub mod project_meta;
+pub mod project_view;
+pub mod project_view_manager;
 pub mod projects_cache;
+pub mod semantic_node;
 
 use std::path::{Path, PathBuf};
 
@@ -23,7 +26,7 @@ pub struct Project {
     project_id: ProjectID,
     project_name: String,
     db_pool: Pool<Sqlite>,
-    project_dir_path: PathBuf,
+    project_dir_cache_path: PathBuf, 
 }
 
 impl Project {
@@ -56,7 +59,7 @@ impl Project {
                 project_id,
                 project_name: project_meta.project_name,
                 db_pool,
-                project_dir_path: project_dir_cache.as_ref().to_path_buf(),
+                project_dir_cache_path: project_dir_cache.as_ref().to_path_buf(),
             }
         )
     }
