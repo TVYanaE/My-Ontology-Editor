@@ -77,7 +77,13 @@ pub async fn check_project_info(
     
     let mut project_file_handler = TokioFile::open(&project_file_path_buf).await?; 
 
-    project_file_handler.read_exact(&mut buf).await?;
+    project_file_handler.read_exact(&mut buf).await.map_err(|_|{
+        CheckProjectInfoError::WrongFormat(
+            ErrorContext { 
+                project_file_path: project_file_path.clone() 
+            }
+        )
+    })?;
 
     let project_file_header = ProjectFileHeader::try_from_bytes(&buf)
         .map_err(|error|{

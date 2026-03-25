@@ -56,6 +56,11 @@ impl CreateProjectWindow {
         self.project_path.clear();
         self.project_path.push_str(project_path);
     }
+
+    pub fn clear(&mut self) {
+        self.project_path.clear();
+        self.project_name.clear();
+    }
 }
 
 fn main_panel(

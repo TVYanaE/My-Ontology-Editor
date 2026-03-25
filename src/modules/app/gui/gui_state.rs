@@ -8,8 +8,6 @@ pub enum GUIState {
     ShowModalWindow(ModalWindowType),
 }
 
-
-
 #[derive(Debug)]
 pub enum GUIStateTransform {
     Stay,
@@ -31,6 +29,7 @@ pub enum ModalWindowType {
         confirmation_type: ConfirmationType,
     },
     LoadingWindow,
+    CreateSemanticNodeWindow,
 }
 
 #[derive(Debug, Clone)]

@@ -30,7 +30,8 @@ impl TopPanel {
         &mut self,
         context: &EGUIContext,
         event_buffer: &mut GUIEventBuffer,
-        project_views: &[(&ProjectID, &mut ProjectView)],
+        project_views: &[(&ProjectID, &ProjectView)],
+        selected_project: Option<&ProjectView>,
     ) {
         TopBottomPanel::new(TopBottomSide::Top, "Top-Panel")
             .show(context, |top_panel_ui|{
@@ -38,7 +39,12 @@ impl TopPanel {
 
                 top_panel_ui.separator();
 
-                self.projects_bar.prepare(top_panel_ui, event_buffer, project_views);
+                self.projects_bar.prepare(
+                    top_panel_ui, 
+                    event_buffer, 
+                    project_views, 
+                    selected_project
+                );
             }
         ); 
     }

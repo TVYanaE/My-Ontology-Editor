@@ -69,6 +69,7 @@ pub fn open_project_event_handling(
             project_file_path 
         } => {
             let notification = format!("Choosed File: {}, has wrong format", project_file_path);
+            ctx.gui.on_command(GUICommand::StopShowLoading);
             ctx.gui.on_command(GUICommand::ShowNotification(notification));
 
             Ok(None)
@@ -192,8 +193,13 @@ pub fn open_project_event_handling(
 
             ctx.project_view_manager.push(project_id.clone(), project_view);
 
-            ctx.project_manager.push(project_id, project);
+            ctx.project_manager.push(project_id.clone(), project);
 
+            ctx.gui.on_command(
+                GUICommand::ProjectOpened { 
+                    project_id 
+                }
+            );
             ctx.gui.on_command(GUICommand::StopShowLoading);
             ctx.gui.on_command(GUICommand::ShowMainUI); 
 

@@ -7,12 +7,18 @@ use crate::modules::app::gui::gui_state::{GUIStateTransform, GUIState};
 use crate::modules::app::gui::gui_state::ModalWindowType;
 use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
-use super::modal_window::ModalWindow;
+use crate::modules::app::gui::main_gui::MainGUI;
+
+use crate::modules::app::gui::modal_window::ModalWindow;
+
+use crate::modules::app::project::project_view::ProjectView;
 
 pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
     gui_events: E,
     gui_affect_buffer: &mut GUIAffectBuffer,
     modal_window: &mut ModalWindow,
+    main_gui: &mut MainGUI,
+    selected_project: Option<&ProjectView>, 
 ) -> GUIStateTransform {
     let mut transform = GUIStateTransform::Stay;
     
@@ -114,6 +120,36 @@ pub fn gui_event_handling<E: Iterator<Item = GUIEvent>>(
                         project_file_path, 
                     }
                 );   
+            },
+            GUIEvent::SwitchProjectRequest { 
+                project_id, 
+            } => {
+                gui_affect_buffer.push(
+                    GUIAffect::SwitchProjectRequest { 
+                        project_id, 
+                    }
+                );
+            }, 
+            GUIEvent::SetLeftPanelVisibility { 
+                visibility 
+            } => {
+                main_gui.with_left_panel(|left_panel|{
+                    left_panel.set_visibility(visibility);
+                });
+            },
+            GUIEvent::CreateSemanticNodeRequest => {
+                if let Some(_project_view) = selected_project {
+                    transform = GUIStateTransform::Next(
+                        GUIState::ShowModalWindow(
+                            ModalWindowType::CreateSemanticNodeWindow
+                        )
+                    );
+                } 
+            },
+            GUIEvent::CreateSemanticNodeWindowClosed => {
+                transform = GUIStateTransform::Next(
+                    GUIState::Idle
+                );
             },
         }
     }

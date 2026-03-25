@@ -7,6 +7,7 @@ use crate::modules::app::confirmation_context::confirmation_context_manager::Con
 
 use crate::modules::app::gui::GUI;
 use crate::modules::app::gui::gui_affect::GUIAffect;
+use crate::modules::app::gui::gui_command::GUICommand;
 
 use crate::modules::app::app_event::AppEvent;
 use crate::modules::app::app_event::creating_project_event::CreatingProjectEvent;
@@ -70,6 +71,17 @@ impl AppKernel {
                                 }.into() 
                             )
                         )
+                    },
+
+                    GUIAffect::SwitchProjectRequest { 
+                        project_id 
+                    } => {
+                        ctx.gui.on_command(
+                            GUICommand::SelectProject { 
+                                project_id,
+                            }
+                        );
+                        Ok(None)
                     },
                 }
             },

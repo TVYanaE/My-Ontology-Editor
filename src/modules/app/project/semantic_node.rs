@@ -7,6 +7,8 @@ use uuid::Error;
 pub struct SemanticNode {
     id: SemanticNodeID, 
     name: String,
+    connect_from: Vec<SemanticNodeID>,
+    connect_to: Vec<SemanticNodeID>,
 }
 
 impl SemanticNode {
@@ -15,7 +17,9 @@ impl SemanticNode {
 
         Self { 
             id, 
-            name: name.to_string() 
+            name: name.to_string(),
+            connect_from: Vec::with_capacity(8),
+            connect_to: Vec::with_capacity(8),
         }
     }
     pub fn get_name(&self) -> &str {

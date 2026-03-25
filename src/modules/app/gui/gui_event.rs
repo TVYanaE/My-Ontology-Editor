@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use crate::modules::app::gui::gui_state::ModalWindowType;
 use crate::modules::app::gui::gui_state::FileDialogResponseReceiver;
 
+use crate::modules::app::project::project_id::ProjectID;
+
 use super::gui_command::ConfirmationType;
 
 #[derive(Debug)]
@@ -29,7 +31,15 @@ pub enum GUIEvent {
     OpenProjectCanceled,
     OpenProjectRequest {
         project_file_path: String,
-    }
+    },
+    SwitchProjectRequest {
+        project_id: ProjectID,
+    }, 
+    SetLeftPanelVisibility {
+        visibility: bool,
+    },
+    CreateSemanticNodeRequest,
+    CreateSemanticNodeWindowClosed,
 }
 
 pub struct GUIEventBuffer(Vec<GUIEvent>);

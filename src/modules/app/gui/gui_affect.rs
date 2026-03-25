@@ -1,5 +1,7 @@
 use crate::modules::app::gui::gui_command::ConfirmationType;
 
+use crate::modules::app::project::project_id::ProjectID;
+
 #[derive(Debug)]
 pub enum GUIAffect {
     ExitRequested,
@@ -13,6 +15,9 @@ pub enum GUIAffect {
     },
     OpenProjectInfo {
         project_file_path: String, 
+    },
+    SwitchProjectRequest {
+        project_id: ProjectID,
     }
 }
 

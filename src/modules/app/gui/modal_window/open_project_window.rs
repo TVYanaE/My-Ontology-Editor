@@ -21,6 +21,7 @@ impl OpenProjectWindow {
             project_file_path: String::with_capacity(64), 
         }
     }
+
     pub(super) fn prepare(
         &mut self,
         context: &EGUIContext,
@@ -44,10 +45,15 @@ impl OpenProjectWindow {
             }
         );
     }
+
     pub fn set_project_file_path(&mut self, project_file_path: &str) {
         self.project_file_path.clear();
         self.project_file_path.push_str(project_file_path);
     }
+
+    pub fn clear(&mut self) {
+        self.project_file_path.clear();
+    }  
 }
 
 fn main_panel(

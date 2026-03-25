@@ -110,7 +110,7 @@ impl EFrameApp for App {
 
         self.time_detector.start_measurement();
 
-        match self.gui.prepare_gui(ctx, &mut self.project_view_manager) {
+        match self.gui.prepare_gui(ctx, &self.project_view_manager) {
             Ok(gui_affect_buffer) => {
                 for gui_affect in gui_affect_buffer {
                     match AppKernel::gui_affects_handling(gui_affect, self.gui_affects_ctx()) {

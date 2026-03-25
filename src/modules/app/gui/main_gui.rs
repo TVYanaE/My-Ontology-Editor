@@ -31,15 +31,24 @@ impl MainGUI {
             top_panel: TopPanel::new(),
         }
     }
+
     pub fn prepare(
         &mut self,
         context: &EGUIContext,
         event_buffer: &mut GUIEventBuffer,
-        project_views: &[(&ProjectID, &mut ProjectView)],
+        project_views: &[(&ProjectID, &ProjectView)],
+        selected_project: Option<&ProjectView>,
     ) {
-        self.top_panel.prepare(context, event_buffer, project_views); 
-        self.bottom_panel.prepare(context, event_buffer);
-        self.left_panel.prepare(context, event_buffer);
+        self.top_panel.prepare(context, event_buffer, project_views, selected_project); 
+        self.bottom_panel.prepare(context, event_buffer, selected_project);
+        self.left_panel.prepare(context, event_buffer, selected_project);
         self.central_panel.prepare(context, event_buffer);
+    }
+
+    pub fn with_left_panel<F>(&mut self, f: F) 
+    where 
+        F: FnOnce(&mut LeftPanel)
+    {
+        f(&mut self.left_panel)
     }
 }
